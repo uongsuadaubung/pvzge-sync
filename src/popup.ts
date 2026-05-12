@@ -143,13 +143,14 @@ async function finalizeSyncDirect(data: SaveData) {
 (document.getElementById('btn-export') as HTMLElement).onclick = async () => {
   try {
     const data = await getLocalData();
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const json = JSON.stringify(data, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
-    chrome.downloads.download({
-      url: url,
-      filename: 'pvzge_save_' + new Date().toISOString().slice(0, 10) + '.json',
-      saveAs: true
-    });
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'pvzge_save_' + new Date().toISOString().slice(0, 10) + '.json';
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : String(e);
     alert(message);
