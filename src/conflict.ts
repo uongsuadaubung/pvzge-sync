@@ -1,5 +1,5 @@
 import { t, applyTranslations } from './i18n';
-import { IGNORED_KEYS } from './constants';
+import { findConflicts, isPvzDate } from './utils';
 import type { SaveData, Conflict, PvzDate } from './types';
 
 let localData: SaveData, remoteData: SaveData;
@@ -141,28 +141,6 @@ function escapeHTML(str: unknown): string {
     return div.innerHTML;
 }
 
-function findConflicts(local: SaveData, remote: SaveData, path = '') {
-    let results: Conflict[] = [];
-    const allKeys = new Set([...Object.keys(local), ...Object.keys(remote)]);
-    for (const key of allKeys) {
-        if (IGNORED_KEYS.includes(key)) continue; // Skip ignored fields
-        const currentPath = path ? `${path}.${key}` : key;
-        const lVal = local[key], rVal = remote[key];
-        if (JSON.stringify(lVal) === JSON.stringify(rVal)) continue;
-        if (typeof lVal === 'object' && lVal !== null && typeof rVal === 'object' && rVal !== null) {
-            if ((Array.isArray(lVal) || Array.isArray(rVal)) && path !== '') {
-                results.push({ path: currentPath, local: lVal, remote: rVal, choice: 'remote' });
-            } else if (isPvzDate(lVal) && isPvzDate(rVal)) {
-                results.push({ path: currentPath, local: lVal, remote: rVal, choice: 'remote' });
-            } else {
-                results = results.concat(findConflicts(lVal as SaveData, rVal as SaveData, currentPath));
-            }
-        } else {
-            results.push({ path: currentPath, local: lVal, remote: rVal, choice: 'remote' });
-        }
-    }
-    return results;
-}
 
 function renderConflicts() {
     const list = document.getElementById('conflict-list') as HTMLElement;
@@ -215,11 +193,6 @@ function applySmartSelection() {
         else c.choice = 'remote';
     });
     renderConflicts();
-}
-
-function isPvzDate(obj: unknown): boolean { 
-    const o = obj as Record<string, unknown>;
-    return !!(o && typeof o.year === 'number' && typeof o.month === 'number' && typeof o.date === 'number'); 
 }
 
 function pvzDateToTime(obj: unknown): number { 
