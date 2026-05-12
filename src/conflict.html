@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Xác nhận dữ liệu - PVZGE Sync</title>
+    <link rel="stylesheet" href="conflict.css">
+</head>
+<body>
+    <div id="simple-view" class="conflict-container">
+        <header>
+            <h2 data-t="detect_changes">Phát hiện thay đổi</h2>
+            <p data-t="choose_version">Bạn muốn sử dụng bản lưu nào?</p>
+        </header>
+
+        <div class="simple-grid">
+            <div class="simple-card" id="card-local">
+                <div class="card-tag local" data-t="card_local">Local</div>
+                <div class="card-stats" id="simple-stats-local"></div>
+                <div class="selection-status" data-t="not_selected">Chưa chọn</div>
+            </div>
+            <div class="simple-card" id="card-remote">
+                <div class="card-tag remote" data-t="card_remote">Cloud</div>
+                <div class="card-stats" id="simple-stats-remote"></div>
+                <div class="selection-status" data-t="not_selected">Chưa chọn</div>
+            </div>
+        </div>
+
+        <div class="simple-actions">
+            <button id="btn-confirm-simple" class="btn primary disabled" disabled data-t="btn_confirm_simple">Xác nhận và Chốt bản này</button>
+        </div>
+
+        <footer>
+            <button id="btn-show-advanced" class="btn-link" data-t="btn_advanced">Tùy chỉnh chi tiết (Advanced Merge) &raquo;</button>
+            <br><br>
+            <button id="btn-cancel-simple" class="btn-link gray" data-t="btn_cancel">Hủy bỏ</button>
+        </footer>
+    </div>
+
+    <div id="advanced-view" class="conflict-container large" style="display: none;">
+        <header>
+            <h2 data-t="advanced_title">Merge chi tiết</h2>
+            <p data-t="advanced_desc">Chọn chính xác từng thuộc tính bạn muốn giữ lại.</p>
+        </header>
+
+        <div class="bulk-actions">
+            <button id="btn-smart-select" class="btn-link" style="color: #4caf50; font-weight: bold;" data-t="btn_smart_select">🪄 Chọn thông minh</button>
+            <button id="btn-all-local" class="btn-link" data-t="btn_all_local">Lấy tất cả Local</button>
+            <button id="btn-all-remote" class="btn-link" data-t="btn_all_remote">Lấy tất cả Cloud</button>
+        </div>
+
+        <div id="conflict-list" class="conflict-list"></div>
+
+        <div class="merge-footer">
+            <button id="btn-back-to-simple" class="btn secondary" data-t="btn_back">Quay lại</button>
+            <button id="btn-confirm-merge" class="btn primary" data-t="btn_confirm_advanced">Xác nhận và Lưu</button>
+        </div>
+    </div>
+    <script type="module" src="conflict.js"></script>
+</body>
+</html>
