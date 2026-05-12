@@ -1,5 +1,5 @@
 import { t, applyTranslations } from './i18n';
-import { hasConflicts } from './utils';
+import { findConflicts, hasConflicts } from './utils';
 import { mergeValidPart } from './merge';
 import { SaveDataSchema } from './schema';
 import { GAME_HOST } from './constants';
@@ -39,11 +39,15 @@ async function updateStatus() {
   }
 }
 
-async function getLocalData(): Promise<SaveData> {
+async function getGameTab(): Promise<chrome.tabs.Tab | null> {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (!tab || !tab.url || !tab.url.includes(GAME_HOST)) {
-    throw new Error(t('msg_game_not_open'));
-  }
+  if (!tab?.url?.includes(GAME_HOST)) return null;
+  return tab;
+}
+
+async function getLocalData(): Promise<SaveData> {
+  const tab = await getGameTab();
+  if (!tab) throw new Error(t('msg_game_not_open'));
 
   return new Promise((resolve, reject) => {
     chrome.tabs.sendMessage(tab.id!, { type: 'GET_LOCAL_DATA' }, (response) => {
@@ -57,10 +61,9 @@ async function getLocalData(): Promise<SaveData> {
 }
 
 async function validateLocalData(): Promise<{ valid: boolean; errors: string[] }> {
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (!tab || !tab.url || !tab.url.includes(GAME_HOST)) {
-    return { valid: false, errors: [t('msg_game_not_open')] };
-  }
+  const tab = await getGameTab();
+  if (!tab) return { valid: false, errors: [t('msg_game_not_open')] };
+
   return new Promise((resolve) => {
     chrome.tabs.sendMessage(tab.id!, { type: 'VALIDATE_LOCAL_DATA' }, (response) => {
       if (chrome.runtime.lastError || !response) {
@@ -123,11 +126,16 @@ async function finalizeSyncDirect(data: SaveData) {
         }
 
         await chrome.storage.local.set({ temp_remote: remoteData, temp_local: localData });
-        if (!hasConflicts(localData!, remoteData)) {
-          await finalizeSyncDirect(remoteData);
-        } else {
-          window.location.href = 'conflict.html';
+
+        // Use same findConflicts logic for both checks — no inconsistency possible
+        const conflicts = findConflicts(localData!, remoteData);
+        if (conflicts.length === 0) {
+          await chrome.storage.local.set({ lastSync: Date.now() });
+          statusText.innerText = '\u2705 Already up to date!';
+          updateStatus();
+          return;
         }
+        window.location.href = 'conflict.html';
       } else {
         alert('Error: ' + response.error);
         updateStatus();
@@ -221,18 +229,13 @@ window.onclick = (e: MouseEvent) => { if (e.target == modal) modal.style.display
   updateStatus();
 };
 
-async function isOnGamePage(): Promise<boolean> {
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  return !!(tab?.url?.includes(GAME_HOST));
-}
-
 async function initPopup() {
   await applyTranslations();
 
   const warnBanner = document.getElementById('warn-banner') as HTMLElement;
 
   // Step 1: check if we're on the game page
-  const onGamePage = await isOnGamePage();
+  const onGamePage = !!(await getGameTab());
   if (!onGamePage) {
     warnBanner.style.display = 'block';
     warnBanner.innerHTML = `<strong>🎮 ${t('not_game_page_title')}</strong><br>${t('not_game_page_body')}`;
