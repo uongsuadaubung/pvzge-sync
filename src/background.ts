@@ -113,9 +113,11 @@ chrome.runtime.onMessage.addListener((message: SyncMessage, _sender: chrome.runt
     return false;
 });
 
-// Only show extension on the game page
+// Only show extension on the game page (Chrome only; Firefox doesn't support declarativeContent)
 chrome.runtime.onInstalled.addListener(() => {
+    if (typeof chrome.action?.disable !== 'function') return;
     chrome.action.disable();
+    if (!chrome.declarativeContent) return;
     chrome.declarativeContent.onPageChanged.removeRules(undefined, () => {
         chrome.declarativeContent.onPageChanged.addRules([{
             conditions: [
