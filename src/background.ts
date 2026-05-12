@@ -1,4 +1,5 @@
-import type { SaveData, Gist, SyncMessage, SyncResponse } from './types';
+import type { Gist, SyncMessage, SyncResponse } from './types';
+import type { SaveData } from './schema';
 import { GITHUB_API_BASE, GIST_DESCRIPTION, GIST_FILE_NAME, GAME_URL_MATCH, ALARM_NAME, SYNC_INTERVAL_MINUTES } from './constants';
 
 // GitHub Gist API Helpers

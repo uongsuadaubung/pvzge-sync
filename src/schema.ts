@@ -171,3 +171,4 @@ export { SaveDataSchema, validateSaveData, validatePlayerProperties, validateSet
 export type SaveData = z.infer<typeof SaveDataSchema>;
 export type PlayerProfile = z.infer<typeof PlayerProfileSchema>;
 export type Settings = z.infer<typeof SettingsSchema>;
+export type PvzDate = z.infer<typeof DateSchema>;

@@ -1,5 +1,5 @@
 import { validatePlayerProperties, validateSettings } from './schema';
-import type { SaveData } from './types';
+import type { SaveData } from './schema';
 
 export function mergeValidPart(remote: SaveData, local: SaveData): SaveData {
   const result: SaveData = { ...remote };
