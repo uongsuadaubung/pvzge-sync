@@ -19,10 +19,15 @@ async function initConflict() {
     renderSimpleView();
 
     const initialConflicts = findConflicts(localData, remoteData);
+    const advancedBtn = document.getElementById('btn-show-advanced') as HTMLElement;
     if (initialConflicts.length === 0) {
         const confirmBtn = document.getElementById('btn-confirm-simple') as HTMLButtonElement;
         confirmBtn.classList.add('disabled');
         confirmBtn.disabled = true;
+        advancedBtn.style.display = 'none';
+        const confirmMergeBtn = document.getElementById('btn-confirm-merge') as HTMLButtonElement;
+        confirmMergeBtn.classList.add('disabled');
+        confirmMergeBtn.disabled = true;
         const footer = document.querySelector('#simple-view footer') as HTMLElement;
         if (footer) {
             footer.insertAdjacentHTML('beforebegin', `<p style="text-align:center; color:#4caf50; margin: 8px 0;">${t('diff_none')}</p>`);
