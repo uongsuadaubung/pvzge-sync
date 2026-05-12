@@ -1,11 +1,10 @@
 import type { SyncMessage, SaveData } from './types';
 import { validatePlayerProperties, validateSettings } from './schema';
-
-const TARGET_KEYS = ['PvZ2_PlayerProperties', 'PvZ2_Settings'];
+import { SAVE_KEYS } from './constants';
 
 function getRawData(): SaveData | null {
   const data: SaveData = {};
-  for (const key of TARGET_KEYS) {
+  for (const key of SAVE_KEYS) {
     const raw = localStorage.getItem(key);
     if (!raw) return null;
     try {
@@ -52,10 +51,19 @@ chrome.runtime.onMessage.addListener((message: SyncMessage, _sender, sendRespons
       return;
     }
     Object.keys(data).forEach(key => {
-      if (TARGET_KEYS.includes(key)) {
+      if (SAVE_KEYS.includes(key as typeof SAVE_KEYS[number])) {
         localStorage.setItem(key, JSON.stringify(data[key]));
       }
     });
     window.location.reload();
+  }
+});
+
+// Auto-sync: when tab is hidden/closed, cache data in background for upload
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) return;
+  const data = getRawData();
+  if (data) {
+    chrome.runtime.sendMessage({ type: 'CACHE_FOR_AUTOSYNC', data });
   }
 });

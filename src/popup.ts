@@ -2,6 +2,7 @@ import { t, applyTranslations } from './i18n';
 import { hasConflicts } from './utils';
 import { mergeValidPart } from './merge';
 import { SaveDataSchema } from './schema';
+import { GAME_HOST } from './constants';
 import type { SaveData, SyncResponse } from './types';
 
 const statusText = document.getElementById('status-text') as HTMLElement;
@@ -40,7 +41,7 @@ async function updateStatus() {
 
 async function getLocalData(): Promise<SaveData> {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (!tab || !tab.url || !tab.url.includes('play.pvzge.com')) {
+  if (!tab || !tab.url || !tab.url.includes(GAME_HOST)) {
     throw new Error(t('msg_game_not_open'));
   }
 
@@ -57,7 +58,7 @@ async function getLocalData(): Promise<SaveData> {
 
 async function validateLocalData(): Promise<{ valid: boolean; errors: string[] }> {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (!tab || !tab.url || !tab.url.includes('play.pvzge.com')) {
+  if (!tab || !tab.url || !tab.url.includes(GAME_HOST)) {
     return { valid: false, errors: [t('msg_game_not_open')] };
   }
   return new Promise((resolve) => {
@@ -219,16 +220,48 @@ window.onclick = (e: MouseEvent) => { if (e.target == modal) modal.style.display
   updateStatus();
 };
 
+async function isOnGamePage(): Promise<boolean> {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  return !!(tab?.url?.includes(GAME_HOST));
+}
+
 async function initPopup() {
   await applyTranslations();
 
+  const warnBanner = document.getElementById('warn-banner') as HTMLElement;
+
+  // Step 1: check if we're on the game page
+  const onGamePage = await isOnGamePage();
+  if (!onGamePage) {
+    warnBanner.style.display = 'block';
+    warnBanner.innerHTML = `<strong>🎮 ${t('not_game_page_title')}</strong><br>${t('not_game_page_body')}`;
+
+    // Disable only cloud sync — import/export + settings still work
+    const cloudSection = document.querySelector('.action-section.cloud') as HTMLElement;
+    if (cloudSection) {
+      cloudSection.style.opacity = '0.4';
+      cloudSection.style.pointerEvents = 'none';
+    }
+    document.querySelectorAll('.action-section.cloud button').forEach(b => {
+      (b as HTMLButtonElement).disabled = true;
+    });
+
+    statusText.innerText = '🎮 ' + t('not_game_page_title');
+    statusText.style.color = '#ff9800';
+    await updateStatus();
+    return;
+  }
+
+  // Step 2: validate local data schema
   const validation = await validateLocalData();
   if (!validation.valid) {
     document.querySelector('main')?.classList.add('disabled');
-    document.querySelectorAll('button').forEach(b => { b.disabled = true; });
+    document.querySelectorAll('button:not(#btn-settings)').forEach(b => {
+      (b as HTMLButtonElement).disabled = true;
+    });
     if (errorBanner) {
       errorBanner.style.display = 'block';
-      errorBanner.innerHTML = `<strong>⚠️ Update Required</strong><br>Local save data is incompatible. Please update the extension to continue.<br><small>${validation.errors.join('; ')}</small>`;
+      errorBanner.innerHTML = `<strong>⚠️ ${t('schema_error_title')}</strong><br>Local save data is incompatible. Please update the extension.<br><small>${validation.errors.join('; ')}</small>`;
     }
     statusText.innerText = '⚠️ Incompatible data';
     statusText.style.color = '#f44336';
