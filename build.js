@@ -85,6 +85,12 @@ async function runBuild() {
                             strict_min_version: "109.0"
                         }
                     };
+                    manifest.background = {
+                        scripts: ["background.js"],
+                        type: "module"
+                    };
+                    manifest.permissions = manifest.permissions.filter(function(p) { return p !== 'declarativeContent'; });
+                    delete manifest.host_permissions;
                 }
                 content = JSON.stringify(manifest, null, 2);
             } else {
