@@ -29,7 +29,7 @@ export interface Conflict {
 }
 
 export interface SyncMessage {
-  type: 'UPLOAD_TO_GIST' | 'DOWNLOAD_FROM_GIST' | 'GET_LOCAL_DATA' | 'VALIDATE_LOCAL_DATA' | 'APPLY_REMOTE_DATA';
+  type: 'UPLOAD_TO_GIST' | 'DOWNLOAD_FROM_GIST' | 'GET_LOCAL_DATA' | 'VALIDATE_LOCAL_DATA' | 'APPLY_REMOTE_DATA' | 'CACHE_FOR_AUTOSYNC';
   data?: SaveData;
 }
 

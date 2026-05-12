@@ -15,17 +15,11 @@ const DateSchema = z.object({
   year: z.number()
 }).strict();
 
-const FeaturesSchema = z.object({
-  feature_almanac: z.boolean(),
-  feature_coins: z.boolean(),
-  feature_plantfood: z.boolean(),
-  feature_powerup: z.boolean(),
-  feature_shovel: z.boolean(),
-  feature_store: z.boolean(),
-  feature_worldkeys: z.boolean(),
-  feature_worldmap: z.boolean(),
-  feature_zengarden: z.boolean()
-}).strict();
+const FeaturesSchema = z.record(z.string(), z.boolean());
+
+const ProgressEntrySchema = z.object({ progress: z.number() }).strict();
+
+const UpgradePropSchema = z.object({ progress: z.number(), enabled: z.boolean() }).strict();
 
 const PlantPropSchema = z.object({
   boost: z.number(),
@@ -36,20 +30,7 @@ const PlantPropSchema = z.object({
   tutorialLevel: z.number()
 }).strict();
 
-const TutorialSchema = z.object({
-  almanac_intro: z.boolean(),
-  almanac_open: z.boolean(),
-  plantfood: z.boolean(),
-  premium_bring_out: z.boolean(),
-  premium_light_up: z.boolean(),
-  premium_unlock: z.boolean(),
-  store_intro: z.boolean(),
-  store_open: z.boolean(),
-  worldkey: z.boolean(),
-  worldmap: z.boolean(),
-  zengarden_intro: z.boolean(),
-  zengarden_open: z.boolean()
-}).strict();
+const TutorialSchema = z.record(z.string(), z.boolean());
 
 const EndlessMiniGamePropsSchema = z.object({
   level: z.number()
@@ -75,16 +56,18 @@ const WorldPropEntrySchema = z.object({
 
 const WorldPropsSchema = z.object({}).catchall(z.union([WorldPropEntrySchema, z.number()]));
 
+const ZenGardenSlotSchema = z.object({ unlocked: z.boolean() }).strict();
+
 const ZenGardenSchema = z.object({
   plantInCart: z.unknown().nullable(),
   plantsInBeach: z.array(z.unknown()),
   plantsInMain: z.array(z.unknown()),
   plantsInMushroom: z.array(z.unknown()),
   plantsInNight: z.array(z.unknown()),
-  slotsInBeach: z.array(z.unknown()),
-  slotsInMain: z.array(z.unknown()),
-  slotsInMushroom: z.array(z.unknown()),
-  slotsInNight: z.array(z.unknown()),
+  slotsInBeach: z.array(ZenGardenSlotSchema),
+  slotsInMain: z.array(ZenGardenSlotSchema),
+  slotsInMushroom: z.array(ZenGardenSlotSchema),
+  slotsInNight: z.array(ZenGardenSlotSchema),
   sprout: z.number()
 }).strict();
 
@@ -103,23 +86,23 @@ const PlayerProfileSchema = z.object({
   futureWMX: z.number(),
   gem: z.number(),
   iceageWMX: z.number(),
-  levelProps: z.object({}).catchall(z.unknown()),
+  levelProps: z.record(z.string(), ProgressEntrySchema),
   lostcityWMX: z.number(),
-  memoryPlantChoose: z.array(z.unknown()),
+  memoryPlantChoose: z.array(z.string()),
   name: z.string(),
   pirateWMX: z.number(),
   plantProps: z.record(z.string(), PlantPropSchema),
   sprout: z.number(),
   time: z.number(),
-  trophyProps: z.object({}).catchall(z.unknown()),
+  trophyProps: z.record(z.string(), ProgressEntrySchema),
   tutorial: TutorialSchema,
-  upgradeProps: z.object({}).catchall(z.unknown()),
+  upgradeProps: z.record(z.string(), UpgradePropSchema),
   version: z.string(),
   worldProgress: z.array(z.unknown()),
   worldProps: WorldPropsSchema,
   worldkey: z.number(),
   zengarden: ZenGardenSchema,
-  zombieProps: z.object({}).catchall(z.unknown())
+  zombieProps: z.record(z.string(), ProgressEntrySchema)
 }).strict();
 
 const KeyBindsSchema = z.record(z.string(), z.string()).refine(

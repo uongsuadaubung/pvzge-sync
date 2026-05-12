@@ -37,7 +37,10 @@ const translations: Record<string, Record<string, string>> = {
         diff_none: "No differences found.",
         msg_gist_not_found: "No save data found on Cloud. Please Upload first.",
         msg_invalid_json: "Error: Invalid JSON file.",
-        msg_game_not_open: "Please open play.pvzge.com first."
+        msg_game_not_open: "Please open play.pvzge.com first.",
+        not_game_page_title: "Not on Game Page",
+        not_game_page_body: "Open <b>play.pvzge.com</b> to use sync features. Import/Export still works.",
+        schema_error_title: "Update Required"
     },
     vi: {
         app_name: "PVZGE Sync",
@@ -77,7 +80,10 @@ const translations: Record<string, Record<string, string>> = {
         diff_none: "Không có sự khác biệt nào.",
         msg_gist_not_found: "Không tìm thấy bản lưu trên Cloud. Hãy Upload trước.",
         msg_invalid_json: "Lỗi: File JSON không hợp lệ.",
-        msg_game_not_open: "Vui lòng mở trang play.pvzge.com trước."
+        msg_game_not_open: "Vui lòng mở trang play.pvzge.com trước.",
+        not_game_page_title: "Không phải trang game",
+        not_game_page_body: "Mở <b>play.pvzge.com</b> để dùng tính năng đồng bộ. Import/Export vẫn hoạt động.",
+        schema_error_title: "Cần cập nhật Extension"
     }
 };
 
