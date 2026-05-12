@@ -3,7 +3,8 @@ import { findConflicts, hasConflicts } from './utils';
 import { mergeValidPart } from './merge';
 import { SaveDataSchema } from './schema';
 import { GAME_HOST } from './constants';
-import type { SaveData, SyncResponse } from './types';
+import type { SyncResponse } from './types';
+import type { SaveData } from './schema';
 
 const statusText = document.getElementById('status-text') as HTMLElement;
 const lastSyncText = document.getElementById('last-sync') as HTMLElement;

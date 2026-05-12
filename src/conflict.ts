@@ -1,6 +1,8 @@
 import { t, applyTranslations } from './i18n';
 import { findConflicts, isPvzDate } from './utils';
-import type { SaveData, Conflict, PvzDate } from './types';
+import type { Conflict } from './types';
+import type { SaveData, PvzDate } from './schema';
+
 
 let localData: SaveData, remoteData: SaveData;
 let conflicts: Conflict[] = [];
@@ -96,33 +98,23 @@ function renderSimpleView() {
 
 function renderCardStats(id: string, data: SaveData, compareTo: SaveData) {
     const container = document.getElementById(id) as HTMLElement;
-    const p = (data.PvZ2_PlayerProperties as Record<string, unknown>[])?.[0] || {};
-    const cp = (compareTo.PvZ2_PlayerProperties as Record<string, unknown>[])?.[0] || {};
+    const p = data.PvZ2_PlayerProperties?.[0];
+    const cp = compareTo.PvZ2_PlayerProperties?.[0];
 
     const stats = [
-        { label: '💎 Gems', val: p.gem as number, cVal: cp.gem as number },
-        { label: '🪙 Coins', val: p.coin as number, cVal: cp.coin as number },
-        { label: '📅 Date', val: p.date as unknown as PvzDate, cVal: cp.date as unknown as PvzDate, isDate: true }
+        { label: '💎 Gems', val: p?.gem, cVal: cp?.gem },
+        { label: '🪙 Coins', val: p?.coin, cVal: cp?.coin },
+        { label: '📅 Date', val: p?.date, cVal: cp?.date }
     ];
 
-    container.innerHTML = stats.map(s => {
-        let displayVal: unknown = s.val;
-        let isBetter: boolean;
+    container.innerHTML = stats.map(({ label, val, cVal }) => {
+        const dateMatch = isPvzDate(val) && isPvzDate(cVal);
+        const displayVal = dateMatch ? `${val.year}-${val.month}-${val.date}` : (val as number | undefined) ?? 'N/A';
+        const isBetter = dateMatch
+            ? pvzDateToTime(val) > pvzDateToTime(cVal)
+            : ((val as number | undefined) ?? 0) > ((cVal as number | undefined) ?? 0);
 
-        if (s.isDate && s.val) {
-            const d = s.val as PvzDate;
-            displayVal = `${d.year}-${d.month}-${d.date}`;
-            isBetter = pvzDateToTime(d) > pvzDateToTime(s.cVal as PvzDate);
-        } else {
-            isBetter = (s.val as number) > (s.cVal as number);
-        }
-
-        return `
-            <div class="stat-row">
-                <span class="stat-label">${s.label}</span>
-                <span class="stat-val ${isBetter ? 'better' : ''}">${displayVal ?? 'N/A'}</span>
-            </div>
-        `;
+        return `<div class="stat-row"><span class="stat-label">${label}</span><span class="stat-val ${isBetter ? 'better' : ''}">${displayVal}</span></div>`;
     }).join('');
 }
 
@@ -175,8 +167,7 @@ function formatValue(val: unknown): string {
     if (typeof val === 'boolean') return val ? 'TRUE' : 'FALSE';
     if (typeof val === 'object') {
         if (isPvzDate(val)) {
-            const d = val as unknown as PvzDate;
-            return escapeHTML(`${d.year}-${String(d.month).padStart(2, '0')}-${String(d.date).padStart(2, '0')} ${String(d.hour || 0).padStart(2, '0')}:${String(d.minute || 0).padStart(2, '0')}:${String(d.second || 0).padStart(2, '0')}`);
+            return escapeHTML(`${val.year}-${String(val.month).padStart(2, '0')}-${String(val.date).padStart(2, '0')} ${String(val.hour || 0).padStart(2, '0')}:${String(val.minute || 0).padStart(2, '0')}:${String(val.second || 0).padStart(2, '0')}`);
         }
         try { return escapeHTML(JSON.stringify(val, null, 1)); } catch { return '[Obj]'; }
     }
@@ -185,19 +176,18 @@ function formatValue(val: unknown): string {
 
 function applySmartSelection() {
     conflicts.forEach(c => {
-        const l = c.local as Record<string, unknown>;
-        const r = c.remote as Record<string, unknown>;
+        const l = c.local;
+        const r = c.remote;
         if (Array.isArray(l) && Array.isArray(r)) c.choice = l.length >= r.length ? 'local' : 'remote';
-        else if (typeof l === 'number' && typeof r === 'number') c.choice = (l as number) > (r as number) ? 'local' : 'remote';
+        else if (typeof l === 'number' && typeof r === 'number') c.choice = l > r ? 'local' : 'remote';
         else if (l != null && r == null) c.choice = 'local';
         else c.choice = 'remote';
     });
     renderConflicts();
 }
 
-function pvzDateToTime(obj: unknown): number { 
-    if (!obj) return 0; 
-    const d = obj as PvzDate;
+function pvzDateToTime(d: PvzDate): number { 
+    
     return new Date(d.year, d.month - 1, d.date, d.hour || 0, d.minute || 0, d.second || 0).getTime(); 
 }
 
@@ -206,14 +196,6 @@ function setAllChoices(choice: 'local' | 'remote') { conflicts.forEach(c => c.ch
 function performMerge() {
     const result = JSON.parse(JSON.stringify(localData)) as SaveData;
     conflicts.forEach(c => { if (c.choice === 'remote') setValueByPath(result, c.path, c.remote); });
-    
-    // Auto-pick latest date for the final merged result
-    const lDate = localData.date;
-    const rDate = remoteData.date;
-    if (isPvzDate(lDate) && isPvzDate(rDate)) {
-        result.date = pvzDateToTime(lDate) > pvzDateToTime(rDate) ? lDate : rDate;
-    }
-    
     return result;
 }
 

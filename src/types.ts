@@ -1,6 +1,4 @@
-export interface SaveData {
-  [key: string]: unknown;
-}
+import type { SaveData } from './schema';
 
 export interface GistFile {
   content: string;
@@ -10,15 +8,6 @@ export interface Gist {
   id: string;
   description: string;
   files: Record<string, GistFile>;
-}
-
-export interface PvzDate {
-  year: number;
-  month: number;
-  date: number;
-  hour?: number;
-  minute?: number;
-  second?: number;
 }
 
 export interface Conflict {

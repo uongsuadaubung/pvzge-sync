@@ -1,9 +1,10 @@
-import type { SyncMessage, SaveData } from './types';
+import type { SyncMessage } from './types';
+import type { SaveData } from './schema';
 import { validatePlayerProperties, validateSettings } from './schema';
 import { SAVE_KEYS } from './constants';
 
 function getRawData(): SaveData | null {
-  const data: SaveData = {};
+  const data: Record<string, unknown> = {};
   for (const key of SAVE_KEYS) {
     const raw = localStorage.getItem(key);
     if (!raw) return null;
@@ -13,7 +14,7 @@ function getRawData(): SaveData | null {
       return null;
     }
   }
-  return data;
+  return data as SaveData;
 }
 
 function validateLocalData(): { valid: boolean; data?: SaveData; errors: string[] } {
@@ -50,9 +51,10 @@ chrome.runtime.onMessage.addListener((message: SyncMessage, _sender, sendRespons
       sendResponse({ success: false, error: 'Invalid data structure' });
       return;
     }
-    Object.keys(data).forEach(key => {
+    const dataRecord = data as Record<string, unknown>;
+    Object.keys(dataRecord).forEach(key => {
       if (SAVE_KEYS.includes(key as typeof SAVE_KEYS[number])) {
-        localStorage.setItem(key, JSON.stringify(data[key]));
+        localStorage.setItem(key, JSON.stringify(dataRecord[key]));
       }
     });
     window.location.reload();
