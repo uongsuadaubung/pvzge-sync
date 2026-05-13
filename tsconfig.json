@@ -22,9 +22,11 @@
     "rootDir": "src",
     "types": [
       "chrome"
-    ]
+    ],
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+    "verbatimModuleSyntax": true
   },
-  "include": [
-    "src/**/*.ts"
-  ]
+  "include": ["src/**/*.ts"]
 }

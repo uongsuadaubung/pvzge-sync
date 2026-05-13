@@ -1,8 +1,8 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 const PlantCostumeSchema = z.object({
   plantID: z.number(),
-  costume: z.number()
+  costume: z.number(),
 }).strict();
 
 const DateSchema = z.object({
@@ -12,7 +12,7 @@ const DateSchema = z.object({
   month: z.number(),
   plantCostumeToday: z.array(PlantCostumeSchema),
   second: z.number(),
-  year: z.number()
+  year: z.number(),
 }).strict();
 
 const FeaturesSchema = z.record(z.string(), z.boolean());
@@ -27,13 +27,13 @@ const PlantPropSchema = z.object({
   costumes: z.array(z.number()),
   medal: z.boolean(),
   progress: z.number(),
-  tutorialLevel: z.number()
+  tutorialLevel: z.number(),
 }).strict();
 
 const TutorialSchema = z.record(z.string(), z.boolean());
 
 const EndlessMiniGamePropsSchema = z.object({
-  level: z.number()
+  level: z.number(),
 }).strict();
 
 const EndlessPropsSchema = z.object({
@@ -43,7 +43,7 @@ const EndlessPropsSchema = z.object({
   obtainedPlants: z.array(z.unknown()),
   plantChosen: z.boolean(),
   plantfood: z.number(),
-  plantsToChoose: z.array(z.unknown()).nullable()
+  plantsToChoose: z.array(z.unknown()).nullable(),
 }).strict();
 
 const WorldPropEntrySchema = z.object({
@@ -51,7 +51,7 @@ const WorldPropEntrySchema = z.object({
   endlessProps: EndlessPropsSchema,
   unlocked: z.boolean(),
   viewed: z.boolean(),
-  wmx: z.number()
+  wmx: z.number(),
 }).strict();
 
 const WorldPropsSchema = z.object({}).catchall(z.union([WorldPropEntrySchema, z.number()]));
@@ -68,7 +68,7 @@ const ZenGardenSchema = z.object({
   slotsInMain: z.array(ZenGardenSlotSchema),
   slotsInMushroom: z.array(ZenGardenSlotSchema),
   slotsInNight: z.array(ZenGardenSlotSchema),
-  sprout: z.number()
+  sprout: z.number(),
 }).strict();
 
 const PlayerProfileSchema = z.object({
@@ -102,28 +102,28 @@ const PlayerProfileSchema = z.object({
   worldProps: WorldPropsSchema,
   worldkey: z.number(),
   zengarden: ZenGardenSchema,
-  zombieProps: z.record(z.string(), ProgressEntrySchema)
+  zombieProps: z.record(z.string(), ProgressEntrySchema),
 }).strict();
 
 const KeyBindsSchema = z.record(z.string(), z.string()).refine(
   (val) => {
     const expectedKeys = [
-      'Game_Pause', 'Game_SpeedUp', 'Game_Card1', 'Game_Card2', 'Game_Card3',
-      'Game_Card4', 'Game_Card5', 'Game_Card6', 'Game_Card7', 'Game_Card8',
-      'Game_Plantfood', 'Game_Shovel', 'Game_CollectAll', 'Game_ConveyorForward',
-      'Game_ConveyorBackward', 'Game_HideUI', 'Game_UIUpper', 'Game_BananaLauncher',
-      'Game_MissileToe', 'Game_Bamboozle', 'Game_HollyKnight', 'Game_IceShroom',
-      'AirRaid_W', 'AirRaid_S', 'AirRaid_A', 'AirRaid_D',
-      'ZenGarden_Glove', 'ZenGarden_Shovel', 'ZenGarden_Cart', 'ZenGarden_DealWithAll',
-      'ZenGarden_HideUI', 'ZenGarden_Next',
-      'Sandbox_PushTide', 'Sandbox_PullTide', 'Sandbox_PushTideBy1Square',
-      'Sandbox_PullTideBy1Square', 'Sandbox_ChangeJam', 'Sandbox_SummonZombies',
-      'Sandbox_ChangeLawn', 'Sandbox_TimeFreeze', 'Sandbox_SwitchMusic', 'Sandbox_Settings',
-      'Rhythm_PhatBeet1', 'Rhythm_PhatBeet2', 'Rhythm_PhatBeet3', 'Rhythm_PhatBeet4', 'Rhythm_PhatBeet5'
+      "Game_Pause", "Game_SpeedUp", "Game_Card1", "Game_Card2", "Game_Card3",
+      "Game_Card4", "Game_Card5", "Game_Card6", "Game_Card7", "Game_Card8",
+      "Game_Plantfood", "Game_Shovel", "Game_CollectAll", "Game_ConveyorForward",
+      "Game_ConveyorBackward", "Game_HideUI", "Game_UIUpper", "Game_BananaLauncher",
+      "Game_MissileToe", "Game_Bamboozle", "Game_HollyKnight", "Game_IceShroom",
+      "AirRaid_W", "AirRaid_S", "AirRaid_A", "AirRaid_D",
+      "ZenGarden_Glove", "ZenGarden_Shovel", "ZenGarden_Cart", "ZenGarden_DealWithAll",
+      "ZenGarden_HideUI", "ZenGarden_Next",
+      "Sandbox_PushTide", "Sandbox_PullTide", "Sandbox_PushTideBy1Square",
+      "Sandbox_PullTideBy1Square", "Sandbox_ChangeJam", "Sandbox_SummonZombies",
+      "Sandbox_ChangeLawn", "Sandbox_TimeFreeze", "Sandbox_SwitchMusic", "Sandbox_Settings",
+      "Rhythm_PhatBeet1", "Rhythm_PhatBeet2", "Rhythm_PhatBeet3", "Rhythm_PhatBeet4", "Rhythm_PhatBeet5",
     ];
     return expectedKeys.every((k) => k in val);
   },
-  { message: 'KeyBinds missing required keys' }
+  { message: "KeyBinds missing required keys" },
 );
 
 const SettingsSchema = z.object({
@@ -147,13 +147,25 @@ const SettingsSchema = z.object({
   AudioLoadMode: z.number(),
   PlayerIndex: z.number(),
   KeyBinds: KeyBindsSchema,
-  ZombieAlert: z.boolean()
+  ZombieAlert: z.boolean(),
 }).strict();
 
 const SaveDataSchema = z.object({
   PvZ2_PlayerProperties: z.array(PlayerProfileSchema),
-  PvZ2_Settings: SettingsSchema
+  PvZ2_Settings: SettingsSchema,
 }).strict();
+
+const GistFileSchema = z.object({
+  content: z.string(),
+});
+
+const GistSchema = z.object({
+  id: z.string(),
+  description: z.string(),
+  files: z.record(z.string(), GistFileSchema),
+});
+
+const GistArraySchema = z.array(GistSchema);
 
 function validateSaveData(data: unknown) {
   return SaveDataSchema.safeParse(data);
@@ -167,8 +179,10 @@ function validateSettings(data: unknown) {
   return SettingsSchema.safeParse(data);
 }
 
-export { SaveDataSchema, validateSaveData, validatePlayerProperties, validateSettings };
+export { SaveDataSchema, DateSchema, GistSchema, GistArraySchema, validateSaveData, validatePlayerProperties, validateSettings };
 export type SaveData = z.infer<typeof SaveDataSchema>;
 export type PlayerProfile = z.infer<typeof PlayerProfileSchema>;
 export type Settings = z.infer<typeof SettingsSchema>;
 export type PvzDate = z.infer<typeof DateSchema>;
+export type GistFile = z.infer<typeof GistFileSchema>;
+export type Gist = z.infer<typeof GistSchema>;

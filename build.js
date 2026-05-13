@@ -2,6 +2,8 @@ const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 const esbuild = require('esbuild');
+const sveltePlugin = require('esbuild-svelte');
+const sveltePreprocess = require('svelte-preprocess');
 
 const distDir = path.join(__dirname, 'dist');
 const chromeDir = path.join(distDir, 'chrome');
@@ -31,46 +33,68 @@ async function runBuild() {
         process.exit(1);
     }
 
+    console.log('Compiling SCSS...');
+    try {
+        execSync(`npx sass src/styles/app.scss ${path.join(chromeDir, 'popup.css')} --no-source-map`, { stdio: 'inherit' });
+        execSync(`npx sass src/styles/app.scss ${path.join(firefoxDir, 'popup.css')} --no-source-map`, { stdio: 'inherit' });
+    } catch (e) {
+        console.error('SCSS compilation failed.');
+        process.exit(1);
+    }
+
     console.log('Bundling with esbuild...');
     
     // Entry points for bundling
     const entryPoints = [
-        'background.ts',
-        'content.ts',
-        'popup.ts',
-        'conflict.ts',
-        'i18n.ts'
+        'extension/background.ts',
+        'extension/content.ts',
+        'popup-entry.ts',
     ].map(file => path.join(srcDir, file));
 
     // Common esbuild config
     const commonConfig = {
         entryPoints,
         bundle: true,
-        minify: true, 
+        minify: true,
         sourcemap: false,
         platform: 'browser',
         target: ['esnext'],
+        plugins: [sveltePlugin({ 
+            compilerOptions: { runes: true },
+            preprocess: sveltePreprocess()
+        })],
     };
 
     // Build for Chrome
     await esbuild.build({
         ...commonConfig,
         outdir: chromeDir,
+        entryNames: '[name]',
+        outExtension: { '.js': '.js' },
     });
-
+    // Rename popup-entry.js → popup.js
+    fs.renameSync(path.join(chromeDir, 'popup-entry.js'), path.join(chromeDir, 'popup.js'));
+    // Generated popup.css is handled by sass above
+    if (fs.existsSync(path.join(chromeDir, 'popup-entry.css'))) {
+        fs.rmSync(path.join(chromeDir, 'popup-entry.css'));
+    }
     // Build for Firefox
     await esbuild.build({
         ...commonConfig,
         outdir: firefoxDir,
+        entryNames: '[name]',
+        outExtension: { '.js': '.js' },
     });
+    fs.renameSync(path.join(firefoxDir, 'popup-entry.js'), path.join(firefoxDir, 'popup.js'));
+    // Generated popup.css is handled by sass above
+    if (fs.existsSync(path.join(firefoxDir, 'popup-entry.css'))) {
+        fs.rmSync(path.join(firefoxDir, 'popup-entry.css'));
+    }
 
     console.log('Copying assets...');
     const assets = [
         'manifest.json',
-        'popup.html',
-        'popup.css',
-        'conflict.html',
-        'conflict.css'
+        'popup.html'
     ];
 
     function copyAssets(targetDir, isFirefox = false) {

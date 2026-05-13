@@ -1,0 +1,124 @@
+
+.button-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.button-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.btn {
+  border: none;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+
+  &.full-width { width: 100%; }
+
+  &.primary {
+    background: var(--primary);
+    color: white;
+
+    &:hover { background: var(--primary-dark); }
+  }
+
+  &.secondary {
+    background: var(--secondary);
+    color: white;
+
+    &:hover { background: var(--secondary-dark); }
+  }
+
+  &.outline {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+
+    &:hover {
+      background: var(--surface-light);
+      border-color: var(--text-dim);
+    }
+  }
+
+  &.disabled {
+    background: #333 !important;
+    color: #666 !important;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+  &-settings-icon {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    color: var(--text-dim);
+    transition: 0.2s;
+    padding: 0;
+    border-radius: 0;
+
+    &:hover {
+      color: white;
+      transform: translateY(-50%) rotate(30deg);
+      background: none;
+    }
+  }
+
+  &-link {
+    background: none;
+    border: none;
+    color: var(--secondary);
+    cursor: pointer;
+    font-size: 0.85rem;
+    padding: 0;
+
+    &.gray {
+      color: #888;
+    }
+    &:hover {
+      text-decoration: underline;
+      background: none;
+    }
+  }
+
+  &-back-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--text-dim);
+    transition: all 0.2s ease;
+    padding: 8px;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    margin-right: 8px;
+
+    svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    &:hover {
+      color: white;
+      background: var(--surface-light);
+      transform: translateX(-2px);
+    }
+  }
+}
