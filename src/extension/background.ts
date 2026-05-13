@@ -1,8 +1,8 @@
 import type { SyncMessage, SyncResponse } from "@/lib/types";
-import { GistSchema, GistArraySchema } from "@/lib/schema";
-import type { SaveData } from "@/lib/schema";
-import { GITHUB_API_BASE, GIST_DESCRIPTION, GIST_FILE_NAME, GAME_URL_MATCH, ALARM_NAME, SYNC_INTERVAL_MINUTES } from "@/lib/constants";
-import { getGithubToken, getGistId, setGistId, setLastSync, getAutoSyncData, setAutoSyncData, removeAutoSyncData } from "@/lib/storage";
+import { GistSchema, GistArraySchema, SaveDataSchema } from "@/lib/schema";
+import type { SaveData, Gist } from "@/lib/schema";
+import { GITHUB_API_BASE, GIST_DESCRIPTION, GIST_FILE_NAME } from "@/lib/constants";
+import { getGithubToken, getGistId, setGistId } from "@/lib/storage";
 
 // GitHub Gist API Helpers
 async function githubRequest(path: string, options: RequestInit = {}) {
@@ -26,8 +26,9 @@ async function githubRequest(path: string, options: RequestInit = {}) {
   return response.json();
 }
 
-async function getGist(gistId: string) {
-  return githubRequest(`/gists/${gistId}`);
+async function getGist(gistId: string): Promise<Gist> {
+  const data = await githubRequest(`/gists/${gistId}`);
+  return GistSchema.parse(data);
 }
 
 async function updateGist(gistId: string, data: SaveData) {
@@ -75,124 +76,46 @@ async function getOrFindGistId() {
   return gistId;
 }
 
-// Listen for messages from background script
-chrome.runtime.onMessage.addListener((message: SyncMessage, _sender: chrome.runtime.MessageSender, sendResponse: (response?: SyncResponse) => void) => {
-  if (message.type === "UPLOAD_TO_GIST") {
-    (async () => {
-      try {
-        const gistId = await getOrFindGistId();
-        if (gistId) {
-          await updateGist(gistId, message.data);
-        } else {
-          const raw = await createGist(message.data);
-          const gist = GistSchema.parse(raw);
-          await setGistId(gist.id);
-        }
-        sendResponse({ success: true });
-      } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : String(error);
-        sendResponse({ success: false, error: message });
-      }
-    })();
-    return true;
-  } else if (message.type === "DOWNLOAD_FROM_GIST") {
-    (async () => {
-      try {
-        const gistId = await getOrFindGistId();
-        if (!gistId) throw new Error("Không tìm thấy bản lưu trên Cloud. Hãy Upload trước.");
-
-        const raw = await getGist(gistId);
-        const gist = GistSchema.parse(raw);
-        const file = gist.files[GIST_FILE_NAME];
-        if (!file) throw new Error("Không tìm thấy file lưu trong Gist.");
-        const remoteData = JSON.parse(file.content) as SaveData;
-        sendResponse({ success: true, data: remoteData });
-      } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : String(error);
-        sendResponse({ success: false, error: message });
-      }
-    })();
-    return true;
-  } else if (message.type === "CACHE_FOR_AUTOSYNC") {
-    (async () => {
-      const tabId = _sender.tab?.id;
-      if (tabId) await setAutoSyncData(tabId, message.data);
-      sendResponse({ success: true });
-    })();
-    return true;
-  }
-  return false;
-});
-
-// Auto-sync: upload cached data when a game tab is closed
-chrome.tabs.onRemoved.addListener((tabId) => {
-  (async () => {
-    const data = await getAutoSyncData(tabId);
-    if (!data) return;
-
-    await removeAutoSyncData(tabId);
-
-    const githubToken = await getGithubToken();
-    if (!githubToken) return;
-
-    try {
-      const gistId = await getOrFindGistId();
-      if (gistId) {
-        await updateGist(gistId, data);
-      } else {
-        const raw = await createGist(data);
-        const gist = GistSchema.parse(raw);
-        await setGistId(gist.id);
-      }
-      await setLastSync();
-    } catch {
-      // Silent fail — auto-sync is best-effort
+async function uploadToGist(data: SaveData): Promise<SyncResponse> {
+  try {
+    const gistId = await getOrFindGistId();
+    if (gistId) {
+      await updateGist(gistId, data);
+    } else {
+      const raw = await createGist(data);
+      const gist = GistSchema.parse(raw);
+      await setGistId(gist.id);
     }
-  })();
-});
-
-
-async function periodicSync() {
-  const githubToken = await getGithubToken();
-  if (!githubToken) return;
-
-  const tabs = await chrome.tabs.query({ url: GAME_URL_MATCH });
-  if (tabs.length === 0) return;
-
-  for (const tab of tabs) {
-    if (!tab.id) continue;
-    try {
-      const tabId = tab.id;
-      const response = await new Promise<{ data: SaveData }>((resolve, reject) => {
-        chrome.tabs.sendMessage(tabId, { type: "GET_LOCAL_DATA" }, (res) => {
-          if (chrome.runtime.lastError || !res?.data) reject(new Error("no data"));
-          else resolve(res);
-        });
-      });
-
-      const gistId = await getOrFindGistId();
-      if (gistId) {
-        await updateGist(gistId, response.data);
-      } else {
-        const raw = await createGist(response.data);
-        const gist = GistSchema.parse(raw);
-        await setGistId(gist.id);
-      }
-      await setLastSync();
-    } catch {
-      // Silent fail — periodic sync is best-effort
-    }
+    return { success: true };
+  } catch (error: unknown) {
+    return { success: false, error: error instanceof Error ? error.message : String(error) };
   }
 }
 
-chrome.alarms.onAlarm.addListener((alarm) => {
-  if (alarm.name === ALARM_NAME) periodicSync();
-});
+async function downloadFromGist(): Promise<SyncResponse> {
+  try {
+    const gistId = await getOrFindGistId();
+    if (!gistId) throw new Error("Không tìm thấy bản lưu trên Cloud. Hãy Upload trước.");
 
-// Register alarm on install and startup (survives browser restarts)
-chrome.runtime.onInstalled.addListener(() => {
-  chrome.alarms.create(ALARM_NAME, { periodInMinutes: SYNC_INTERVAL_MINUTES });
-});
-chrome.runtime.onStartup.addListener(() => {
-  chrome.alarms.create(ALARM_NAME, { periodInMinutes: SYNC_INTERVAL_MINUTES });
+    const gist = await getGist(gistId);
+    const file = gist.files[GIST_FILE_NAME];
+    if (!file) throw new Error("Không tìm thấy file lưu trong Gist.");
+    // content may be absent for large/truncated files — fall back to raw_url
+    // const content = file.content ?? await fetch(file.raw_url).then((r) => r.text());
+    const data = SaveDataSchema.parse(JSON.parse(file.content));
+    return { success: true, data };
+  } catch (error: unknown) {
+    return { success: false, error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+chrome.runtime.onMessage.addListener((message: SyncMessage, _sender: chrome.runtime.MessageSender, sendResponse: (response?: SyncResponse) => void) => {
+  if (message.type === "UPLOAD_TO_GIST") {
+    uploadToGist(message.data).then(sendResponse);
+    return true;
+  } else if (message.type === "DOWNLOAD_FROM_GIST") {
+    downloadFromGist().then(sendResponse);
+    return true;
+  }
+  return false;
 });

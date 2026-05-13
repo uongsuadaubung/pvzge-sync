@@ -66,6 +66,13 @@
   }
 
   async function handleDownload() {
+    // Fetch local data first — appStore.localData is null until a conflict is resolved
+    const local = await getLocalData().catch((e: unknown) => {
+      alert(e instanceof Error ? e.message : String(e));
+      return null;
+    });
+    if (!local) return;
+
     chrome.runtime.sendMessage(
       { type: "DOWNLOAD_FROM_GIST" },
       async (r: SyncResponse) => {
@@ -75,18 +82,19 @@
         }
         let remote = r.data as SaveData;
         if (!SaveDataSchema.safeParse(remote).success) {
-          remote = mergeValidPart(remote, appStore.localData!);
+          remote = mergeValidPart(remote, local);
           if (!SaveDataSchema.safeParse(remote).success) {
             alert("Cannot fix remote data. Please update the extension.");
             return;
           }
           alert("Remote data partially incompatible. Merged with local.");
         }
-        if (findConflicts(appStore.localData!, remote).length === 0) {
-          await appStore.markSynced();
+        if (findConflicts(local, remote).length === 0) {
+          // No differences — apply remote and mark synced
+          await applyRemoteData(remote);
           return;
         }
-        appStore.setConflictData(appStore.localData!, remote);
+        appStore.setConflictData(local, remote);
       },
     );
   }

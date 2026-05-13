@@ -41,12 +41,3 @@ chrome.runtime.onMessage.addListener((message: SyncMessage, _sender, sendRespons
     window.location.reload();
   }
 });
-
-// Auto-sync: when tab is hidden/closed, cache data in background for upload
-document.addEventListener("visibilitychange", () => {
-  if (!document.hidden) return;
-  const data = getRawData();
-  if (data) {
-    chrome.runtime.sendMessage({ type: "CACHE_FOR_AUTOSYNC", data });
-  }
-});
