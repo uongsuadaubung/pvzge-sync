@@ -4,13 +4,11 @@ export interface Conflict {
   path: string;
   local: unknown;
   remote: unknown;
-  choice: "local" | "remote";
 }
 
 export type SyncMessage =
   | { type: "UPLOAD_TO_GIST"; data: SaveData }
   | { type: "APPLY_REMOTE_DATA"; data: SaveData }
-  | { type: "CACHE_FOR_AUTOSYNC"; data: SaveData }
   | { type: "DOWNLOAD_FROM_GIST" }
   | { type: "GET_LOCAL_DATA" }
   | { type: "VALIDATE_LOCAL_DATA" };

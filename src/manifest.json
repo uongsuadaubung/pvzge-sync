@@ -3,7 +3,7 @@
   "name": "PVZGE Sync",
   "version": "0.2.0",
   "description": "Sync PVZGE game save data across browsers via Gist or JSON",
-  "permissions": ["storage", "tabs", "alarms"],
+  "permissions": ["storage", "tabs"],
   "host_permissions": ["https://play.pvzge.com/*"],
   "action": {
     "default_popup": "popup.html",

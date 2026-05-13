@@ -25,14 +25,14 @@ function diffObjects(local: Record<string, unknown>, remote: Record<string, unkn
     if (JSON.stringify(lVal) === JSON.stringify(rVal)) continue;
     if (typeof lVal === "object" && lVal !== null && typeof rVal === "object" && rVal !== null) {
       if ((Array.isArray(lVal) || Array.isArray(rVal)) && path !== "") {
-        results.push({ path: currentPath, local: lVal, remote: rVal, choice: "remote" });
+        results.push({ path: currentPath, local: lVal, remote: rVal });
       } else if (isPvzDate(lVal) && isPvzDate(rVal)) {
-        results.push({ path: currentPath, local: lVal, remote: rVal, choice: "remote" });
+        results.push({ path: currentPath, local: lVal, remote: rVal });
       } else {
         results = results.concat(diffObjects(lVal as Record<string, unknown>, rVal as Record<string, unknown>, currentPath));
       }
     } else {
-      results.push({ path: currentPath, local: lVal, remote: rVal, choice: "remote" });
+      results.push({ path: currentPath, local: lVal, remote: rVal });
     }
   }
   return results;

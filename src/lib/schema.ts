@@ -155,17 +155,30 @@ const SaveDataSchema = z.object({
   PvZ2_Settings: SettingsSchema,
 }).strict();
 
+// Used when fetching a specific gist — content may be absent if file is truncated
 const GistFileSchema = z.object({
   content: z.string(),
+  raw_url: z.string(),
+});
+
+// Used when listing gists — GitHub never returns file content in list responses
+const GistListFileSchema = z.object({
+  raw_url: z.string(),
 });
 
 const GistSchema = z.object({
   id: z.string(),
-  description: z.string(),
+  description: z.string().nullable(),
   files: z.record(z.string(), GistFileSchema),
 });
 
-const GistArraySchema = z.array(GistSchema);
+const GistListItemSchema = z.object({
+  id: z.string(),
+  description: z.string().nullable(),
+  files: z.record(z.string(), GistListFileSchema),
+});
+
+const GistArraySchema = z.array(GistListItemSchema);
 
 function validateSaveData(data: unknown) {
   return SaveDataSchema.safeParse(data);
