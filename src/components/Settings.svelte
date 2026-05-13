@@ -49,6 +49,20 @@
         bind:value={tokenInput}
         placeholder="ghp_xxxxxxxxxxxx"
       />
+      <div class="help-box">
+        <p>
+          {t("help_no_token")}
+          <a
+            href="https://github.com/settings/tokens/new?description=PVZGE%20Sync&scopes=gist"
+            target="_blank"
+            rel="noopener noreferrer"
+          >{t("help_click_here")}</a>
+        </p>
+        <ul>
+          <li>{@html t("help_step1")}</li>
+          <li>{t("help_step2")}</li>
+        </ul>
+      </div>
     </div>
 
     <div style="margin-top: 24px;">
