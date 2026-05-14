@@ -13,50 +13,78 @@
 
 .btn {
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 12px;
-  font-size: 0.85rem;
+  font-size: 0.88rem;
   font-weight: 600;
+  font-family: inherit;
   cursor: pointer;
-  transition: 0.2s;
+  transition: all 0.18s ease;
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
+  letter-spacing: 0.3px;
 
   &.full-width { width: 100%; }
 
   &.primary {
-    background: var(--primary);
-    color: white;
+    background: linear-gradient(160deg, var(--primary), var(--primary-dark));
+    color: #0a1f05;
+    font-weight: 700;
+    box-shadow: 0 3px 10px rgba(107, 201, 48, 0.35);
 
-    &:hover { background: var(--primary-dark); }
+    &:hover {
+      background: linear-gradient(160deg, #7ddc38, #5ab020);
+      box-shadow: 0 5px 16px rgba(107, 201, 48, 0.5);
+      transform: translateY(-1px);
+    }
+
+    &:active { transform: translateY(0); }
+
+    &:disabled {
+      background: var(--surface-light);
+      color: var(--text-dim);
+      box-shadow: none;
+      cursor: not-allowed;
+      transform: none;
+    }
   }
 
   &.secondary {
-    background: var(--secondary);
-    color: white;
+    background: linear-gradient(160deg, var(--secondary), var(--secondary-dark));
+    color: #1a1200;
+    font-weight: 700;
+    box-shadow: 0 3px 10px rgba(249, 215, 28, 0.3);
 
-    &:hover { background: var(--secondary-dark); }
+    &:hover {
+      background: linear-gradient(160deg, #ffe033, #dbb400);
+      box-shadow: 0 5px 16px rgba(249, 215, 28, 0.45);
+      transform: translateY(-1px);
+    }
   }
 
   &.outline {
     background: transparent;
     border: 1px solid var(--border);
-    color: var(--text);
+    color: var(--text-dim);
 
     &:hover {
       background: var(--surface-light);
-      border-color: var(--text-dim);
+      border-color: var(--primary-dark);
+      color: var(--text);
     }
   }
 
   &.disabled {
-    background: #333 !important;
-    color: #666 !important;
+    background: var(--surface-light) !important;
+    color: var(--text-dim) !important;
     cursor: not-allowed;
     pointer-events: none;
+    box-shadow: none !important;
+    transform: none !important;
   }
+
   &-settings-icon {
     position: absolute;
     right: 0;
@@ -67,12 +95,12 @@
     font-size: 1.2rem;
     cursor: pointer;
     color: var(--text-dim);
-    transition: 0.2s;
+    transition: all 0.2s;
     padding: 0;
     border-radius: 0;
 
     &:hover {
-      color: white;
+      color: var(--primary);
       transform: translateY(-50%) rotate(30deg);
       background: none;
     }
@@ -86,9 +114,8 @@
     font-size: 0.85rem;
     padding: 0;
 
-    &.gray {
-      color: #888;
-    }
+    &.gray { color: var(--text-dim); }
+
     &:hover {
       text-decoration: underline;
       background: none;
@@ -116,7 +143,7 @@
     }
 
     &:hover {
-      color: white;
+      color: var(--primary);
       background: var(--surface-light);
       transform: translateX(-2px);
     }

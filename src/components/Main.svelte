@@ -10,6 +10,7 @@
 
   let fileInput = $state<HTMLInputElement>(null!);
   let downloadAnchor = $state<HTMLAnchorElement>(null!);
+  let loading = $state(false);
 
   // Derived từ store — tự cập nhật khi token thay đổi
   let statusMsg = $derived(
@@ -25,64 +26,75 @@
 
 
   async function handleSync() {
+    loading = true;
     await smartSync(true).catch((e: unknown) =>
       alert("Error: " + (e instanceof Error ? e.message : String(e))),
-    );
+    ).finally(() => { loading = false; });
   }
 
   async function handleExport() {
-    const data = await getLocalData().catch((e: unknown) => {
-      alert(e instanceof Error ? e.message : String(e));
-      return null;
-    });
-    if (!data) return;
-    const url = URL.createObjectURL(
-      new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }),
-    );
-    downloadAnchor.href = url;
-    downloadAnchor.download =
-      "pvzge_save_" + new Date().toISOString().slice(0, 10) + ".json";
-    downloadAnchor.click();
-    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    loading = true;
+    try {
+      const data = await getLocalData().catch((e: unknown) => {
+        alert(e instanceof Error ? e.message : String(e));
+        return null;
+      });
+      if (!data) return;
+      const url = URL.createObjectURL(
+        new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }),
+      );
+      downloadAnchor.href = url;
+      downloadAnchor.download =
+        "pvzge_save_" + new Date().toISOString().slice(0, 10) + ".json";
+      downloadAnchor.click();
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } finally {
+      loading = false;
+    }
   }
 
   async function handleFile(e: Event) {
     const file = (e.target as HTMLInputElement).files?.[0];
     if (!file) return;
-    const text = await file.text().catch(() => null);
-    if (!text) {
-      alert(t("msg_invalid_json"));
-      return;
-    }
-    let raw: unknown;
+    loading = true;
     try {
-      raw = JSON.parse(text);
-    } catch {
-      alert(t("msg_invalid_json"));
-      return;
-    }
-
-    const parseResult = SaveDataSchema.safeParse(raw);
-    let imported: SaveData;
-    if (parseResult.success) {
-      imported = parseResult.data;
-    } else {
-      let local: SaveData;
+      const text = await file.text().catch(() => null);
+      if (!text) {
+        alert(t("msg_invalid_json"));
+        return;
+      }
+      let raw: unknown;
       try {
-        local = await getLocalData();
-      } catch (e: unknown) {
-        alert(e instanceof Error ? e.message : String(e));
+        raw = JSON.parse(text);
+      } catch {
+        alert(t("msg_invalid_json"));
         return;
       }
-      const merged = mergeValidPart(raw, local);
-      if (!SaveDataSchema.safeParse(merged).success) {
-        alert("Cannot fix file. Update extension.");
-        return;
+
+      const parseResult = SaveDataSchema.safeParse(raw);
+      let imported: SaveData;
+      if (parseResult.success) {
+        imported = parseResult.data;
+      } else {
+        let local: SaveData;
+        try {
+          local = await getLocalData();
+        } catch (e: unknown) {
+          alert(e instanceof Error ? e.message : String(e));
+          return;
+        }
+        const merged = mergeValidPart(raw, local);
+        if (!SaveDataSchema.safeParse(merged).success) {
+          alert("Cannot fix file. Update extension.");
+          return;
+        }
+        alert("File partially incompatible. Merged with local.");
+        imported = merged;
       }
-      alert("File partially incompatible. Merged with local.");
-      imported = merged;
+      await applyRemoteToGame(imported);
+    } finally {
+      loading = false;
     }
-    await applyRemoteToGame(imported);
   }
 </script>
 
@@ -111,6 +123,18 @@
       <span id="status-text" style="color:{statusColor}">{statusMsg}</span>
     </div>
 
+    {#if appStore.githubUser}
+      <div class="user-card">
+        <img class="user-avatar" src={appStore.githubUser.avatar_url} alt={appStore.githubUser.login} />
+        <div class="user-info">
+          <div class="user-name">{appStore.githubUser.name ?? appStore.githubUser.login}</div>
+          {#if appStore.githubUser.bio}
+            <div class="user-bio">{appStore.githubUser.bio}</div>
+          {/if}
+        </div>
+      </div>
+    {/if}
+
     {#if appStore.githubConnected}
       <section class="action-section cloud">
         <div class="section-header">
@@ -118,7 +142,7 @@
           <h3>{t("cloud_sync")}</h3>
         </div>
         <div class="button-group">
-          <button class="btn primary full-width" onclick={handleSync}
+          <button class="btn primary full-width" onclick={handleSync} disabled={loading}
             >{t("btn_sync")}</button
           >
         </div>
@@ -131,10 +155,10 @@
         <h3>{t("offline_backup")}</h3>
       </div>
       <div class="button-grid">
-        <button class="btn outline" onclick={handleExport}
+        <button class="btn outline" onclick={handleExport} disabled={loading}
           >{t("btn_export")}</button
         >
-        <button class="btn outline" onclick={() => fileInput.click()}
+        <button class="btn outline" onclick={() => fileInput.click()} disabled={loading}
           >{t("btn_import")}</button
         >
       </div>
@@ -156,3 +180,4 @@
     ></a>
   </main>
 </div>
+

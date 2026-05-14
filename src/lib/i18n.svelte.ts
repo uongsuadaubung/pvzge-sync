@@ -31,6 +31,8 @@ interface Lang {
   not_game_page_body: string;
   schema_error_title: string;
   btn_sync: string;
+  token_validating: string;
+  token_invalid: string;
 }
 
 const translations: Record<"en" | "vi", Lang> = {
@@ -67,6 +69,8 @@ const translations: Record<"en" | "vi", Lang> = {
     not_game_page_body: "Open <b>play.pvzge.com</b> to use sync features.",
     schema_error_title: "Update Required",
     btn_sync: "Sync",
+    token_validating: "Validating token...",
+    token_invalid: "Invalid token. Please check and try again.",
   },
   vi: {
     app_name: "PVZGE Sync",
@@ -101,6 +105,8 @@ const translations: Record<"en" | "vi", Lang> = {
     not_game_page_body: "Mở <b>play.pvzge.com</b> để dùng tính năng đồng bộ.",
     schema_error_title: "Cần cập nhật Extension",
     btn_sync: "Đồng bộ",
+    token_validating: "Đang kiểm tra token...",
+    token_invalid: "Token không hợp lệ. Vui lòng kiểm tra lại.",
   },
 };
 export const SUPPORTED_LANGUAGES = ["en", "vi"] as const;

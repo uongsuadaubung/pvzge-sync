@@ -2,9 +2,12 @@
   import { onMount } from "svelte";
   import { t, type SupportLanguage } from "@/lib/i18n.svelte";
   import { appStore } from "@/lib/store.svelte";
+  import type { SyncResponse } from "@/lib/types";
 
   let tokenInput = $state("");
   let langInput = $state<SupportLanguage>("en");
+  let saving = $state(false);
+  let tokenError = $state("");
 
   onMount(() => {
     tokenInput = appStore.githubToken;
@@ -12,8 +15,24 @@
   });
 
   async function save() {
-    await appStore.updateSettings(tokenInput.trim(), langInput);
-    appStore.navigate('main');
+    const token = tokenInput.trim();
+    tokenError = "";
+
+    if (token) {
+      saving = true;
+      const r: SyncResponse = await new Promise((resolve) =>
+        chrome.runtime.sendMessage({ type: "VALIDATE_TOKEN", token }, resolve),
+      );
+      saving = false;
+      if (!r.success) {
+        tokenError = r.error ?? t("token_invalid");
+        return;
+      }
+      appStore.githubUser = r.githubUser ?? null;
+    }
+
+    await appStore.updateSettings(token, langInput);
+    appStore.navigate("main");
   }
 </script>
 
@@ -48,7 +67,11 @@
         type="password"
         bind:value={tokenInput}
         placeholder="ghp_xxxxxxxxxxxx"
+        oninput={() => (tokenError = "")}
       />
+      {#if tokenError}
+        <p class="token-error">{tokenError}</p>
+      {/if}
       <div class="help-box">
         <p>
           {t("help_no_token")}
@@ -66,9 +89,10 @@
     </div>
 
     <div style="margin-top: 24px;">
-      <button class="btn primary full-width" onclick={save}
-        >{t("btn_save")}</button
+      <button class="btn primary full-width" onclick={save} disabled={saving}
+        >{saving ? t("token_validating") : t("btn_save")}</button
       >
     </div>
   </main>
 </div>
+
