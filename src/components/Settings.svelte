@@ -1,10 +1,10 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { t } from "@/lib/i18n.svelte";
+  import { t, type SupportLanguage } from "@/lib/i18n.svelte";
   import { appStore } from "@/lib/store.svelte";
 
   let tokenInput = $state("");
-  let langInput = $state("en");
+  let langInput = $state<SupportLanguage>("en");
 
   onMount(() => {
     tokenInput = appStore.githubToken;

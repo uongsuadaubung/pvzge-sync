@@ -1,7 +1,12 @@
 <script lang="ts">
   import { t } from "@/lib/i18n.svelte";
 
-  let { warnMsg = "", errorMsg = "" } = $props();
+  interface NoticeProps {
+    warnMsg?: string;
+    errorMsg?: string;
+  }
+
+  let { warnMsg = "", errorMsg = "" }: NoticeProps = $props();
 </script>
 
 <div class="container">

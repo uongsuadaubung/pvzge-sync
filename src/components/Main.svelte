@@ -1,10 +1,9 @@
 <script lang="ts">
   import { t } from "@/lib/i18n.svelte";
-  import { findConflicts, hasConflicts } from "@/lib/utils";
+
   import { mergeValidPart } from "@/lib/merge";
+  import { smartSync, getLocalData, applyRemoteToGame } from "@/lib/sync";
   import { SaveDataSchema } from "@/lib/schema";
-  import { GAME_HOST } from "@/lib/constants";
-  import type { SyncResponse } from "@/lib/types";
   import type { SaveData } from "@/lib/schema";
 
   import { appStore } from "@/lib/store.svelte";
@@ -23,79 +22,11 @@
       : t("no_sync"),
   );
 
-  async function getGameTab(): Promise<chrome.tabs.Tab | null> {
-    const [tab] = await chrome.tabs.query({
-      active: true,
-      currentWindow: true,
-    });
-    return tab?.url?.includes(GAME_HOST) ? tab : null;
-  }
 
-  async function getLocalData(): Promise<SaveData> {
-    const tab = await getGameTab();
-    if (!tab) throw new Error(t("msg_game_not_open"));
-    return new Promise((resolve, reject) => {
-      chrome.tabs.sendMessage(tab.id!, { type: "GET_LOCAL_DATA" }, (r) => {
-        chrome.runtime.lastError
-          ? reject(new Error("Connection error."))
-          : resolve(r.data);
-      });
-    });
-  }
 
-  async function applyRemoteData(data: SaveData) {
-    const tab = await getGameTab();
-    if (tab?.id)
-      chrome.tabs.sendMessage(tab.id, { type: "APPLY_REMOTE_DATA", data });
-    await appStore.markSynced();
-  }
-
-  async function handleUpload() {
-    const data = await getLocalData().catch((e: unknown) => {
-      alert(e instanceof Error ? e.message : String(e));
-      return null;
-    });
-    if (!data) return;
-    chrome.runtime.sendMessage(
-      { type: "UPLOAD_TO_GIST", data },
-      async (r: SyncResponse) => {
-        if (r.success) await appStore.markSynced();
-        else alert("Error: " + r.error);
-      },
-    );
-  }
-
-  async function handleDownload() {
-    // Fetch local data first — appStore.localData is null until a conflict is resolved
-    const local = await getLocalData().catch((e: unknown) => {
-      alert(e instanceof Error ? e.message : String(e));
-      return null;
-    });
-    if (!local) return;
-
-    chrome.runtime.sendMessage(
-      { type: "DOWNLOAD_FROM_GIST" },
-      async (r: SyncResponse) => {
-        if (!r.success) {
-          alert("Error: " + r.error);
-          return;
-        }
-        let remote = r.data as SaveData;
-        if (!SaveDataSchema.safeParse(remote).success) {
-          remote = mergeValidPart(remote, local);
-          if (!SaveDataSchema.safeParse(remote).success) {
-            alert("Cannot fix remote data. Please update the extension.");
-            return;
-          }
-          alert("Remote data partially incompatible. Merged with local.");
-        }
-        if (findConflicts(local, remote).length === 0) {
-          // No differences — apply remote and mark synced
-          await applyRemoteData(remote);
-          return;
-        }
-        appStore.setConflictData(local, remote);
-      },
+  async function handleSync() {
+    await smartSync(true).catch((e: unknown) =>
+      alert("Error: " + (e instanceof Error ? e.message : String(e))),
     );
   }
 
@@ -123,25 +54,35 @@
       alert(t("msg_invalid_json"));
       return;
     }
+    let raw: unknown;
     try {
-      let imported = JSON.parse(text) as SaveData;
-      if (!SaveDataSchema.safeParse(imported).success) {
-        const merged = mergeValidPart(imported, appStore.localData!);
-        if (!SaveDataSchema.safeParse(merged).success) {
-          alert("Cannot fix file. Update extension.");
-          return;
-        }
-        alert("File partially incompatible. Merged with local.");
-        imported = merged;
-      }
-      if (!hasConflicts(appStore.localData!, imported)) {
-        await applyRemoteData(imported);
-      } else {
-        appStore.setConflictData(appStore.localData!, imported);
-      }
+      raw = JSON.parse(text);
     } catch {
       alert(t("msg_invalid_json"));
+      return;
     }
+
+    const parseResult = SaveDataSchema.safeParse(raw);
+    let imported: SaveData;
+    if (parseResult.success) {
+      imported = parseResult.data;
+    } else {
+      let local: SaveData;
+      try {
+        local = await getLocalData();
+      } catch (e: unknown) {
+        alert(e instanceof Error ? e.message : String(e));
+        return;
+      }
+      const merged = mergeValidPart(raw, local);
+      if (!SaveDataSchema.safeParse(merged).success) {
+        alert("Cannot fix file. Update extension.");
+        return;
+      }
+      alert("File partially incompatible. Merged with local.");
+      imported = merged;
+    }
+    await applyRemoteToGame(imported);
   }
 </script>
 
@@ -162,60 +103,56 @@
   </header>
 
   <main>
-      <div class="status-indicator">
-        <span
-          class="dot {appStore.githubConnected ? 'active' : ''}"
-          style="background:{statusColor}"
-        ></span>
-        <span id="status-text" style="color:{statusColor}">{statusMsg}</span>
-      </div>
+    <div class="status-indicator">
+      <span
+        class="dot {appStore.githubConnected ? 'active' : ''}"
+        style="background:{statusColor}"
+      ></span>
+      <span id="status-text" style="color:{statusColor}">{statusMsg}</span>
+    </div>
 
-      {#if appStore.githubConnected}
-        <section class="action-section cloud">
-          <div class="section-header">
-            <span class="section-icon">☁️</span>
-            <h3>{t("cloud_sync")}</h3>
-          </div>
-          <div class="button-group">
-            <button class="btn primary full-width" onclick={handleUpload}
-              >{t("btn_upload")}</button
-            >
-            <button class="btn secondary full-width" onclick={handleDownload}
-              >{t("btn_download")}</button
-            >
-          </div>
-        </section>
-      {/if}
-
-      <section class="action-section local">
+    {#if appStore.githubConnected}
+      <section class="action-section cloud">
         <div class="section-header">
-          <span class="section-icon">💾</span>
-          <h3>{t("offline_backup")}</h3>
+          <span class="section-icon">☁️</span>
+          <h3>{t("cloud_sync")}</h3>
         </div>
-        <div class="button-grid">
-          <button class="btn outline" onclick={handleExport}
-            >{t("btn_export")}</button
-          >
-          <button class="btn outline" onclick={() => fileInput.click()}
-            >{t("btn_import")}</button
+        <div class="button-group">
+          <button class="btn primary full-width" onclick={handleSync}
+            >{t("btn_sync")}</button
           >
         </div>
       </section>
+    {/if}
 
-      <input
-        type="file"
-        bind:this={fileInput}
-        style="display:none"
-        accept=".json"
-        onchange={handleFile}
-      />
-      <a
-        bind:this={downloadAnchor}
-        href={undefined}
-        aria-hidden="true"
-        style="display:none"
-        tabindex="-1"
-      ></a>
-    </main>
-  
+    <section class="action-section local">
+      <div class="section-header">
+        <span class="section-icon">💾</span>
+        <h3>{t("offline_backup")}</h3>
+      </div>
+      <div class="button-grid">
+        <button class="btn outline" onclick={handleExport}
+          >{t("btn_export")}</button
+        >
+        <button class="btn outline" onclick={() => fileInput.click()}
+          >{t("btn_import")}</button
+        >
+      </div>
+    </section>
+
+    <input
+      type="file"
+      bind:this={fileInput}
+      style="display:none"
+      accept=".json"
+      onchange={handleFile}
+    />
+    <a
+      bind:this={downloadAnchor}
+      href={undefined}
+      aria-hidden="true"
+      style="display:none"
+      tabindex="-1"
+    ></a>
+  </main>
 </div>

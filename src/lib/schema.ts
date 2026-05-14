@@ -169,6 +169,7 @@ const GistListFileSchema = z.object({
 const GistSchema = z.object({
   id: z.string(),
   description: z.string().nullable(),
+  updated_at: z.string(),
   files: z.record(z.string(), GistFileSchema),
 });
 
