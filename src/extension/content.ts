@@ -3,37 +3,28 @@ import type { SaveData } from "@/lib/schema";
 import { validateSaveData } from "@/lib/schema";
 import { SAVE_KEYS } from "@/lib/constants";
 
-function getRawData(): SaveData | null {
-  const data: Record<string, unknown> = {};
+function getRawData(): { data: SaveData; errors: null } | { data: null; errors: string[] } {
+  const obj: Record<string, unknown> = {};
   for (const key of SAVE_KEYS) {
     const raw = localStorage.getItem(key);
-    if (!raw) return null;
+    if (!raw) return { data: null, errors: ["Local data not found"] };
     try {
-      data[key] = JSON.parse(raw);
+      obj[key] = JSON.parse(raw);
     } catch {
-      return null;
+      return { data: null, errors: ["Local data is corrupted (invalid JSON)"] };
     }
   }
-  return data as SaveData;
-}
-
-function validateLocalData(): { valid: boolean; errors: string[] } {
-  const raw = getRawData();
-  if (!raw) return { valid: false, errors: ["Local data not found"] };
-
-  const result = validateSaveData(raw);
+  const result = validateSaveData(obj);
   if (!result.success) {
-    return { valid: false, errors: [result.error.message] };
+    return { data: null, errors: result.error.issues.map((e) => e.message) };
   }
-  return { valid: true, errors: [] };
+  return { data: result.data, errors: null };
 }
 
 chrome.runtime.onMessage.addListener((message: SyncMessage, _sender, sendResponse) => {
   if (message.type === "GET_LOCAL_DATA") {
-    const raw = getRawData();
-    sendResponse({ data: raw });
-  } else if (message.type === "VALIDATE_LOCAL_DATA") {
-    sendResponse(validateLocalData());
+    const { data, errors } = getRawData();
+    sendResponse({ data, error: errors?.join("; ") });
   } else if (message.type === "APPLY_REMOTE_DATA") {
     for (const key of SAVE_KEYS) {
       localStorage.setItem(key, JSON.stringify(message.data[key]));

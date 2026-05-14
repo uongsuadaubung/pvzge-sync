@@ -1,4 +1,39 @@
-const translations: Record<string, Record<string, string>> = {
+interface Lang {
+  app_name: string;
+  last_sync: string;
+  no_sync: string;
+  status_no_github: string;
+  status_connected: string;
+  cloud_sync: string;
+  btn_upload: string;
+  btn_download: string;
+  offline_backup: string;
+  btn_export: string;
+  btn_import: string;
+  settings_title: string;
+  help_no_token: string;
+  help_click_here: string;
+  help_step1: string;
+  help_step2: string;
+  btn_save: string;
+  lang_label: string;
+  detect_changes: string;
+  choose_version: string;
+  card_local: string;
+  card_remote: string;
+  not_selected: string;
+  selected: string;
+  btn_confirm_simple: string;
+  btn_cancel: string;
+  msg_invalid_json: string;
+  msg_game_not_open: string;
+  not_game_page_title: string;
+  not_game_page_body: string;
+  schema_error_title: string;
+  btn_sync: string;
+}
+
+const translations: Record<"en" | "vi", Lang> = {
   en: {
     app_name: "PVZGE Sync",
     last_sync: "Last sync: ",
@@ -31,6 +66,7 @@ const translations: Record<string, Record<string, string>> = {
     not_game_page_title: "Not on Game Page",
     not_game_page_body: "Open <b>play.pvzge.com</b> to use sync features.",
     schema_error_title: "Update Required",
+    btn_sync: "Sync",
   },
   vi: {
     app_name: "PVZGE Sync",
@@ -64,16 +100,21 @@ const translations: Record<string, Record<string, string>> = {
     not_game_page_title: "Không phải trang game",
     not_game_page_body: "Mở <b>play.pvzge.com</b> để dùng tính năng đồng bộ.",
     schema_error_title: "Cần cập nhật Extension",
+    btn_sync: "Đồng bộ",
   },
 };
+export const SUPPORTED_LANGUAGES = ["en", "vi"] as const;
+export type SupportLanguage = typeof SUPPORTED_LANGUAGES[number];
 
-let currentLang = $state("en");
+let currentLang = $state<SupportLanguage>("en");
 
-export function setLanguage(code: string) {
+export function setLanguage(code: SupportLanguage) {
   currentLang = code;
 }
 
-export function t(key: string): string {
+export type TranslationKey = keyof Lang;
+
+export function t(key: TranslationKey): string {
   return translations[currentLang]?.[key] ?? translations["en"]?.[key] ?? key;
 }
 

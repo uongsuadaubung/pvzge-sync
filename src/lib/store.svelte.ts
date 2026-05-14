@@ -1,21 +1,18 @@
 import { getGithubToken, getLanguage, getLastSync, setGithubSettings, setLastSync as storageSetLastSync } from "./storage";
 import { setLanguage } from "./i18n.svelte";
-import type { SaveData } from "./schema";
+import type { SupportLanguage } from "./i18n.svelte";
 
 // Định nghĩa Store theo chuẩn Svelte 5 Runes
 export const appStore = $state({
   // Dữ liệu từ Storage
   githubToken: "",
-  language: "en",
+  language: "en" as SupportLanguage,
   lastSync: 0,
 
   // Trạng thái Giao diện (UI State)
   isLoaded: false,
-  view: "main" as "main" | "settings" | "conflict",
+  view: "main" as "main" | "settings",
 
-  // Dữ liệu tạm thời (để truyền giữa các View)
-  localData: null as SaveData | null,
-  remoteData: null as SaveData | null,
 
   // Getter phái sinh (Derived data)
   get githubConnected() {
@@ -32,7 +29,7 @@ export const appStore = $state({
     this.isLoaded = true;
   },
 
-  async updateSettings(token: string, lang: string) {
+  async updateSettings(token: string, lang: SupportLanguage) {
     await setGithubSettings(token, lang);
     this.githubToken = token;
     this.language = lang;
@@ -44,13 +41,8 @@ export const appStore = $state({
     this.lastSync = Date.now();
   },
 
-  navigate(newView: "main" | "settings" | "conflict") {
+  navigate(newView: "main" | "settings") {
     this.view = newView;
   },
 
-  setConflictData(local: SaveData, remote: SaveData) {
-    this.localData = local;
-    this.remoteData = remote;
-    this.view = "conflict";
-  },
 });

@@ -5,7 +5,7 @@ import { GITHUB_API_BASE, GIST_DESCRIPTION, GIST_FILE_NAME } from "@/lib/constan
 import { getGithubToken, getGistId, setGistId } from "@/lib/storage";
 
 // GitHub Gist API Helpers
-async function githubRequest(path: string, options: RequestInit = {}) {
+async function githubRequest(path: string, options: RequestInit = {}): Promise<unknown> {
   const githubToken = await getGithubToken();
   if (!githubToken) throw new Error("Chưa cấu hình GitHub Token");
 
@@ -38,7 +38,7 @@ async function updateGist(gistId: string, data: SaveData) {
       description: GIST_DESCRIPTION,
       files: {
         [GIST_FILE_NAME]: {
-          content: JSON.stringify(data, null, 2),
+          content: JSON.stringify(data),
         },
       },
     }),
@@ -53,7 +53,7 @@ async function createGist(data: SaveData) {
       public: false,
       files: {
         [GIST_FILE_NAME]: {
-          content: JSON.stringify(data, null, 2),
+          content: JSON.stringify(data),
         },
       },
     }),
@@ -63,7 +63,7 @@ async function createGist(data: SaveData) {
 async function findGistId() {
   const raw = await githubRequest("/gists");
   const gists = GistArraySchema.parse(raw);
-  const target = gists.find((g) => g.description === GIST_DESCRIPTION);
+  const target = gists.find((g) => GIST_FILE_NAME in g.files);
   return target ? target.id : undefined;
 }
 
@@ -101,9 +101,11 @@ async function downloadFromGist(): Promise<SyncResponse> {
     const file = gist.files[GIST_FILE_NAME];
     if (!file) throw new Error("Không tìm thấy file lưu trong Gist.");
     // content may be absent for large/truncated files — fall back to raw_url
-    // const content = file.content ?? await fetch(file.raw_url).then((r) => r.text());
-    const data = SaveDataSchema.parse(JSON.parse(file.content));
-    return { success: true, data };
+    const content = file.content || await fetch(file.raw_url).then((r) => r.text());
+    const raw = JSON.parse(content);
+    const data = SaveDataSchema.parse(raw);
+    const gistUpdatedAt = new Date(gist.updated_at).getTime();
+    return { success: true, data, gistUpdatedAt };
   } catch (error: unknown) {
     return { success: false, error: error instanceof Error ? error.message : String(error) };
   }
