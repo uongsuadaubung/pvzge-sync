@@ -111,12 +111,52 @@ async function downloadFromGist(): Promise<SyncResponse> {
   }
 }
 
+async function fetchUserInfo(token: string): Promise<SyncResponse> {
+  try {
+    const response = await fetch(`${GITHUB_API_BASE}/user`, {
+      headers: {
+        "Authorization": `token ${token}`,
+        "Accept": "application/vnd.github.v3+json",
+      },
+    });
+    if (!response.ok) throw new Error(`Invalid token (HTTP ${response.status})`);
+    const raw = await response.json() as Record<string, unknown>;
+    return {
+      success: true,
+      githubUser: {
+        login: String(raw.login ?? ""),
+        name: raw.name != null ? String(raw.name) : null,
+        bio: raw.bio != null ? String(raw.bio) : null,
+        avatar_url: String(raw.avatar_url ?? ""),
+      },
+    };
+  } catch (error: unknown) {
+    return { success: false, error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+async function validateToken(token: string): Promise<SyncResponse> {
+  return fetchUserInfo(token);
+}
+
+async function getUserInfo(): Promise<SyncResponse> {
+  const token = await getGithubToken();
+  if (!token) return { success: false, error: "No token configured" };
+  return fetchUserInfo(token);
+}
+
 chrome.runtime.onMessage.addListener((message: SyncMessage, _sender: chrome.runtime.MessageSender, sendResponse: (response?: SyncResponse) => void) => {
   if (message.type === "UPLOAD_TO_GIST") {
     uploadToGist(message.data).then(sendResponse);
     return true;
   } else if (message.type === "DOWNLOAD_FROM_GIST") {
     downloadFromGist().then(sendResponse);
+    return true;
+  } else if (message.type === "VALIDATE_TOKEN") {
+    validateToken(message.token).then(sendResponse);
+    return true;
+  } else if (message.type === "GET_USER_INFO") {
+    getUserInfo().then(sendResponse);
     return true;
   }
   return false;

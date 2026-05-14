@@ -1,6 +1,7 @@
 import { getGithubToken, getLanguage, getLastSync, setGithubSettings, setLastSync as storageSetLastSync } from "./storage";
 import { setLanguage } from "./i18n.svelte";
 import type { SupportLanguage } from "./i18n.svelte";
+import type { GithubUser, SyncResponse } from "./types";
 
 // Định nghĩa Store theo chuẩn Svelte 5 Runes
 export const appStore = $state({
@@ -12,6 +13,7 @@ export const appStore = $state({
   // Trạng thái Giao diện (UI State)
   isLoaded: false,
   view: "main" as "main" | "settings",
+  githubUser: null as GithubUser | null,
 
 
   // Getter phái sinh (Derived data)
@@ -26,6 +28,14 @@ export const appStore = $state({
     this.lastSync = (await getLastSync()) ?? 0;
 
     setLanguage(this.language); // Update i18n
+
+    if (this.githubToken) {
+      const r: SyncResponse = await new Promise((resolve) =>
+        chrome.runtime.sendMessage({ type: "GET_USER_INFO" }, resolve),
+      );
+      if (r?.success && r.githubUser) this.githubUser = r.githubUser;
+    }
+
     this.isLoaded = true;
   },
 
@@ -46,3 +56,4 @@ export const appStore = $state({
   },
 
 });
+

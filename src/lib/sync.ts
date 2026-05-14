@@ -3,16 +3,25 @@ import type { SyncResponse } from "./types";
 import { appStore } from "./store.svelte";
 import { GAME_HOST, IGNORED_KEYS } from "./constants";
 
-function stripIgnoredKeys(obj: unknown): unknown {
-  if (Array.isArray(obj)) return obj.map(stripIgnoredKeys);
-  if (obj !== null && typeof obj === "object") {
-    return Object.fromEntries(
-      Object.entries(obj as Record<string, unknown>)
-        .filter(([k]) => !(IGNORED_KEYS as readonly string[]).includes(k))
-        .map(([k, v]) => [k, stripIgnoredKeys(v)]),
-    );
+function deepEqual(a: unknown, b: unknown): boolean {
+  if (a === b) return true;
+  if (a === null || b === null || typeof a !== typeof b) return false;
+
+  if (Array.isArray(a) && Array.isArray(b)) {
+    if (a.length !== b.length) return false;
+    return a.every((item, i) => deepEqual(item, b[i]));
   }
-  return obj;
+
+  if (typeof a === "object" && typeof b === "object") {
+    const aObj = a as Record<string, unknown>;
+    const bObj = b as Record<string, unknown>;
+    const aKeys = Object.keys(aObj).filter((k) => !(IGNORED_KEYS as readonly string[]).includes(k));
+    const bKeys = Object.keys(bObj).filter((k) => !(IGNORED_KEYS as readonly string[]).includes(k));
+    if (aKeys.length !== bKeys.length) return false;
+    return aKeys.every((k) => Object.prototype.hasOwnProperty.call(bObj, k) && deepEqual(aObj[k], bObj[k]));
+  }
+
+  return false;
 }
 
 function preserveLocalDate(remote: SaveData, local: SaveData): SaveData {
@@ -24,10 +33,6 @@ function preserveLocalDate(remote: SaveData, local: SaveData): SaveData {
       return { ...profile, date: localProfile.date, time: localProfile.time };
     }),
   };
-}
-
-function stringifyForCompare(data: SaveData): string {
-  return JSON.stringify(stripIgnoredKeys(data));
 }
 
 export async function applyRemoteToGame(data: SaveData): Promise<void> {
@@ -74,7 +79,7 @@ export async function smartSync(allowPush = false): Promise<void> {
   if (!allowPush || !local) return;
 
   // Nội dung giống nhau → không cần push
-  if (r?.success && r.data && stringifyForCompare(local) === stringifyForCompare(r.data)) return;
+  if (r?.success && r.data && deepEqual(local, r.data)) return;
 
   // Push local lên
   const uploadR: SyncResponse = await new Promise((resolve) =>
