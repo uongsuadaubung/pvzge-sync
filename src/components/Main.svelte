@@ -1,10 +1,8 @@
 <script lang="ts">
   import { t } from "@/lib/i18n.svelte";
 
-  import { mergeValidPart } from "@/lib/merge";
   import { smartSync, getLocalData, applyRemoteToGame } from "@/lib/sync";
   import { SaveDataSchema } from "@/lib/schema";
-  import type { SaveData } from "@/lib/schema";
 
   import { appStore } from "@/lib/store.svelte";
 
@@ -59,10 +57,7 @@
     loading = true;
     try {
       const text = await file.text().catch(() => null);
-      if (!text) {
-        alert(t("msg_invalid_json"));
-        return;
-      }
+      if (!text) { alert(t("msg_invalid_json")); return; }
       let raw: unknown;
       try {
         raw = JSON.parse(text);
@@ -70,28 +65,12 @@
         alert(t("msg_invalid_json"));
         return;
       }
-
       const parseResult = SaveDataSchema.safeParse(raw);
-      let imported: SaveData;
-      if (parseResult.success) {
-        imported = parseResult.data;
-      } else {
-        let local: SaveData;
-        try {
-          local = await getLocalData();
-        } catch (e: unknown) {
-          alert(e instanceof Error ? e.message : String(e));
-          return;
-        }
-        const merged = mergeValidPart(raw, local);
-        if (!SaveDataSchema.safeParse(merged).success) {
-          alert("Cannot fix file. Update extension.");
-          return;
-        }
-        alert("File partially incompatible. Merged with local.");
-        imported = merged;
+      if (!parseResult.success) {
+        alert(t("msg_invalid_json"));
+        return;
       }
-      await applyRemoteToGame(imported);
+      await applyRemoteToGame(parseResult.data);
     } finally {
       loading = false;
     }
