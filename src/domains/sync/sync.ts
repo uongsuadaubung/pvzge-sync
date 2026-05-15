@@ -3,6 +3,11 @@ import type { SyncResponse } from "@/shared/types";
 import { getLastSync, setLastSync } from "@/shared/storage";
 import { GAME_HOST, IGNORED_KEYS } from "@/shared/constants";
 
+import { uploadToGist, downloadFromGist } from "@/domains/github/api";
+
+/**
+ * So sánh sâu hai đối tượng dữ liệu, bỏ qua các trường không cần thiết (như date/time).
+ */
 function deepEqual(a: unknown, b: unknown): boolean {
   if (a === b) return true;
   if (a === undefined || b === undefined) return false;
@@ -25,6 +30,10 @@ function deepEqual(a: unknown, b: unknown): boolean {
   return false;
 }
 
+/**
+ * Giữ nguyên thông tin thời gian cục bộ (date/time) khi áp dụng dữ liệu từ Cloud.
+ * Điều này tránh gây xung đột logic thời gian trong game.
+ */
 function preserveLocalDate(remote: SaveData, local: SaveData): SaveData {
   return {
     ...remote,
@@ -36,12 +45,30 @@ function preserveLocalDate(remote: SaveData, local: SaveData): SaveData {
   };
 }
 
-export async function applyRemoteToGame(data: SaveData): Promise<void> {
+/**
+ * Tìm ID của tab đang chạy game PVZGE.
+ * Ưu tiên tab đang active, nếu không tìm tab đầu tiên khớp URL.
+ */
+export async function getTargetTab(tabId?: number): Promise<number> {
+  if (tabId) return tabId;
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (!tab?.url?.includes(GAME_HOST) || !tab.id) throw new Error("Game not open");
-  const tabId = tab.id;
+  if (tab?.url?.includes(GAME_HOST) && tab.id) return tab.id;
+
+  const tabs = await chrome.tabs.query({ url: `*://${GAME_HOST}/*` });
+  if (tabs[0]?.id) return tabs[0].id;
+
+  throw new Error("Game not open");
+}
+
+/**
+ * Áp dụng dữ liệu Save Data vào trang game (thông qua Content Script).
+ */
+export async function applyRemoteToGame(data: SaveData): Promise<void> {
+  const targetId = await getTargetTab();
+  console.log("[Sync] Applying data to game tab:", targetId);
+
   await new Promise<void>((resolve, reject) => {
-    chrome.tabs.sendMessage(tabId, { type: "APPLY_REMOTE_DATA", data }, (r: SyncResponse | undefined) => {
+    chrome.tabs.sendMessage(targetId, { type: "APPLY_REMOTE_DATA", data }, (r: SyncResponse | undefined) => {
       if (chrome.runtime.lastError || !r?.success) {
         reject(new Error(chrome.runtime.lastError?.message ?? "Apply failed"));
         return;
@@ -50,15 +77,18 @@ export async function applyRemoteToGame(data: SaveData): Promise<void> {
     });
   });
   await setLastSync();
+  console.log("[Sync] Data applied and lastSync updated.");
 }
 
-/** Lấy save data từ localStorage của game tab hiện tại. */
+/**
+ * Lấy dữ liệu Save Data hiện tại từ trang game.
+ */
 export async function getLocalData(): Promise<SaveData> {
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (!tab?.url?.includes(GAME_HOST) || !tab.id) throw new Error("Game not open");
-  const tabId = tab.id;
+  const targetId = await getTargetTab();
+  console.log("[Sync] Getting local data from game tab:", targetId);
+
   return new Promise<SaveData>((resolve, reject) => {
-    chrome.tabs.sendMessage(tabId, { type: "GET_LOCAL_DATA" }, (r: SyncResponse | undefined) => {
+    chrome.tabs.sendMessage(targetId, { type: "GET_LOCAL_DATA" }, (r: SyncResponse | undefined) => {
       if (chrome.runtime.lastError || !r) { reject(new Error("Connection error")); return; }
       if (!r.success) { reject(new Error(r.error)); return; }
       if (!("data" in r)) { reject(new Error("Local data not found")); return; }
@@ -68,44 +98,52 @@ export async function getLocalData(): Promise<SaveData> {
 }
 
 /**
- * Smart sync — dùng chung cho auto-sync (Popup) và manual sync (Main):
- * - Remote mới hơn lastSync → pull về (apply remote)
- * - allowPush=true và local mới hơn → push lên Gist
+ * Smart Sync Logic:
+ * 1. Tải bản lưu từ Cloud (Gist).
+ * 2. Nếu Cloud mới hơn (dựa trên updated_at vs lastSync) -> Tải về máy.
+ * 3. Nếu local có thay đổi (so với Cloud) và được phép Push -> Đẩy lên Cloud.
+ *
+ * @param allowPush - Có cho phép ghi đè dữ liệu lên Cloud hay không.
  */
 export async function smartSync(allowPush = false): Promise<boolean> {
-  const local = await getLocalData().catch(() => null);
+  console.log("[SmartSync] Starting sync process... (allowPush:", allowPush, ")");
 
-  const r: SyncResponse = await new Promise((resolve, reject) =>
-    chrome.runtime.sendMessage({ type: "DOWNLOAD_FROM_GIST" }, (response: SyncResponse | undefined) => {
-      if (chrome.runtime.lastError) { reject(new Error(chrome.runtime.lastError.message)); return; }
-      if (!response) { reject(new Error("No response from background")); return; }
-      resolve(response);
-    }),
-  );
+  const local = await getLocalData().catch(() => {
+    console.warn("[SmartSync] Could not get local data (game not open?)");
+    return null;
+  });
 
-  // Đọc lastSync từ storage để tránh stale khi store chưa được cập nhật
+  const r = await downloadFromGist();
   const lastSync = (await getLastSync()) ?? 0;
 
-  // Remote mới hơn → pull (giữ date/time của local)
+  // Trường hợp 1: Dữ liệu trên Cloud mới hơn thời điểm đồng bộ cuối cùng
   if (r.success && "gistUpdatedAt" in r && r.gistUpdatedAt > lastSync) {
+    console.log("[SmartSync] Cloud data is newer. Pulling...");
     await applyRemoteToGame(local ? preserveLocalDate(r.data, local) : r.data);
     return true;
   }
 
-  // Pull-only mode hoặc không có local → bỏ qua
-  if (!allowPush || !local) return false;
+  // Nếu không cho phép Push hoặc không có dữ liệu local thì dừng ở đây
+  if (!allowPush || !local) {
+    console.log("[SmartSync] No pull needed and push not allowed/possible.");
+    return false;
+  }
 
-  // Nội dung giống nhau → không cần push
-  if (r.success && "data" in r && deepEqual(local, r.data)) return false;
+  // Trường hợp 2: Kiểm tra xem Local có gì mới so với Cloud không
+  if (r.success && "data" in r && deepEqual(local, r.data)) {
+    console.log("[SmartSync] Local and Cloud are identical. No action needed.");
+    return false;
+  }
 
-  // Push local lên
-  const uploadR: SyncResponse = await new Promise((resolve) =>
-    chrome.runtime.sendMessage({ type: "UPLOAD_TO_GIST", data: local }, resolve),
-  );
+  // Trường hợp 3: Local mới hơn hoặc Cloud chưa có dữ liệu -> Push lên
+  console.log("[SmartSync] Local changes detected. Uploading to Cloud...");
+  const uploadR = await uploadToGist(local);
   if (uploadR.success) {
     await setLastSync();
+    console.log("[SmartSync] Sync completed successfully.");
     return true;
   } else {
+    console.error("[SmartSync] Upload failed:", uploadR.error);
     throw new Error(uploadR.error);
   }
 }

@@ -39,6 +39,9 @@ const LangSchema = z.object({
   btn_go_back: z.string(),
   btn_logout: z.string(),
   connected_as: z.string(),
+  auto_sync_label: z.string(),
+  auto_sync_interval: z.string(),
+  auto_sync_mins: z.string(),
   schema_error_body: z.string(),
 });
 

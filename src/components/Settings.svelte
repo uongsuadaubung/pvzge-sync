@@ -8,19 +8,24 @@
 
   let tokenInput = $state("");
   let langInput = $state(SupportLanguage.En);
+  let autoSyncEnabled = $state(false);
+  let autoSyncInterval = $state(30);
   let saving = $state(false);
   let tokenError = $state("");
 
   onMount(() => {
     tokenInput = appStore.githubToken;
     langInput = appStore.language;
+    autoSyncEnabled = appStore.autoSyncEnabled;
+    autoSyncInterval = appStore.autoSyncInterval;
   });
 
   async function save() {
     const token = tokenInput.trim();
     tokenError = "";
 
-    if (token) {
+    // Chỉ validate nếu token thay đổi và không rỗng
+    if (token && token !== appStore.githubToken) {
       saving = true;
       const r: SyncResponse = await new Promise((resolve) =>
         chrome.runtime.sendMessage({ type: "VALIDATE_TOKEN", token }, resolve),
@@ -33,7 +38,7 @@
       appStore.githubUser = "githubUser" in r ? r.githubUser : null;
     }
 
-    await appStore.updateSettings(token, langInput);
+    await appStore.updateSettings(token, langInput, autoSyncEnabled, autoSyncInterval);
     appStore.navigate(View.Main);
   }
 </script>
@@ -70,6 +75,26 @@
         <option value="vi">Tiếng Việt</option>
       </select>
     </div>
+
+    <div class="input-group row">
+      <label for="check-autosync">{t("auto_sync_label")}</label>
+      <input type="checkbox" id="check-autosync" bind:checked={autoSyncEnabled} />
+    </div>
+
+    {#if autoSyncEnabled}
+      <div class="input-group">
+        <label for="input-interval">{t("auto_sync_interval")}</label>
+        <div class="flex-row">
+          <input
+            type="number"
+            id="input-interval"
+            bind:value={autoSyncInterval}
+            min="5"
+          />
+          <span style="margin-left: 8px;">{t("auto_sync_mins")}</span>
+        </div>
+      </div>
+    {/if}
 
     <div class="input-group">
       <label for="input-token">{t("token_label")}</label>
@@ -112,12 +137,10 @@
       {/if}
     </div>
 
-    {#if !appStore.githubConnected}
-      <div style="margin-top: 24px;">
-        <button class="btn primary full-width" onclick={save} disabled={saving}
-          >{saving ? t("token_validating") : t("btn_save")}</button
-        >
-      </div>
-    {/if}
+    <div class="input-group">
+      <button class="btn primary full-width" onclick={save} disabled={saving}
+        >{saving ? t("token_validating") : t("btn_save")}</button
+      >
+    </div>
   </main>
 </div>

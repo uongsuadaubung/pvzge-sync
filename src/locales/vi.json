@@ -37,5 +37,8 @@
   "btn_go_back": "Quay lại",
   "btn_logout": "Đăng xuất / Xóa Token",
   "connected_as": "Đang kết nối với:",
+  "auto_sync_label": "Tự động đồng bộ",
+  "auto_sync_interval": "Chu kỳ (phút):",
+  "auto_sync_mins": "phút",
   "schema_error_body": "Dữ liệu lưu trữ không tương thích. Vui lòng cập nhật extension."
 }
