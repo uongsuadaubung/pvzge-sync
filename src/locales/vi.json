@@ -35,5 +35,7 @@
   "token_invalid": "Token không hợp lệ. Vui lòng kiểm tra lại.",
   "token_label": "GitHub Personal Access Token:",
   "btn_go_back": "Quay lại",
+  "btn_logout": "Đăng xuất / Xóa Token",
+  "connected_as": "Đang kết nối với:",
   "schema_error_body": "Dữ liệu lưu trữ không tương thích. Vui lòng cập nhật extension."
 }

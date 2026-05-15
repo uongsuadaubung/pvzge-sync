@@ -44,7 +44,12 @@ export const appStore = $state({
     await setGithubSettings(token, lang);
     this.githubToken = token;
     this.language = lang;
+    if (!token) this.githubUser = null;
     await setLanguage(lang); // Update i18n
+  },
+
+  async logout() {
+    await this.updateSettings("", this.language);
   },
 
   navigate(newView: View) {
