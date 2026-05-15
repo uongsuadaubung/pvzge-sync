@@ -5,6 +5,7 @@ import { GAME_HOST, IGNORED_KEYS } from "@/shared/constants";
 
 function deepEqual(a: unknown, b: unknown): boolean {
   if (a === b) return true;
+  if (a === undefined || b === undefined) return false;
   if (a === null || b === null || typeof a !== typeof b) return false;
 
   if (Array.isArray(a) && Array.isArray(b)) {
