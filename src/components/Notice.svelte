@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { t } from "@/lib/i18n.svelte";
+  import { t } from "@/shared/i18n.svelte";
 
   interface NoticeProps {
     warnMsg?: string;
@@ -26,7 +26,7 @@
   {:else if errorMsg}
     <div class="error-banner">
       <strong>⚠️ {t("schema_error_title")}</strong><br />
-      Local save data is incompatible. Please update the extension.<br />
+      {t("schema_error_body")}<br />
       <small>{errorMsg}</small>
     </div>
   {/if}

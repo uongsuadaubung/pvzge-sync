@@ -1,12 +1,13 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { t } from "@/lib/i18n.svelte";
-  import { GAME_HOST } from "@/lib/constants";
-  import { smartSync } from "@/lib/sync";
+  import { t } from "@/shared/i18n.svelte";
+  import { GAME_HOST } from "@/shared/constants";
+  import { smartSync } from "@/domains/sync/sync";
   import Main from "@/components/Main.svelte";
   import Settings from "@/components/Settings.svelte";
   import Notice from "@/components/Notice.svelte";
-  import { appStore } from "@/lib/store.svelte";
+  import { appStore } from "@/shared/store.svelte";
+  import { View } from "@/shared/types";
   let ready = $state(false);
   let warnMsg = $state("");
   let errorMsg = $state("");
@@ -32,9 +33,11 @@
 
     // Auto-sync nếu đã cấu hình GitHub
     if (appStore.githubConnected) {
-      await smartSync().catch((e: unknown) => {
+      const synced = await smartSync().catch((e: unknown) => {
         errorMsg = e instanceof Error ? e.message : String(e);
+        return false;
       });
+      if (synced) appStore.lastSync = Date.now();
     }
 
     ready = true;
@@ -42,7 +45,7 @@
 </script>
 
 {#if ready}
-  {#if appStore.view === "settings"}
+  {#if appStore.view === View.Settings}
     <Settings />
   {:else if warnMsg || errorMsg}
     <Notice {warnMsg} {errorMsg} />

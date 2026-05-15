@@ -25,9 +25,9 @@ async function runBuild() {
         process.exit(1);
     }
 
-    console.log('Type checking with tsc...');
+    console.log('Type checking with svelte-check...');
     try {
-        execSync('npx tsc --noEmit', { stdio: 'inherit' });
+        execSync('npm run check', { stdio: 'inherit' });
     } catch (e) {
         console.error('Type checking failed. Build aborted.');
         process.exit(1);
