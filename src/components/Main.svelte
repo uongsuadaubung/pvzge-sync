@@ -5,6 +5,7 @@
   import { SaveDataSchema } from "@/domains/game/schema";
 
   import { appStore } from "@/shared/store.svelte";
+  import UserProfile from "./UserProfile.svelte";
   import { View } from "@/shared/types";
 
   let fileInput = $state<HTMLInputElement>(null!);
@@ -110,15 +111,7 @@
     </div>
 
     {#if appStore.githubUser}
-      <div class="user-card">
-        <img class="user-avatar" src={appStore.githubUser.avatar_url} alt={appStore.githubUser.login} />
-        <div class="user-info">
-          <div class="user-name">{appStore.githubUser.name ?? appStore.githubUser.login}</div>
-          {#if appStore.githubUser.bio}
-            <div class="user-bio">{appStore.githubUser.bio}</div>
-          {/if}
-        </div>
-      </div>
+      <UserProfile user={appStore.githubUser} showBio />
     {/if}
 
     {#if appStore.githubConnected}

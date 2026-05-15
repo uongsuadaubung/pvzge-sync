@@ -35,5 +35,7 @@
   "token_invalid": "Invalid token. Please check and try again.",
   "token_label": "GitHub Personal Access Token:",
   "btn_go_back": "Go back",
+  "btn_logout": "Logout / Remove Token",
+  "connected_as": "Connected as:",
   "schema_error_body": "Local save data is incompatible. Please update the extension."
 }

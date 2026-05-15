@@ -37,6 +37,8 @@ const LangSchema = z.object({
   token_invalid: z.string(),
   token_label: z.string(),
   btn_go_back: z.string(),
+  btn_logout: z.string(),
+  connected_as: z.string(),
   schema_error_body: z.string(),
 });
 
