@@ -1,5 +1,5 @@
 import { describe, test, expect } from "vitest";
-import { validatePlayerProperties, validateSettings, SaveDataSchema } from "../src/lib/schema";
+import { validatePlayerProperties, validateSettings, SaveDataSchema } from "../src/domains/game/schema";
 
 const validProfile = {
   beachWMX: 0,

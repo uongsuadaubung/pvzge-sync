@@ -1,6 +1,5 @@
 import { z } from "zod";
-import { SUPPORTED_LANGUAGES } from "./i18n.svelte";
-import type { SupportLanguage } from "./i18n.svelte";
+import { SupportLanguage } from "./i18n.svelte";
 
 // --- getters ---
 
@@ -21,7 +20,7 @@ export async function getLastSync(): Promise<number | undefined> {
 
 export async function getLanguage(): Promise<SupportLanguage | undefined> {
   const { language } = await chrome.storage.local.get("language");
-  return z.enum(SUPPORTED_LANGUAGES).safeParse(language).data;
+  return z.enum(SupportLanguage).safeParse(language).data;
 }
 
 // --- setters ---
@@ -37,4 +36,3 @@ export async function setLastSync() {
 export async function setGithubSettings(githubToken: string, language: string) {
   await chrome.storage.local.set({ githubToken, language });
 }
-

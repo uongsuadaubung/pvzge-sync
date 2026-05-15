@@ -1,10 +1,11 @@
 <script lang="ts">
-  import { t } from "@/lib/i18n.svelte";
+  import { t } from "@/shared/i18n.svelte";
 
-  import { smartSync, getLocalData, applyRemoteToGame } from "@/lib/sync";
-  import { SaveDataSchema } from "@/lib/schema";
+  import { smartSync, getLocalData, applyRemoteToGame } from "@/domains/sync/sync";
+  import { SaveDataSchema } from "@/domains/game/schema";
 
-  import { appStore } from "@/lib/store.svelte";
+  import { appStore } from "@/shared/store.svelte";
+  import { View } from "@/shared/types";
 
   let fileInput = $state<HTMLInputElement>(null!);
   let downloadAnchor = $state<HTMLAnchorElement>(null!);
@@ -25,9 +26,14 @@
 
   async function handleSync() {
     loading = true;
-    await smartSync(true).catch((e: unknown) =>
-      alert("Error: " + (e instanceof Error ? e.message : String(e))),
-    ).finally(() => { loading = false; });
+    try {
+      const synced = await smartSync(true);
+      if (synced) appStore.lastSync = Date.now();
+    } catch (e: unknown) {
+      alert("Error: " + (e instanceof Error ? e.message : String(e)));
+    } finally {
+      loading = false;
+    }
   }
 
   async function handleExport() {
@@ -71,6 +77,7 @@
         return;
       }
       await applyRemoteToGame(parseResult.data);
+      appStore.lastSync = Date.now();
     } finally {
       loading = false;
     }
@@ -89,7 +96,7 @@
     <button
       class="btn-settings-icon"
       title="Cài đặt"
-      onclick={() => appStore.navigate("settings")}>⚙️</button
+      onclick={() => appStore.navigate(View.Settings)}>⚙️</button
     >
   </header>
 

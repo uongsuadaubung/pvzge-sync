@@ -1,11 +1,12 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { t, type SupportLanguage } from "@/lib/i18n.svelte";
-  import { appStore } from "@/lib/store.svelte";
-  import type { SyncResponse } from "@/lib/types";
+  import { t, SupportLanguage } from "@/shared/i18n.svelte";
+  import { appStore } from "@/shared/store.svelte";
+  import { View } from "@/shared/types";
+  import type { SyncResponse } from "@/shared/types";
 
   let tokenInput = $state("");
-  let langInput = $state<SupportLanguage>("en");
+  let langInput = $state(SupportLanguage.En);
   let saving = $state(false);
   let tokenError = $state("");
 
@@ -28,17 +29,17 @@
         tokenError = r.error ?? t("token_invalid");
         return;
       }
-      appStore.githubUser = r.githubUser ?? null;
+      appStore.githubUser = ("githubUser" in r) ? r.githubUser : null;
     }
 
     await appStore.updateSettings(token, langInput);
-    appStore.navigate("main");
+    appStore.navigate(View.Main);
   }
 </script>
 
 <div class="container">
   <header>
-    <button class="btn-back-icon" aria-label="Go back" onclick={() => appStore.navigate('main')}>
+    <button class="btn-back-icon" aria-label={t("btn_go_back")} onclick={() => appStore.navigate(View.Main)}>
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
         <path fill-rule="evenodd" d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z" clip-rule="evenodd" />
       </svg>
@@ -61,7 +62,7 @@
     </div>
 
     <div class="input-group">
-      <label for="input-token">GitHub Personal Access Token:</label>
+      <label for="input-token">{t("token_label")}</label>
       <input
         id="input-token"
         type="password"

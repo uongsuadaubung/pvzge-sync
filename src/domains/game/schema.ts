@@ -150,53 +150,27 @@ const SettingsSchema = z.object({
   ZombieAlert: z.boolean(),
 }).strict();
 
-const SaveDataSchema = z.object({
+export const SaveDataSchema = z.object({
   PvZ2_PlayerProperties: z.array(PlayerProfileSchema),
   PvZ2_Settings: SettingsSchema,
 }).strict();
 
-// Used when fetching a specific gist — content may be absent if file is truncated
-const GistFileSchema = z.object({
-  content: z.string(),
-  raw_url: z.string(),
-});
+export const DateSchema_export = DateSchema;
 
-// Used when listing gists — GitHub never returns file content in list responses
-const GistListFileSchema = z.object({
-  raw_url: z.string(),
-});
-
-const GistSchema = z.object({
-  id: z.string(),
-  description: z.string().nullable(),
-  updated_at: z.string(),
-  files: z.record(z.string(), GistFileSchema),
-});
-
-const GistListItemSchema = z.object({
-  id: z.string(),
-  description: z.string().nullable(),
-  files: z.record(z.string(), GistListFileSchema),
-});
-
-const GistArraySchema = z.array(GistListItemSchema);
-
-function validateSaveData(data: unknown) {
+export function validateSaveData(data: unknown) {
   return SaveDataSchema.safeParse(data);
 }
 
-function validatePlayerProperties(data: unknown) {
+export function validatePlayerProperties(data: unknown) {
   return z.array(PlayerProfileSchema).safeParse(data);
 }
 
-function validateSettings(data: unknown) {
+export function validateSettings(data: unknown) {
   return SettingsSchema.safeParse(data);
 }
 
-export { SaveDataSchema, DateSchema, GistSchema, GistArraySchema, validateSaveData, validatePlayerProperties, validateSettings };
+export { DateSchema };
 export type SaveData = z.infer<typeof SaveDataSchema>;
 export type PlayerProfile = z.infer<typeof PlayerProfileSchema>;
 export type Settings = z.infer<typeof SettingsSchema>;
 export type PvzDate = z.infer<typeof DateSchema>;
-export type GistFile = z.infer<typeof GistFileSchema>;
-export type Gist = z.infer<typeof GistSchema>;
