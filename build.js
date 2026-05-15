@@ -1,10 +1,13 @@
-const fs = require('fs');
-const path = require('path');
-const { execSync } = require('child_process');
-const esbuild = require('esbuild');
-const sveltePlugin = require('esbuild-svelte');
-const sveltePreprocess = require('svelte-preprocess');
+import fs from 'fs';
+import path from 'path';
+import { execSync } from 'child_process';
+import * as esbuild from 'esbuild';
+import sveltePlugin from 'esbuild-svelte';
+import sveltePreprocess from 'svelte-preprocess';
+import AdmZip from 'adm-zip';
+import { fileURLToPath } from 'url';
 
+const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const distDir = path.join(__dirname, 'dist');
 const chromeDir = path.join(distDir, 'chrome');
 const firefoxDir = path.join(distDir, 'firefox');
@@ -138,7 +141,6 @@ async function runBuild() {
     copyAssets(firefoxDir, true);
 
     // Create ZIP packages
-    const AdmZip = require('adm-zip');
     const chromeZip = new AdmZip();
     chromeZip.addLocalFolder(chromeDir);
     chromeZip.writeZip(path.join(distDir, 'chrome.zip'));
