@@ -37,5 +37,8 @@
   "btn_go_back": "Go back",
   "btn_logout": "Logout / Remove Token",
   "connected_as": "Connected as:",
+  "auto_sync_label": "Auto-sync",
+  "auto_sync_interval": "Interval (mins):",
+  "auto_sync_mins": "mins",
   "schema_error_body": "Local save data is incompatible. Please update the extension."
 }

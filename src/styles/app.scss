@@ -256,6 +256,25 @@ header {
     }
   }
 
+  &.row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+
+    label { margin-bottom: 0; }
+    input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+    }
+  }
+
+  .flex-row {
+    display: flex;
+    align-items: center;
+  }
+
   .token-error {
     color: #ff7a5a;
     font-size: 0.78rem;

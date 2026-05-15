@@ -15,7 +15,8 @@ export type SyncMessage =
   | { type: "DOWNLOAD_FROM_GIST" }
   | { type: "GET_LOCAL_DATA" }
   | { type: "VALIDATE_TOKEN"; token: string }
-  | { type: "GET_USER_INFO" };
+  | { type: "GET_USER_INFO" }
+  | { type: "SETTINGS_UPDATED" };
 
 export type SyncResponse =
   | { success: true; data: SaveData; gistUpdatedAt: number } // DOWNLOAD_FROM_GIST
