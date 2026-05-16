@@ -17,7 +17,6 @@
   let autoSyncEnabled = $state(false);
   let autoSyncInterval = $state(30);
   let autoCollectEnabled = $state(false);
-  let autoCollectKey = $state("a");
   let saving = $state(false);
   let tokenError = $state("");
 
@@ -32,7 +31,6 @@
     autoSyncEnabled = appStore.autoSyncEnabled;
     autoSyncInterval = appStore.autoSyncInterval;
     autoCollectEnabled = appStore.autoCollectEnabled;
-    autoCollectKey = appStore.autoCollectKey;
   });
 
   async function save() {
@@ -58,8 +56,7 @@
       langInput, 
       autoSyncEnabled, 
       autoSyncInterval, 
-      autoCollectEnabled, 
-      autoCollectKey
+      autoCollectEnabled
     );
     appStore.navigate(View.Main);
   }
@@ -111,19 +108,6 @@
       />
     </div>
 
-    {#if autoCollectEnabled}
-      <div class="input-group">
-        <label for="input-collect-key">{t("collect_key_label")}</label>
-        <div class="flex-row">
-          <Input
-            id="input-collect-key"
-            bind:value={autoCollectKey}
-            maxlength={1}
-            style="width: 64px; text-align: center; text-transform: uppercase;"
-          />
-        </div>
-      </div>
-    {/if}
 
     <div class="input-group">
       <label for="input-token">{t("token_label")}</label>
@@ -134,7 +118,9 @@
           fullWidth
           onclick={() => {
             appStore.logout();
+            // Đồng bộ lại trạng thái cục bộ ngay lập tức
             tokenInput = "";
+            autoSyncEnabled = false;
           }}
         >
           {t("btn_logout")}

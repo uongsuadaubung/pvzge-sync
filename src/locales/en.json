@@ -44,7 +44,6 @@
   "auto_collect": "Auto Collect",
   "btn_auto_collect_on": "Turn ON Auto Collect",
   "btn_auto_collect_off": "Turn OFF Auto Collect",
-  "collect_key_label": "Collect Key (Simulate press):",
   "group_tools": "Game Tools",
   "group_sync": "Sync & Backup"
 }
