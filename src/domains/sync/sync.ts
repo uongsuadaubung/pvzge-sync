@@ -117,7 +117,7 @@ export async function smartSync(allowPush = false): Promise<boolean> {
   const lastSync = (await getLastSync()) ?? 0;
 
   // Trường hợp 1: Dữ liệu trên Cloud mới hơn thời điểm đồng bộ cuối cùng
-  if (r.success && "gistUpdatedAt" in r && r.gistUpdatedAt > lastSync) {
+  if (r.success && "gistUpdatedAt" in r && r.gistUpdatedAt && r.gistUpdatedAt > lastSync) {
     console.log("[SmartSync] Cloud data is newer. Pulling...");
     await applyRemoteToGame(local ? preserveLocalDate(r.data, local) : r.data);
     return true;

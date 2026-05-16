@@ -43,6 +43,15 @@
     {/if}
   </div>
 
+  {#if appStore.githubUser && showLogo}
+    <div class="header-user">
+      <div class="user-pill">
+        <img src={appStore.githubUser.avatar_url} alt="User Avatar" />
+        <span>{appStore.githubUser.login}</span>
+      </div>
+    </div>
+  {/if}
+
   {#if showSettings}
     <Button variant="settings" onclick={() => appStore.navigate(View.Settings)} title={t("settings_title")}>
       ⚙️
@@ -88,6 +97,32 @@
       small {
         color: var(--text-dim);
         font-size: 0.75rem;
+      }
+    }
+
+    .header-user {
+      display: flex;
+      align-items: center;
+      margin-left: auto;
+
+      .user-pill {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: var(--surface-light);
+        padding: 4px 10px 4px 4px;
+        border-radius: 20px;
+        border: 1px solid var(--border);
+        font-size: 0.82rem;
+        font-weight: 500;
+        color: var(--text);
+
+        img {
+          width: 24px;
+          height: 24px;
+          border-radius: 50%;
+          border: 1px solid var(--primary-dark);
+        }
       }
     }
   }

@@ -4,12 +4,13 @@ import {
   getLastSync,
   getAutoSyncEnabled,
   getAutoSyncInterval,
+  getAutoCollectEnabled,
+  getAutoCollectKey,
   setGithubSettings,
 } from "./storage";
 import { setLanguage } from "./i18n.svelte";
 import { SupportLanguage } from "./i18n.svelte";
-import type { GithubUser, SyncResponse } from "./types";
-import { View } from "./types";
+import { SyncResponseSchema, View, type GithubUser } from "./types";
 
 /**
  * App Store sử dụng Svelte 5 Runes ($state).
@@ -22,6 +23,8 @@ export const appStore = $state({
   lastSync: 0,
   autoSyncEnabled: false,
   autoSyncInterval: 5,
+  autoCollectEnabled: false,
+  autoCollectKey: "a",
 
   // --- Trạng thái Giao diện (UI State) ---
   isLoaded: false,
@@ -39,21 +42,27 @@ export const appStore = $state({
   async init() {
     console.log("[Store] Initializing...");
     this.githubToken = (await getGithubToken()) ?? "";
-    this.language = (await getLanguage()) ?? SupportLanguage.En;
-    this.lastSync = (await getLastSync()) ?? 0;
+    this.language = await getLanguage();
+    this.lastSync = await getLastSync();
     this.autoSyncEnabled = await getAutoSyncEnabled();
     this.autoSyncInterval = await getAutoSyncInterval();
+    this.autoCollectEnabled = await getAutoCollectEnabled();
+    this.autoCollectKey = await getAutoCollectKey();
 
     await setLanguage(this.language);
 
     if (this.githubToken) {
       // Lấy thông tin user thông qua background để đảm bảo tính nhất quán
-      const r: SyncResponse = await new Promise((resolve) =>
+      const rawResponse = await new Promise((resolve) =>
         chrome.runtime.sendMessage({ type: "GET_USER_INFO" }, resolve),
       );
-      if (r.success && "githubUser" in r) {
-        this.githubUser = r.githubUser;
+
+      const result = SyncResponseSchema.safeParse(rawResponse);
+      if (result.success && "githubUser" in result.data) {
+        this.githubUser = result.data.githubUser;
         console.log("[Store] GitHub user loaded:", this.githubUser.login);
+      } else if (!result.success) {
+        console.warn("[Store] Failed to load GitHub user info:", result.error.format());
       }
     }
 
@@ -69,26 +78,44 @@ export const appStore = $state({
     lang: SupportLanguage,
     autoSyncEnabled: boolean,
     autoSyncInterval: number,
+    autoCollectEnabled: boolean,
+    autoCollectKey: string,
   ) {
     console.log("[Store] Updating settings...");
-    await setGithubSettings(token, lang, autoSyncEnabled, autoSyncInterval);
+    await setGithubSettings(
+      token,
+      lang,
+      autoSyncEnabled,
+      autoSyncInterval,
+      autoCollectEnabled,
+      autoCollectKey,
+    );
 
     this.githubToken = token;
     this.language = lang;
     this.autoSyncEnabled = autoSyncEnabled;
     this.autoSyncInterval = autoSyncInterval;
+    this.autoCollectEnabled = autoCollectEnabled;
+    this.autoCollectKey = autoCollectKey;
 
     if (!token) this.githubUser = null;
     await setLanguage(lang);
 
-    // Thông báo cho background script để cập nhật Alarm
+    // Thông báo cho các thành phần khác (background, content)
     chrome.runtime.sendMessage({ type: "SETTINGS_UPDATED" });
   },
 
   /** Đăng xuất: Xóa token nhưng giữ nguyên các thiết lập khác. */
   async logout() {
     console.log("[Store] Logging out...");
-    await this.updateSettings("", this.language, this.autoSyncEnabled, this.autoSyncInterval);
+    await this.updateSettings(
+      "",
+      this.language,
+      this.autoSyncEnabled,
+      this.autoSyncInterval,
+      this.autoCollectEnabled,
+      this.autoCollectKey,
+    );
   },
 
   /** Chuyển đổi màn hình hiển thị trong Popup. */

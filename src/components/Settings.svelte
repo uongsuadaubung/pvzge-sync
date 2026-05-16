@@ -16,6 +16,8 @@
   let langInput = $state(SupportLanguage.En);
   let autoSyncEnabled = $state(false);
   let autoSyncInterval = $state(30);
+  let autoCollectEnabled = $state(false);
+  let autoCollectKey = $state("a");
   let saving = $state(false);
   let tokenError = $state("");
 
@@ -29,6 +31,8 @@
     langInput = appStore.language;
     autoSyncEnabled = appStore.autoSyncEnabled;
     autoSyncInterval = appStore.autoSyncInterval;
+    autoCollectEnabled = appStore.autoCollectEnabled;
+    autoCollectKey = appStore.autoCollectKey;
   });
 
   async function save() {
@@ -49,7 +53,14 @@
       appStore.githubUser = "githubUser" in r ? r.githubUser : null;
     }
 
-    await appStore.updateSettings(token, langInput, autoSyncEnabled, autoSyncInterval);
+    await appStore.updateSettings(
+      token, 
+      langInput, 
+      autoSyncEnabled, 
+      autoSyncInterval, 
+      autoCollectEnabled, 
+      autoCollectKey
+    );
     appStore.navigate(View.Main);
   }
 </script>
@@ -88,6 +99,28 @@
             min={5}
           />
           <span style="margin-left: 12px;">{t("auto_sync_mins")}</span>
+        </div>
+      </div>
+    {/if}
+
+    <div class="input-group">
+      <Checkbox 
+        id="check-autocollect" 
+        bind:checked={autoCollectEnabled} 
+        label={t("auto_collect")} 
+      />
+    </div>
+
+    {#if autoCollectEnabled}
+      <div class="input-group">
+        <label for="input-collect-key">{t("collect_key_label")}</label>
+        <div class="flex-row">
+          <Input
+            id="input-collect-key"
+            bind:value={autoCollectKey}
+            maxlength={1}
+            style="width: 64px; text-align: center; text-transform: uppercase;"
+          />
         </div>
       </div>
     {/if}

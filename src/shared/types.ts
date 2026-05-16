@@ -1,26 +1,27 @@
-import type { SaveData } from "@/domains/game/schema";
+import { z } from "zod";
+import { SaveDataSchema } from "@/domains/game/schema";
+import { GithubUserSchema } from "@/domains/github/schema";
+import type { GithubUser } from "@/domains/github/schema";
 
 export enum View { Main = "main", Settings = "settings" }
 
-export interface GithubUser {
-  login: string;
-  name: string | null;
-  bio: string | null;
-  avatar_url: string;
-}
+export const SyncMessageSchema = z.discriminatedUnion("type", [
+  z.object({ type: z.literal("UPLOAD_TO_GIST"), data: SaveDataSchema }),
+  z.object({ type: z.literal("APPLY_REMOTE_DATA"), data: SaveDataSchema }),
+  z.object({ type: z.literal("DOWNLOAD_FROM_GIST") }),
+  z.object({ type: z.literal("GET_LOCAL_DATA") }),
+  z.object({ type: z.literal("VALIDATE_TOKEN"), token: z.string() }),
+  z.object({ type: z.literal("GET_USER_INFO") }),
+  z.object({ type: z.literal("SETTINGS_UPDATED") }),
+]);
 
-export type SyncMessage =
-  | { type: "UPLOAD_TO_GIST"; data: SaveData }
-  | { type: "APPLY_REMOTE_DATA"; data: SaveData }
-  | { type: "DOWNLOAD_FROM_GIST" }
-  | { type: "GET_LOCAL_DATA" }
-  | { type: "VALIDATE_TOKEN"; token: string }
-  | { type: "GET_USER_INFO" }
-  | { type: "SETTINGS_UPDATED" };
+export const SyncResponseSchema = z.union([
+  z.object({ success: z.literal(true), data: SaveDataSchema, gistUpdatedAt: z.number().optional() }),
+  z.object({ success: z.literal(true), githubUser: GithubUserSchema }),
+  z.object({ success: z.literal(true) }),
+  z.object({ success: z.literal(false), error: z.string() }),
+]);
 
-export type SyncResponse =
-  | { success: true; data: SaveData; gistUpdatedAt: number } // DOWNLOAD_FROM_GIST
-  | { success: true; data: SaveData }                        // GET_LOCAL_DATA
-  | { success: true; githubUser: GithubUser }                // GET_USER_INFO / VALIDATE_TOKEN
-  | { success: true }                                        // UPLOAD_TO_GIST / APPLY_REMOTE_DATA
-  | { success: false; error: string };
+export type SyncMessage = z.infer<typeof SyncMessageSchema>;
+export type SyncResponse = z.infer<typeof SyncResponseSchema>;
+export type { GithubUser };

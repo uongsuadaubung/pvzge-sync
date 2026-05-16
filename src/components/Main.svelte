@@ -7,17 +7,12 @@
   import { appStore } from "@/shared/store.svelte";
   import Header from "./Header.svelte";
   import Button from "./Button.svelte";
-  import UserProfile from "./UserProfile.svelte";
 
   let fileInput = $state<HTMLInputElement>(null!);
   let downloadAnchor = $state<HTMLAnchorElement>(null!);
   let loading = $state(false);
 
   // Derived từ store — tự cập nhật khi token thay đổi
-  let statusMsg = $derived(
-    appStore.githubConnected ? t("status_connected") : t("status_no_github"),
-  );
-  let statusColor = $derived(appStore.githubConnected ? "var(--success)" : "var(--warning)");
   let lastSyncMsg = $derived(
     appStore.lastSync
       ? t("last_sync") + new Date(appStore.lastSync).toLocaleString()
@@ -94,17 +89,40 @@
   />
 
   <main>
-    <div class="status-indicator">
-      <span
-        class="dot {appStore.githubConnected ? 'active' : ''}"
-        style="background:{statusColor}"
-      ></span>
-      <span id="status-text" style="color:{statusColor}">{statusMsg}</span>
+    <div class="group-label">
+      <span>{t("group_tools")}</span>
+      <div class="line"></div>
     </div>
 
-    {#if appStore.githubUser}
-      <UserProfile user={appStore.githubUser} showBio />
-    {/if}
+    <section class="action-section auto-collect">
+      <div class="section-header">
+        <span class="section-icon">☀️</span>
+        <h3>{t("auto_collect")}</h3>
+      </div>
+      <div class="button-group">
+        <Button 
+          variant={appStore.autoCollectEnabled ? "danger" : "primary"}
+          fullWidth 
+          onclick={() => {
+            appStore.updateSettings(
+              appStore.githubToken,
+              appStore.language,
+              appStore.autoSyncEnabled,
+              appStore.autoSyncInterval,
+              !appStore.autoCollectEnabled,
+              appStore.autoCollectKey
+            );
+          }}
+        >
+          {appStore.autoCollectEnabled ? t("btn_auto_collect_off") : t("btn_auto_collect_on")}
+        </Button>
+      </div>
+    </section>
+
+    <div class="group-label">
+      <span>{t("group_sync")}</span>
+      <div class="line"></div>
+    </div>
 
     {#if appStore.githubConnected}
       <section class="action-section cloud">
@@ -153,29 +171,27 @@
 </div>
 
 <style lang="scss">
-  /* ─── Status Indicator ───────────────────────────── */
-  .status-indicator {
+  /* ─── Group Labels ───────────────────────────────── */
+  .group-label {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 8px 14px;
-    background: var(--surface);
-    border-radius: 20px;
-    margin-bottom: 12px;
-    font-size: 0.82rem;
-    border: 1px solid var(--border);
+    gap: 12px;
+    margin: 10px 0 14px;
+    
+    span {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--primary);
+      white-space: nowrap;
+      opacity: 0.85;
+    }
 
-    .dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--surface-light);
-      flex-shrink: 0;
-
-      &.active {
-        background: var(--primary);
-        box-shadow: 0 0 8px var(--primary), 0 0 16px var(--glow-primary);
-      }
+    .line {
+      height: 1px;
+      flex: 1;
+      background: linear-gradient(90deg, var(--border), transparent);
     }
   }
 

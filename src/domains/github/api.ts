@@ -1,10 +1,15 @@
+import { z } from "zod";
 import type { SyncResponse } from "@/shared/types";
-import { GistSchema, GistArraySchema } from "@/domains/github/schema";
+import { GistSchema, GistArraySchema, GithubUserSchema } from "@/domains/github/schema";
 import type { Gist } from "@/domains/github/schema";
 import { SaveDataSchema } from "@/domains/game/schema";
 import type { SaveData } from "@/domains/game/schema";
 import { GITHUB_API_BASE, GIST_DESCRIPTION, GIST_FILE_NAME } from "@/shared/constants";
 import { getGithubToken, getGistId, setGistId } from "@/shared/storage";
+
+const GithubErrorSchema = z.object({
+  message: z.string().optional(),
+});
 
 /**
  * Hàm hỗ trợ thực hiện request đến GitHub API.
@@ -26,10 +31,11 @@ async function githubRequest(path: string, options: RequestInit = {}): Promise<u
   });
 
   if (!response.ok) {
-    const error = await response.json() as { message?: unknown };
-    const errMsg = typeof error.message === "string" ? error.message : "GitHub API Error";
+    const rawError = await response.json();
+    const parsed = GithubErrorSchema.safeParse(rawError);
+    const errMsg = parsed.success ? parsed.data.message : "GitHub API Error";
     console.error(`[GitHub API] Error ${response.status}:`, errMsg);
-    throw new Error(errMsg);
+    throw new Error(errMsg || "GitHub API Error");
   }
 
   return response.json();
@@ -154,15 +160,11 @@ async function fetchUserInfo(token: string): Promise<SyncResponse> {
       },
     });
     if (!response.ok) throw new Error(`Token không hợp lệ (HTTP ${response.status})`);
-    const raw = await response.json() as Record<string, unknown>;
+    const raw = await response.json();
+    const githubUser = GithubUserSchema.parse(raw);
     return {
       success: true,
-      githubUser: {
-        login: String(raw.login ?? ""),
-        name: raw.name != null ? String(raw.name) : null,
-        bio: raw.bio != null ? String(raw.bio) : null,
-        avatar_url: String(raw.avatar_url ?? ""),
-      },
+      githubUser,
     };
   } catch (error: unknown) {
     return { success: false, error: error instanceof Error ? error.message : String(error) };
