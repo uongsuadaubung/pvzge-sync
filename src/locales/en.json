@@ -10,7 +10,7 @@
   "offline_backup": "Offline Backup",
   "btn_export": "Export JSON",
   "btn_import": "Import JSON",
-  "settings_title": "GitHub Settings",
+  "settings_title": "Settings",
   "help_no_token": "No Token?",
   "help_click_here": "Click here to create",
   "help_step1": "Select 'gist' scope.",

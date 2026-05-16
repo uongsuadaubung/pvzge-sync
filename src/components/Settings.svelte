@@ -2,8 +2,14 @@
   import { onMount } from "svelte";
   import { t, SupportLanguage } from "@/shared/i18n.svelte";
   import { appStore } from "@/shared/store.svelte";
+  import Header from "./Header.svelte";
+  import Button from "./Button.svelte";
   import UserProfile from "./UserProfile.svelte";
   import { View } from "@/shared/types";
+  import NumberInput from "./NumberInput.svelte";
+  import Select from "./Select.svelte";
+  import Checkbox from "./Checkbox.svelte";
+  import Input from "./Input.svelte";
   import type { SyncResponse } from "@/shared/types";
 
   let tokenInput = $state("");
@@ -12,6 +18,11 @@
   let autoSyncInterval = $state(30);
   let saving = $state(false);
   let tokenError = $state("");
+
+  const langOptions = [
+    { value: "en", label: "English" },
+    { value: "vi", label: "Tiếng Việt" }
+  ];
 
   onMount(() => {
     tokenInput = appStore.githubToken;
@@ -44,54 +55,39 @@
 </script>
 
 <div class="container">
-  <header>
-    <button
-      class="btn-back-icon"
-      aria-label={t("btn_go_back")}
-      onclick={() => appStore.navigate(View.Main)}
-    >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 20 20"
-        fill="currentColor"
-      >
-        <path
-          fill-rule="evenodd"
-          d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z"
-          clip-rule="evenodd"
-        />
-      </svg>
-    </button>
-    <div class="header-text">
-      <h1>{t("settings_title")}</h1>
-    </div>
-  </header>
+  <Header 
+    showBack 
+    title={t("settings_title")} 
+  />
 
   <main>
     <div class="input-group">
       <label for="select-lang">{t("lang_label")}</label>
-      <select id="select-lang" bind:value={langInput}>
-        <option value="en">English</option>
-        <option value="vi">Tiếng Việt</option>
-      </select>
+      <Select 
+        id="select-lang" 
+        bind:value={langInput} 
+        options={langOptions} 
+      />
     </div>
 
-    <div class="input-group row">
-      <label for="check-autosync">{t("auto_sync_label")}</label>
-      <input type="checkbox" id="check-autosync" bind:checked={autoSyncEnabled} />
+    <div class="input-group">
+      <Checkbox 
+        id="check-autosync" 
+        bind:checked={autoSyncEnabled} 
+        label={t("auto_sync_label")} 
+      />
     </div>
 
     {#if autoSyncEnabled}
       <div class="input-group">
         <label for="input-interval">{t("auto_sync_interval")}</label>
         <div class="flex-row">
-          <input
-            type="number"
+          <NumberInput
             id="input-interval"
             bind:value={autoSyncInterval}
-            min="5"
+            min={5}
           />
-          <span style="margin-left: 8px;">{t("auto_sync_mins")}</span>
+          <span style="margin-left: 12px;">{t("auto_sync_mins")}</span>
         </div>
       </div>
     {/if}
@@ -100,21 +96,23 @@
       <label for="input-token">{t("token_label")}</label>
       {#if appStore.githubConnected}
         <UserProfile user={appStore.githubUser} showConnectedText />
-        <button
-          class="btn secondary full-width"
+        <Button
+          variant="danger"
+          fullWidth
           onclick={() => {
             appStore.logout();
             tokenInput = "";
           }}
         >
           {t("btn_logout")}
-        </button>
+        </Button>
       {:else}
-        <input
+        <Input
           id="input-token"
           type="password"
           bind:value={tokenInput}
           placeholder="ghp_xxxxxxxxxxxx"
+          error={!!tokenError}
           oninput={() => (tokenError = "")}
         />
         {#if tokenError}
@@ -138,9 +136,58 @@
     </div>
 
     <div class="input-group">
-      <button class="btn primary full-width" onclick={save} disabled={saving}
-        >{saving ? t("token_validating") : t("btn_save")}</button
+      <Button 
+        fullWidth 
+        onclick={save} 
+        disabled={saving}
       >
+        {saving ? t("token_validating") : t("btn_save")}
+      </Button>
     </div>
   </main>
 </div>
+
+<style lang="scss">
+  .input-group {
+    margin-bottom: 16px;
+
+    label {
+      display: block;
+      font-size: 0.8rem;
+      margin-bottom: 6px;
+      color: var(--text-dim);
+    }
+
+
+
+    .flex-row {
+      display: flex;
+      align-items: center;
+    }
+
+    .token-error {
+      color: var(--error);
+      font-size: 0.78rem;
+      margin: 5px 0 0;
+    }
+  }
+
+  .help-box {
+    margin-top: 10px;
+    padding: 10px 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    line-height: 1.6;
+
+    p { margin: 0 0 4px; }
+    ul { margin: 4px 0 0; padding-left: 16px; }
+    a {
+      color: var(--primary);
+      text-decoration: none;
+      &:hover { text-decoration: underline; }
+    }
+  }
+</style>

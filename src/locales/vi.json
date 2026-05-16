@@ -10,7 +10,7 @@
   "offline_backup": "Sao lưu Offline",
   "btn_export": "Xuất file JSON",
   "btn_import": "Nhập file JSON",
-  "settings_title": "Cài đặt GitHub",
+  "settings_title": "Cài đặt",
   "help_no_token": "Chưa có Token?",
   "help_click_here": "Nhấn vào đây để tạo",
   "help_step1": "Chọn quyền 'gist' khi tạo.",

@@ -5,8 +5,9 @@
   import { SaveDataSchema } from "@/domains/game/schema";
 
   import { appStore } from "@/shared/store.svelte";
+  import Header from "./Header.svelte";
+  import Button from "./Button.svelte";
   import UserProfile from "./UserProfile.svelte";
-  import { View } from "@/shared/types";
 
   let fileInput = $state<HTMLInputElement>(null!);
   let downloadAnchor = $state<HTMLAnchorElement>(null!);
@@ -16,7 +17,7 @@
   let statusMsg = $derived(
     appStore.githubConnected ? t("status_connected") : t("status_no_github"),
   );
-  let statusColor = $derived(appStore.githubConnected ? "#4caf50" : "#ff9800");
+  let statusColor = $derived(appStore.githubConnected ? "var(--success)" : "var(--warning)");
   let lastSyncMsg = $derived(
     appStore.lastSync
       ? t("last_sync") + new Date(appStore.lastSync).toLocaleString()
@@ -86,20 +87,11 @@
 </script>
 
 <div class="container">
-  <header>
-    <div class="logo-wrapper">
-      <img src="icons/icon48.png" alt="Logo" class="logo" />
-    </div>
-    <div class="header-text">
-      <h1>{t("app_name")}</h1>
-      <small id="last-sync">{lastSyncMsg || t("no_sync")}</small>
-    </div>
-    <button
-      class="btn-settings-icon"
-      title="Cài đặt"
-      onclick={() => appStore.navigate(View.Settings)}>⚙️</button
-    >
-  </header>
+  <Header 
+    showLogo 
+    showSettings 
+    subtitle={lastSyncMsg || t("no_sync")} 
+  />
 
   <main>
     <div class="status-indicator">
@@ -121,9 +113,9 @@
           <h3>{t("cloud_sync")}</h3>
         </div>
         <div class="button-group">
-          <button class="btn primary full-width" onclick={handleSync} disabled={loading}
-            >{t("btn_sync")}</button
-          >
+          <Button fullWidth onclick={handleSync} disabled={loading}>
+            {t("btn_sync")}
+          </Button>
         </div>
       </section>
     {/if}
@@ -134,12 +126,12 @@
         <h3>{t("offline_backup")}</h3>
       </div>
       <div class="button-grid">
-        <button class="btn outline" onclick={handleExport} disabled={loading}
-          >{t("btn_export")}</button
-        >
-        <button class="btn outline" onclick={() => fileInput.click()} disabled={loading}
-          >{t("btn_import")}</button
-        >
+        <Button variant="outline" onclick={handleExport} disabled={loading}>
+          {t("btn_export")}
+        </Button>
+        <Button variant="outline" onclick={() => fileInput.click()} disabled={loading}>
+          {t("btn_import")}
+        </Button>
       </div>
     </section>
 
@@ -159,4 +151,77 @@
     ></a>
   </main>
 </div>
+
+<style lang="scss">
+  /* ─── Status Indicator ───────────────────────────── */
+  .status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: var(--surface);
+    border-radius: 20px;
+    margin-bottom: 12px;
+    font-size: 0.82rem;
+    border: 1px solid var(--border);
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--surface-light);
+      flex-shrink: 0;
+
+      &.active {
+        background: var(--primary);
+        box-shadow: 0 0 8px var(--primary), 0 0 16px var(--glow-primary);
+      }
+    }
+  }
+
+  /* ─── Action Sections ────────────────────────────── */
+  .action-section {
+    background: var(--surface);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 14px;
+    border: 1px solid var(--border);
+    transition: border-color 0.2s, box-shadow 0.2s;
+
+    &:hover {
+      border-color: var(--primary-dark);
+      box-shadow: 0 2px 12px rgba(var(--primary-rgb), 0.08);
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 14px;
+
+      .section-icon { font-size: 1rem; }
+
+      h3 {
+        margin: 0;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        color: var(--text-dim);
+      }
+    }
+  }
+
+  .button-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .button-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+</style>
 
