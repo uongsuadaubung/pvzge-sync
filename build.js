@@ -77,8 +77,10 @@ async function runBuild() {
     });
     // Rename popup-entry.js → popup.js
     fs.renameSync(path.join(chromeDir, 'popup-entry.js'), path.join(chromeDir, 'popup.js'));
-    // Generated popup.css is handled by sass above
+    // Generated popup-entry.css contains component styles
     if (fs.existsSync(path.join(chromeDir, 'popup-entry.css'))) {
+        const componentCss = fs.readFileSync(path.join(chromeDir, 'popup-entry.css'));
+        fs.appendFileSync(path.join(chromeDir, 'popup.css'), componentCss);
         fs.rmSync(path.join(chromeDir, 'popup-entry.css'));
     }
     // Build for Firefox
@@ -89,8 +91,10 @@ async function runBuild() {
         outExtension: { '.js': '.js' },
     });
     fs.renameSync(path.join(firefoxDir, 'popup-entry.js'), path.join(firefoxDir, 'popup.js'));
-    // Generated popup.css is handled by sass above
+    // Generated popup-entry.css contains component styles
     if (fs.existsSync(path.join(firefoxDir, 'popup-entry.css'))) {
+        const componentCss = fs.readFileSync(path.join(firefoxDir, 'popup-entry.css'));
+        fs.appendFileSync(path.join(firefoxDir, 'popup.css'), componentCss);
         fs.rmSync(path.join(firefoxDir, 'popup-entry.css'));
     }
 

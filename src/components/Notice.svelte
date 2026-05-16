@@ -6,18 +6,12 @@
     errorMsg?: string;
   }
 
+  import Header from "./Header.svelte";
   let { warnMsg = "", errorMsg = "" }: NoticeProps = $props();
 </script>
 
 <div class="container">
-  <header>
-    <div class="logo-wrapper">
-      <img src="icons/icon48.png" alt="Logo" class="logo" />
-    </div>
-    <div class="header-text">
-      <h1>{t("app_name")}</h1>
-    </div>
-  </header>
+  <Header showLogo />
 
   {#if warnMsg}
     <div class="warn-banner">
@@ -31,3 +25,31 @@
     </div>
   {/if}
 </div>
+
+<style lang="scss">
+  .error-banner {
+    background: var(--notice-error-bg);
+    border: 1px solid var(--notice-error-border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    color: var(--notice-error-text);
+    font-size: 0.85rem;
+    line-height: 1.5;
+
+    strong { color: var(--error); }
+  }
+
+  .warn-banner {
+    background: var(--notice-warn-bg);
+    border: 1px solid var(--notice-warn-border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    color: var(--notice-warn-text);
+    font-size: 0.85rem;
+    line-height: 1.5;
+
+    strong { color: var(--secondary); }
+  }
+</style>
