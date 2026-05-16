@@ -5,8 +5,8 @@ import {
   getAutoSyncEnabled,
   getAutoSyncInterval,
   getAutoCollectEnabled,
-  getAutoCollectKey,
   setGithubSettings,
+  clearAuth,
 } from "./storage";
 import { setLanguage } from "./i18n.svelte";
 import { SupportLanguage } from "./i18n.svelte";
@@ -24,7 +24,6 @@ export const appStore = $state({
   autoSyncEnabled: false,
   autoSyncInterval: 5,
   autoCollectEnabled: false,
-  autoCollectKey: "a",
 
   // --- Trạng thái Giao diện (UI State) ---
   isLoaded: false,
@@ -47,7 +46,6 @@ export const appStore = $state({
     this.autoSyncEnabled = await getAutoSyncEnabled();
     this.autoSyncInterval = await getAutoSyncInterval();
     this.autoCollectEnabled = await getAutoCollectEnabled();
-    this.autoCollectKey = await getAutoCollectKey();
 
     await setLanguage(this.language);
 
@@ -79,7 +77,6 @@ export const appStore = $state({
     autoSyncEnabled: boolean,
     autoSyncInterval: number,
     autoCollectEnabled: boolean,
-    autoCollectKey: string,
   ) {
     console.log("[Store] Updating settings...");
     await setGithubSettings(
@@ -88,7 +85,6 @@ export const appStore = $state({
       autoSyncEnabled,
       autoSyncInterval,
       autoCollectEnabled,
-      autoCollectKey,
     );
 
     this.githubToken = token;
@@ -96,7 +92,6 @@ export const appStore = $state({
     this.autoSyncEnabled = autoSyncEnabled;
     this.autoSyncInterval = autoSyncInterval;
     this.autoCollectEnabled = autoCollectEnabled;
-    this.autoCollectKey = autoCollectKey;
 
     if (!token) this.githubUser = null;
     await setLanguage(lang);
@@ -105,17 +100,19 @@ export const appStore = $state({
     chrome.runtime.sendMessage({ type: "SETTINGS_UPDATED" });
   },
 
-  /** Đăng xuất: Xóa token nhưng giữ nguyên các thiết lập khác. */
+  /** Đăng xuất: Xóa toàn bộ thông tin liên quan đến GitHub và dừng đồng bộ. */
   async logout() {
     console.log("[Store] Logging out...");
-    await this.updateSettings(
-      "",
-      this.language,
-      this.autoSyncEnabled,
-      this.autoSyncInterval,
-      this.autoCollectEnabled,
-      this.autoCollectKey,
-    );
+    await clearAuth();
+
+    // Cập nhật lại trạng thái local trong store
+    this.githubToken = "";
+    this.autoSyncEnabled = false;
+    this.lastSync = 0;
+    this.githubUser = null;
+
+    // Thông báo cho background để dừng Alarm và thông báo cho tabs
+    chrome.runtime.sendMessage({ type: "SETTINGS_UPDATED" });
   },
 
   /** Chuyển đổi màn hình hiển thị trong Popup. */

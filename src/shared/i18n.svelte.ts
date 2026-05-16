@@ -46,7 +46,6 @@ const LangSchema = z.object({
   auto_collect: z.string(),
   btn_auto_collect_on: z.string(),
   btn_auto_collect_off: z.string(),
-  collect_key_label: z.string(),
   group_tools: z.string(),
   group_sync: z.string(),
 });

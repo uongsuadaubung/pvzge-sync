@@ -1,5 +1,5 @@
 import { SyncMessageSchema, type SyncResponse } from "@/shared/types";
-import { getAutoCollectEnabled, getAutoCollectKey } from "@/shared/storage";
+import { getAutoCollectEnabled } from "@/shared/storage";
 import { getGameSaveData, getGameCollectKey, setGameSaveData } from "@/domains/game/storage";
 
 /**
@@ -31,7 +31,6 @@ let collectInterval: number | undefined;
 
 async function syncAutoCollect() {
   const enabled = await getAutoCollectEnabled();
-  const extensionKey = await getAutoCollectKey();
 
   const rawGameKey = getGameCollectKey();
   const gameKeyOptions = rawGameKey ? mapGameKeyToEvent(rawGameKey) : null;
@@ -42,10 +41,11 @@ async function syncAutoCollect() {
     keyOptions = gameKeyOptions;
     console.log(`[PVZGE-Sync] AutoCollect using Game Key: ${keyOptions.key}`);
   } else {
-    const key = (extensionKey || "a").toLowerCase();
-    const charCode = key.toUpperCase().charCodeAt(0);
-    keyOptions = { key, code: `Key${key.toUpperCase()}`, keyCode: charCode, which: charCode };
-    console.log(`[PVZGE-Sync] AutoCollect using Extension Key: ${key}`);
+    // Fallback mặc định là 'a' (phím chuẩn của game)
+    const key = "a";
+    const charCode = 65; // 'A'
+    keyOptions = { key, code: "KeyA", keyCode: charCode, which: charCode };
+    console.log("[PVZGE-Sync] AutoCollect using Default Key: 'a'");
   }
 
   if (collectInterval) {

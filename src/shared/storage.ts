@@ -12,7 +12,6 @@ const SettingsSchema = z.object({
   autoSyncEnabled: z.boolean().default(false),
   autoSyncInterval: z.number().default(5),
   autoCollectEnabled: z.boolean().default(false),
-  autoCollectKey: z.string().default("a"),
 });
 
 export type AppSettings = z.infer<typeof SettingsSchema>;
@@ -81,11 +80,6 @@ export async function getAutoCollectEnabled(): Promise<boolean> {
   return (await getAllSettings()).autoCollectEnabled;
 }
 
-/** Lấy phím tự động nhặt mặt trời */
-export async function getAutoCollectKey(): Promise<string> {
-  return (await getAllSettings()).autoCollectKey;
-}
-
 // --- Setters ---
 
 /** Lưu Gist ID vào storage */
@@ -107,7 +101,6 @@ export async function setGithubSettings(
   autoSyncEnabled: boolean,
   autoSyncInterval: number,
   autoCollectEnabled: boolean,
-  autoCollectKey: string,
 ) {
   await updateSettings({
     githubToken,
@@ -115,6 +108,17 @@ export async function setGithubSettings(
     autoSyncEnabled,
     autoSyncInterval,
     autoCollectEnabled,
-    autoCollectKey,
   });
+}
+/**
+ * Đăng xuất: Xóa toàn bộ thông tin liên quan đến GitHub và đồng bộ.
+ */
+export async function clearAuth() {
+  await updateSettings({
+    githubToken: "",
+    gistId: "",
+    lastSync: 0,
+    autoSyncEnabled: false,
+  });
+  console.log("[Storage] Auth cleared.");
 }

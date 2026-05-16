@@ -109,8 +109,7 @@
               appStore.language,
               appStore.autoSyncEnabled,
               appStore.autoSyncInterval,
-              !appStore.autoCollectEnabled,
-              appStore.autoCollectKey
+              !appStore.autoCollectEnabled
             );
           }}
         >
