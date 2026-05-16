@@ -26,5 +26,13 @@ const GistListItemSchema = z.object({
 
 export const GistArraySchema = z.array(GistListItemSchema);
 
+export const GithubUserSchema = z.object({
+  login: z.string(),
+  name: z.string().nullable(),
+  bio: z.string().nullable(),
+  avatar_url: z.string(),
+});
+
 export type Gist = z.infer<typeof GistSchema>;
 export type GistFile = z.infer<typeof GistFileSchema>;
+export type GithubUser = z.infer<typeof GithubUserSchema>;

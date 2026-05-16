@@ -43,6 +43,12 @@ const LangSchema = z.object({
   auto_sync_interval: z.string(),
   auto_sync_mins: z.string(),
   schema_error_body: z.string(),
+  auto_collect: z.string(),
+  btn_auto_collect_on: z.string(),
+  btn_auto_collect_off: z.string(),
+  collect_key_label: z.string(),
+  group_tools: z.string(),
+  group_sync: z.string(),
 });
 
 type Lang = z.infer<typeof LangSchema>;

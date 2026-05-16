@@ -1,4 +1,4 @@
-import type { SyncMessage, SyncResponse } from "@/shared/types";
+import { SyncMessageSchema, type SyncResponse } from "@/shared/types";
 import { uploadToGist, downloadFromGist, validateToken, getUserInfo } from "@/domains/github/api";
 import { getAutoSyncEnabled, getAutoSyncInterval, getGithubToken } from "@/shared/storage";
 import { smartSync } from "@/domains/sync/sync";
@@ -7,7 +7,15 @@ import { smartSync } from "@/domains/sync/sync";
  * Listener xử lý các tin nhắn từ Popup hoặc Content Script.
  * Các hàm API được gọi ở đây để tận dụng môi trường Background (tránh bị kill khi đóng popup).
  */
-chrome.runtime.onMessage.addListener((message: SyncMessage, _sender: chrome.runtime.MessageSender, sendResponse: (response?: SyncResponse) => void) => {
+chrome.runtime.onMessage.addListener((rawMessage: unknown, _sender: chrome.runtime.MessageSender, sendResponse: (response?: SyncResponse) => void) => {
+  const result = SyncMessageSchema.safeParse(rawMessage);
+
+  if (!result.success) {
+    console.error("[Background] Invalid message received:", result.error.format());
+    return false;
+  }
+
+  const message = result.data;
   console.debug("[Background] Received message:", message.type);
 
   if (message.type === "UPLOAD_TO_GIST") {
@@ -23,8 +31,19 @@ chrome.runtime.onMessage.addListener((message: SyncMessage, _sender: chrome.runt
     getUserInfo().then(sendResponse);
     return true;
   } else if (message.type === "SETTINGS_UPDATED") {
-    console.log("[Background] Settings updated, resetting alarm...");
+    console.log("[Background] Settings updated, resetting alarm and notifying tabs...");
     setupAlarm();
+
+    // Phát tín hiệu cho các content script ở các tab đang mở
+    chrome.tabs.query({}, (tabs) => {
+      tabs.forEach((tab) => {
+        if (tab.id) {
+          chrome.tabs.sendMessage(tab.id, { type: "SETTINGS_UPDATED" }).catch(() => {
+            // Bỏ qua lỗi nếu tab không có content script
+          });
+        }
+      });
+    });
     return false;
   }
   return false;

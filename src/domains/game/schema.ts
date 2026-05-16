@@ -105,26 +105,7 @@ const PlayerProfileSchema = z.object({
   zombieProps: z.record(z.string(), ProgressEntrySchema),
 }).strict();
 
-const KeyBindsSchema = z.record(z.string(), z.string()).refine(
-  (val) => {
-    const expectedKeys = [
-      "Game_Pause", "Game_SpeedUp", "Game_Card1", "Game_Card2", "Game_Card3",
-      "Game_Card4", "Game_Card5", "Game_Card6", "Game_Card7", "Game_Card8",
-      "Game_Plantfood", "Game_Shovel", "Game_CollectAll", "Game_ConveyorForward",
-      "Game_ConveyorBackward", "Game_HideUI", "Game_UIUpper", "Game_BananaLauncher",
-      "Game_MissileToe", "Game_Bamboozle", "Game_HollyKnight", "Game_IceShroom",
-      "AirRaid_W", "AirRaid_S", "AirRaid_A", "AirRaid_D",
-      "ZenGarden_Glove", "ZenGarden_Shovel", "ZenGarden_Cart", "ZenGarden_DealWithAll",
-      "ZenGarden_HideUI", "ZenGarden_Next",
-      "Sandbox_PushTide", "Sandbox_PullTide", "Sandbox_PushTideBy1Square",
-      "Sandbox_PullTideBy1Square", "Sandbox_ChangeJam", "Sandbox_SummonZombies",
-      "Sandbox_ChangeLawn", "Sandbox_TimeFreeze", "Sandbox_SwitchMusic", "Sandbox_Settings",
-      "Rhythm_PhatBeet1", "Rhythm_PhatBeet2", "Rhythm_PhatBeet3", "Rhythm_PhatBeet4", "Rhythm_PhatBeet5",
-    ];
-    return expectedKeys.every((k) => k in val);
-  },
-  { message: "KeyBinds missing required keys" },
-);
+const KeyBindsSchema = z.record(z.string(), z.string());
 
 const SettingsSchema = z.object({
   MusicSpeedMax: z.number(),
@@ -148,7 +129,7 @@ const SettingsSchema = z.object({
   PlayerIndex: z.number(),
   KeyBinds: KeyBindsSchema,
   ZombieAlert: z.boolean(),
-}).strict();
+});
 
 export const SaveDataSchema = z.object({
   PvZ2_PlayerProperties: z.array(PlayerProfileSchema),

@@ -11,6 +11,8 @@ const SettingsSchema = z.object({
   language: z.enum(SupportLanguage).default(SupportLanguage.En),
   autoSyncEnabled: z.boolean().default(false),
   autoSyncInterval: z.number().default(5),
+  autoCollectEnabled: z.boolean().default(false),
+  autoCollectKey: z.string().default("a"),
 });
 
 export type AppSettings = z.infer<typeof SettingsSchema>;
@@ -74,6 +76,16 @@ export async function getAutoSyncInterval(): Promise<number> {
   return (await getAllSettings()).autoSyncInterval;
 }
 
+/** Kiểm tra tính năng tự động nhặt mặt trời có đang bật hay không */
+export async function getAutoCollectEnabled(): Promise<boolean> {
+  return (await getAllSettings()).autoCollectEnabled;
+}
+
+/** Lấy phím tự động nhặt mặt trời */
+export async function getAutoCollectKey(): Promise<string> {
+  return (await getAllSettings()).autoCollectKey;
+}
+
 // --- Setters ---
 
 /** Lưu Gist ID vào storage */
@@ -94,6 +106,15 @@ export async function setGithubSettings(
   language: SupportLanguage,
   autoSyncEnabled: boolean,
   autoSyncInterval: number,
+  autoCollectEnabled: boolean,
+  autoCollectKey: string,
 ) {
-  await updateSettings({ githubToken, language, autoSyncEnabled, autoSyncInterval });
+  await updateSettings({
+    githubToken,
+    language,
+    autoSyncEnabled,
+    autoSyncInterval,
+    autoCollectEnabled,
+    autoCollectKey,
+  });
 }
