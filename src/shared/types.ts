@@ -3,7 +3,7 @@ import { SaveDataSchema } from "@/domains/game/schema";
 import { GithubUserSchema } from "@/domains/github/schema";
 import type { GithubUser } from "@/domains/github/schema";
 
-export enum View { Main = "main", Settings = "settings" }
+export enum View { Main = "main", Settings = "settings", Guide = "guide" }
 
 export const SyncMessageSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("UPLOAD_TO_GIST"), data: SaveDataSchema }),

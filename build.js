@@ -39,19 +39,22 @@ async function runBuild() {
     console.log('Compiling SCSS...');
     try {
         execSync(`npx sass src/styles/app.scss ${path.join(chromeDir, 'popup.css')} --no-source-map`, { stdio: 'inherit' });
+        execSync(`npx sass src/styles/app.scss ${path.join(chromeDir, 'guide.css')} --no-source-map`, { stdio: 'inherit' });
         execSync(`npx sass src/styles/app.scss ${path.join(firefoxDir, 'popup.css')} --no-source-map`, { stdio: 'inherit' });
+        execSync(`npx sass src/styles/app.scss ${path.join(firefoxDir, 'guide.css')} --no-source-map`, { stdio: 'inherit' });
     } catch (e) {
         console.error('SCSS compilation failed.');
         process.exit(1);
     }
 
     console.log('Bundling with esbuild...');
-    
+
     // Entry points for bundling
     const entryPoints = [
         'extension/background.ts',
         'extension/content.ts',
         'popup-entry.ts',
+        'guide-entry.ts',
     ].map(file => path.join(srcDir, file));
 
     // Common esbuild config
@@ -62,7 +65,7 @@ async function runBuild() {
         sourcemap: false,
         platform: 'browser',
         target: ['esnext'],
-        plugins: [sveltePlugin({ 
+        plugins: [sveltePlugin({
             compilerOptions: { runes: true },
             preprocess: sveltePreprocess()
         })],
@@ -77,11 +80,19 @@ async function runBuild() {
     });
     // Rename popup-entry.js → popup.js
     fs.renameSync(path.join(chromeDir, 'popup-entry.js'), path.join(chromeDir, 'popup.js'));
+    // Rename guide-entry.js → guide.js
+    fs.renameSync(path.join(chromeDir, 'guide-entry.js'), path.join(chromeDir, 'guide.js'));
     // Generated popup-entry.css contains component styles
     if (fs.existsSync(path.join(chromeDir, 'popup-entry.css'))) {
         const componentCss = fs.readFileSync(path.join(chromeDir, 'popup-entry.css'));
         fs.appendFileSync(path.join(chromeDir, 'popup.css'), componentCss);
         fs.rmSync(path.join(chromeDir, 'popup-entry.css'));
+    }
+    // Generated guide-entry.css contains guide component styles
+    if (fs.existsSync(path.join(chromeDir, 'guide-entry.css'))) {
+        const componentCss = fs.readFileSync(path.join(chromeDir, 'guide-entry.css'));
+        fs.appendFileSync(path.join(chromeDir, 'guide.css'), componentCss);
+        fs.rmSync(path.join(chromeDir, 'guide-entry.css'));
     }
     // Build for Firefox
     await esbuild.build({
@@ -91,17 +102,26 @@ async function runBuild() {
         outExtension: { '.js': '.js' },
     });
     fs.renameSync(path.join(firefoxDir, 'popup-entry.js'), path.join(firefoxDir, 'popup.js'));
+    // Rename guide-entry.js → guide.js
+    fs.renameSync(path.join(firefoxDir, 'guide-entry.js'), path.join(firefoxDir, 'guide.js'));
     // Generated popup-entry.css contains component styles
     if (fs.existsSync(path.join(firefoxDir, 'popup-entry.css'))) {
         const componentCss = fs.readFileSync(path.join(firefoxDir, 'popup-entry.css'));
         fs.appendFileSync(path.join(firefoxDir, 'popup.css'), componentCss);
         fs.rmSync(path.join(firefoxDir, 'popup-entry.css'));
     }
+    // Generated guide-entry.css contains guide component styles
+    if (fs.existsSync(path.join(firefoxDir, 'guide-entry.css'))) {
+        const componentCss = fs.readFileSync(path.join(firefoxDir, 'guide-entry.css'));
+        fs.appendFileSync(path.join(firefoxDir, 'guide.css'), componentCss);
+        fs.rmSync(path.join(firefoxDir, 'guide-entry.css'));
+    }
 
     console.log('Copying assets...');
     const assets = [
         'manifest.json',
-        'popup.html'
+        'popup.html',
+        'guide.html'
     ];
 
     function copyAssets(targetDir, isFirefox = false) {
@@ -120,7 +140,7 @@ async function runBuild() {
                         scripts: ["background.js"],
                         type: "module"
                     };
-                    manifest.permissions = manifest.permissions.filter(function(p) { return p !== 'declarativeContent'; });
+                    manifest.permissions = manifest.permissions.filter(function (p) { return p !== 'declarativeContent'; });
                     delete manifest.host_permissions;
                 }
                 content = JSON.stringify(manifest, null, 2);
@@ -137,6 +157,16 @@ async function runBuild() {
         if (fs.existsSync(iconsSrc)) {
             fs.readdirSync(iconsSrc).forEach(icon => {
                 fs.copyFileSync(path.join(iconsSrc, icon), path.join(iconsTarget, icon));
+            });
+        }
+
+        // Copy images
+        const imagesTarget = path.join(targetDir, 'images');
+        fs.mkdirSync(imagesTarget, { recursive: true });
+        const imagesSrc = path.join(srcDir, 'images');
+        if (fs.existsSync(imagesSrc)) {
+            fs.readdirSync(imagesSrc).forEach(img => {
+                fs.copyFileSync(path.join(imagesSrc, img), path.join(imagesTarget, img));
             });
         }
     }

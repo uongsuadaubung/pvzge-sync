@@ -53,13 +53,22 @@
   {/if}
 
   {#if showSettings}
-    <Button variant="settings" onclick={() => appStore.navigate(View.Settings)} title={t("settings_title")}>
-      ⚙️
-    </Button>
+    <div class="header-actions">
+      <Button variant="settings" onclick={() => chrome.tabs.create({ url: chrome.runtime.getURL("guide.html") })} title={t("guide_title")}>
+        ❓
+      </Button>
+      <Button variant="settings" onclick={() => appStore.navigate(View.Settings)} title={t("settings_title")}>
+        ⚙️
+      </Button>
+    </div>
   {/if}
 </header>
 
 <style lang="scss">
+  .header-actions {
+    display: flex;
+    gap: 8px;
+  }
   header {
     display: flex;
     align-items: center;
