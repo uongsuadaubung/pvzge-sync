@@ -105,7 +105,55 @@ const PlayerProfileSchema = z.object({
   zombieProps: z.record(z.string(), ProgressEntrySchema),
 }).strict();
 
-const KeyBindsSchema = z.record(z.string(), z.string());
+const KeyBindsSchema = z.object({
+  Game_Pause: z.string(),
+  Game_SpeedUp: z.string(),
+  Game_Card1: z.string(),
+  Game_Card2: z.string(),
+  Game_Card3: z.string(),
+  Game_Card4: z.string(),
+  Game_Card5: z.string(),
+  Game_Card6: z.string(),
+  Game_Card7: z.string(),
+  Game_Card8: z.string(),
+  Game_Plantfood: z.string(),
+  Game_Shovel: z.string(),
+  Game_CollectAll: z.string(),
+  Game_ConveyorForward: z.string(),
+  Game_ConveyorBackward: z.string(),
+  Game_HideUI: z.string(),
+  Game_UIUpper: z.string(),
+  Game_BananaLauncher: z.string(),
+  Game_MissileToe: z.string(),
+  Game_Bamboozle: z.string(),
+  Game_HollyKnight: z.string(),
+  Game_IceShroom: z.string(),
+  AirRaid_W: z.string(),
+  AirRaid_S: z.string(),
+  AirRaid_A: z.string(),
+  AirRaid_D: z.string(),
+  ZenGarden_Glove: z.string(),
+  ZenGarden_Shovel: z.string(),
+  ZenGarden_Cart: z.string(),
+  ZenGarden_DealWithAll: z.string(),
+  ZenGarden_HideUI: z.string(),
+  ZenGarden_Next: z.string(),
+  Sandbox_PushTide: z.string(),
+  Sandbox_PullTide: z.string(),
+  Sandbox_PushTideBy1Square: z.string(),
+  Sandbox_PullTideBy1Square: z.string(),
+  Sandbox_ChangeJam: z.string(),
+  Sandbox_SummonZombies: z.string(),
+  Sandbox_ChangeLawn: z.string(),
+  Sandbox_TimeFreeze: z.string(),
+  Sandbox_SwitchMusic: z.string(),
+  Sandbox_Settings: z.string(),
+  Rhythm_PhatBeet1: z.string(),
+  Rhythm_PhatBeet2: z.string(),
+  Rhythm_PhatBeet3: z.string(),
+  Rhythm_PhatBeet4: z.string(),
+  Rhythm_PhatBeet5: z.string(),
+}).strict();
 
 const SettingsSchema = z.object({
   MusicSpeedMax: z.number(),
@@ -129,7 +177,7 @@ const SettingsSchema = z.object({
   PlayerIndex: z.number(),
   KeyBinds: KeyBindsSchema,
   ZombieAlert: z.boolean(),
-});
+}).strict();
 
 export const SaveDataSchema = z.object({
   PvZ2_PlayerProperties: z.array(PlayerProfileSchema),

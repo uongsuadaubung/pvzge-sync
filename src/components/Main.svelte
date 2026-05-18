@@ -11,6 +11,7 @@
   let fileInput = $state<HTMLInputElement>(null!);
   let downloadAnchor = $state<HTMLAnchorElement>(null!);
   let loading = $state(false);
+  let syncCooldown = $state(false);
 
   // Derived từ store — tự cập nhật khi token thay đổi
   let lastSyncMsg = $derived(
@@ -23,6 +24,8 @@
 
   async function handleSync() {
     loading = true;
+    syncCooldown = true;
+    setTimeout(() => { syncCooldown = false; }, 10_000);
     try {
       const synced = await smartSync(true);
       if (synced) appStore.lastSync = Date.now();
@@ -130,7 +133,7 @@
           <h3>{t("cloud_sync")}</h3>
         </div>
         <div class="button-group">
-          <Button fullWidth onclick={handleSync} disabled={loading}>
+          <Button fullWidth onclick={handleSync} disabled={loading || syncCooldown}>
             {t("btn_sync")}
           </Button>
         </div>

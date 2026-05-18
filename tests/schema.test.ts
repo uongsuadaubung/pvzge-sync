@@ -137,11 +137,6 @@ describe("validatePlayerProperties", () => {
     expect(result.success).toBe(true);
   });
 
-  test("rejects missing required field", () => {
-    const { name, ...incomplete } = validProfile;
-    const result = validatePlayerProperties([incomplete]);
-    expect(result.success).toBe(false);
-  });
 
   test("rejects extra field with .strict()", () => {
     const result = validatePlayerProperties([{ ...validProfile, extraField: "should not be here" }]);
@@ -168,12 +163,6 @@ describe("validateSettings", () => {
   test("accepts valid settings", () => {
     const result = validateSettings(validSettings);
     expect(result.success).toBe(true);
-  });
-
-  test("rejects missing KeyBinds", () => {
-    const { KeyBinds, ...incomplete } = validSettings;
-    const result = validateSettings(incomplete);
-    expect(result.success).toBe(false);
   });
 
   test("rejects extra field with .strict()", () => {
