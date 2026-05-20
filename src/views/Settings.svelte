@@ -2,14 +2,14 @@
   import { onMount } from "svelte";
   import { t, SupportLanguage } from "@/shared/i18n.svelte";
   import { appStore } from "@/shared/store.svelte";
-  import Header from "./Header.svelte";
-  import Button from "./Button.svelte";
-  import UserProfile from "./UserProfile.svelte";
+  import Header from "@/components/Header.svelte";
+  import Button from "@/components/Button.svelte";
+  import UserProfile from "@/components/UserProfile.svelte";
   import { View } from "@/shared/types";
-  import NumberInput from "./NumberInput.svelte";
-  import Select from "./Select.svelte";
-  import Checkbox from "./Checkbox.svelte";
-  import Input from "./Input.svelte";
+  import NumberInput from "@/components/NumberInput.svelte";
+  import Select from "@/components/Select.svelte";
+  import Checkbox from "@/components/Checkbox.svelte";
+  import Input from "@/components/Input.svelte";
   import type { SyncResponse } from "@/shared/types";
 
   let tokenInput = $state("");
@@ -146,7 +146,7 @@
               rel="noopener noreferrer">{t("help_click_here")}</a
             >
           </p>
-          <ul>
+          <ul style="padding-left: 16px;">
             <li>{@html t("help_step1")}</li>
             <li>{t("help_step2")}</li>
           </ul>

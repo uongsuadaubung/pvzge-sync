@@ -3,9 +3,9 @@
   import { t } from "@/shared/i18n.svelte";
   import { GAME_HOST } from "@/shared/constants";
   import { smartSync } from "@/domains/sync/sync";
-  import Main from "@/components/Main.svelte";
-  import Settings from "@/components/Settings.svelte";
-  import Notice from "@/components/Notice.svelte";
+  import Main from "@/views/Main.svelte";
+  import Settings from "@/views/Settings.svelte";
+  import Notice from "@/views/Notice.svelte";
   import { appStore } from "@/shared/store.svelte";
   import { View } from "@/shared/types";
   let ready = $state(false);

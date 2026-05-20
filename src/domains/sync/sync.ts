@@ -147,3 +147,35 @@ export async function smartSync(allowPush = false): Promise<boolean> {
     throw new Error(uploadR.error);
   }
 }
+
+/**
+ * Cưỡng bức tải dữ liệu local lên Cloud (Ghi đè Đám mây)
+ */
+export async function forceUploadToCloud(): Promise<void> {
+  console.log("[Sync] Force uploading local data to cloud...");
+  const local = await getLocalData();
+  const uploadR = await uploadToGist(local);
+  if (!uploadR.success) {
+    throw new Error(uploadR.error || "Force upload failed");
+  }
+  await setLastSync();
+  console.log("[Sync] Force upload completed successfully.");
+}
+
+/**
+ * Cưỡng bức tải dữ liệu từ Cloud về (Ghi đè máy này)
+ */
+export async function forceDownloadFromCloud(): Promise<void> {
+  console.log("[Sync] Force downloading remote data from cloud...");
+  const local = await getLocalData().catch(() => null);
+  const r = await downloadFromGist();
+  if (!r.success) {
+    throw new Error(r.error || "Force download failed");
+  }
+  if (!("data" in r)) {
+    throw new Error("No data found in Gist response");
+  }
+  const dataToApply = local ? preserveLocalDate(r.data, local) : r.data;
+  await applyRemoteToGame(dataToApply);
+  console.log("[Sync] Force download completed successfully.");
+}

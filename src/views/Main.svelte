@@ -1,17 +1,46 @@
 <script lang="ts">
   import { t } from "@/shared/i18n.svelte";
 
-  import { smartSync, getLocalData, applyRemoteToGame } from "@/domains/sync/sync";
+  import { smartSync, getLocalData, applyRemoteToGame, forceUploadToCloud, forceDownloadFromCloud } from "@/domains/sync/sync";
   import { SaveDataSchema } from "@/domains/game/schema";
 
   import { appStore } from "@/shared/store.svelte";
-  import Header from "./Header.svelte";
-  import Button from "./Button.svelte";
+  import Header from "@/components/Header.svelte";
+  import Button from "@/components/Button.svelte";
 
   let fileInput = $state<HTMLInputElement>(null!);
   let downloadAnchor = $state<HTMLAnchorElement>(null!);
   let loading = $state(false);
   let syncCooldown = $state(false);
+  let showAdvanced = $state(false);
+
+  async function handleForceUpload() {
+    if (!confirm(t("msg_force_upload_confirm"))) return;
+    loading = true;
+    try {
+      await forceUploadToCloud();
+      appStore.lastSync = Date.now();
+      alert(t("msg_force_upload_success"));
+    } catch (e: unknown) {
+      alert("Error: " + (e instanceof Error ? e.message : String(e)));
+    } finally {
+      loading = false;
+    }
+  }
+
+  async function handleForceDownload() {
+    if (!confirm(t("msg_force_download_confirm"))) return;
+    loading = true;
+    try {
+      await forceDownloadFromCloud();
+      appStore.lastSync = Date.now();
+      alert(t("msg_force_download_success"));
+    } catch (e: unknown) {
+      alert("Error: " + (e instanceof Error ? e.message : String(e)));
+    } finally {
+      loading = false;
+    }
+  }
 
   // Derived từ store — tự cập nhật khi token thay đổi
   let lastSyncMsg = $derived(
@@ -137,6 +166,41 @@
             {t("btn_sync")}
           </Button>
         </div>
+
+        <div class="advanced-wrapper">
+          <button 
+            type="button" 
+            class="advanced-toggle" 
+            onclick={() => showAdvanced = !showAdvanced}
+            aria-expanded={showAdvanced}
+          >
+            <span>{t("advanced_title")}</span>
+            <span class="arrow-icon {showAdvanced ? 'open' : ''}">▼</span>
+          </button>
+
+          {#if showAdvanced}
+            <div class="advanced-content">
+              <Button 
+                variant="outline" 
+                fullWidth 
+                onclick={handleForceUpload} 
+                disabled={loading}
+                class="force-btn force-upload"
+              >
+                {t("btn_force_upload")}
+              </Button>
+              <Button 
+                variant="outline" 
+                fullWidth 
+                onclick={handleForceDownload} 
+                disabled={loading}
+                class="force-btn force-download"
+              >
+                {t("btn_force_download")}
+              </Button>
+            </div>
+          {/if}
+        </div>
       </section>
     {/if}
 
@@ -241,5 +305,59 @@
     grid-template-columns: 1fr 1fr;
     gap: 10px;
   }
-</style>
 
+  .advanced-wrapper {
+    margin-top: 14px;
+    border-top: 1px dashed var(--border);
+    padding-top: 10px;
+  }
+
+  .advanced-toggle {
+    background: transparent;
+    border: none;
+    padding: 6px 0;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--text-dim);
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: color 0.2s;
+
+    &:hover {
+      color: var(--primary);
+    }
+
+    .arrow-icon {
+      font-size: 0.65rem;
+      transition: transform 0.2s ease;
+      
+      &.open {
+        transform: rotate(180deg);
+      }
+    }
+  }
+
+  .advanced-content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 8px;
+    animation: slideDown 0.2s ease-out forwards;
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+</style>

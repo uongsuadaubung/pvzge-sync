@@ -2,7 +2,7 @@
   import { t } from "@/shared/i18n.svelte";
   import { appStore } from "@/shared/store.svelte";
   import { View } from "@/shared/types";
-  import Button from "./Button.svelte";
+  import Button from "@/components/Button.svelte";
 
   interface Props {
     title?: string;
