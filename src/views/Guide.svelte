@@ -2,7 +2,7 @@
   import { onMount } from "svelte";
   import { t, SupportLanguage } from "@/shared/i18n.svelte";
   import { appStore } from "@/shared/store.svelte";
-  import Button from "./Button.svelte";
+  import Button from "@/components/Button.svelte";
 
   // Assets
   const heroImage = chrome.runtime.getURL("images/guide_hero.png");

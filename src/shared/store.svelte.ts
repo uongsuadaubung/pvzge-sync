@@ -7,10 +7,10 @@ import {
   getAutoCollectEnabled,
   setGithubSettings,
   clearAuth,
-} from "./storage";
-import { setLanguage } from "./i18n.svelte";
-import { SupportLanguage } from "./i18n.svelte";
-import { SyncResponseSchema, View, type GithubUser } from "./types";
+} from "@/shared/storage";
+import { setLanguage } from "@/shared/i18n.svelte";
+import { SupportLanguage } from "@/shared/i18n.svelte";
+import { SyncResponseSchema, View, type GithubUser } from "@/shared/types";
 
 /**
  * App Store sử dụng Svelte 5 Runes ($state).

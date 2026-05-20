@@ -1,5 +1,5 @@
 import { SAVE_KEYS } from "@/shared/constants";
-import { validateSaveData, validateSettings, type SaveData } from "./schema";
+import { validateSaveData, validateSettings, type SaveData } from "@/domains/game/schema";
 
 /**
  * Đọc dữ liệu thô từ localStorage của game.

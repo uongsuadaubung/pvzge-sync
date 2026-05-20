@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { SupportLanguage } from "./i18n.svelte";
+import { SupportLanguage } from "@/shared/i18n.svelte";
 
 /**
  * Schema định nghĩa cấu trúc dữ liệu lưu trữ trong chrome.storage.local.

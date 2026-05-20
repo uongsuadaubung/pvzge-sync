@@ -33,6 +33,13 @@ const LangSchema = z.object({
   not_game_page_body: z.string(),
   schema_error_title: z.string(),
   btn_sync: z.string(),
+  advanced_title: z.string(),
+  btn_force_upload: z.string(),
+  btn_force_download: z.string(),
+  msg_force_upload_confirm: z.string(),
+  msg_force_download_confirm: z.string(),
+  msg_force_upload_success: z.string(),
+  msg_force_download_success: z.string(),
   token_validating: z.string(),
   token_invalid: z.string(),
   token_label: z.string(),
@@ -124,8 +131,8 @@ export enum SupportLanguage {
 export type TranslationKey = keyof Lang;
 
 const loaders: Record<SupportLanguage, () => Promise<unknown>> = {
-  [SupportLanguage.En]: () => import("../locales/en.json").then((m) => m.default),
-  [SupportLanguage.Vi]: () => import("../locales/vi.json").then((m) => m.default),
+  [SupportLanguage.En]: () => import("@/locales/en.json").then((m) => m.default),
+  [SupportLanguage.Vi]: () => import("@/locales/vi.json").then((m) => m.default),
 };
 
 let translations = $state<Partial<Lang>>({});
