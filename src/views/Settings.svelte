@@ -147,7 +147,7 @@
             >
           </p>
           <ul style="padding-left: 16px;">
-            <li>{@html t("help_step1")}</li>
+            <li>{t("help_step1")}</li>
             <li>{t("help_step2")}</li>
           </ul>
         </div>

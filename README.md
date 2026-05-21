@@ -6,146 +6,146 @@
 [![Manifest V3](https://img.shields.io/badge/Manifest-V3-4285f4?style=for-the-badge&logo=google-chrome&logoColor=white)](https://developer.chrome.com/docs/extensions/mv3/intro/)
 [![License: ISC](https://img.shields.io/badge/License-ISC-blue?style=for-the-badge)](https://opensource.org/licenses/ISC)
 
-Một browser extension mã nguồn mở giúp tự động đồng bộ hóa đám mây, tự động thu thập tài nguyên và sao lưu tiến trình ngoại tuyến cho tựa game **Plants vs. Zombies Gardenless Edition (PvZGE)** trên trang web chính thức [play.pvzge.com](https://play.pvzge.com).
+An open-source browser extension that enables automatic cloud synchronization, automatic resource collection, and offline backup for **Plants vs. Zombies Gardenless Edition (PvZGE)** on the official website [play.pvzge.com](https://play.pvzge.com).
 
-Dự án được viết bằng **Svelte 5 (Runes)**, **TypeScript**, **Sass/SCSS**, đóng gói bằng **Esbuild** và chạy tốt trên cả Google Chrome lẫn Mozilla Firefox.
-
----
-
-## ⚡ Các tính năng chính
-
-### 1. 🔄 Tự động đồng bộ với Cloud (GitHub Gist)
-* **Tránh mất save:** Extension tự động so sánh dữ liệu save game trên máy của bạn (Local) và trên mạng (Cloud) để bạn không bị tải đè nhầm file cũ.
-* **Tự động lưu:** Tự động tải save game lên Cloud sau mỗi khoảng thời gian bạn đặt (ví dụ: 5, 10, 30 phút...).
-* **Giữ nguyên thời gian chơi:** Giữ lại thông tin ngày giờ trong file save để tránh bị lỗi đếm giờ hoặc reset sự kiện trong game.
-* **Hỏi khi lệch file:** Nếu file save trên máy và trên cloud khác nhau, extension sẽ hiện bảng so sánh để bạn chọn giữ bản nào.
-
-### 2. ☀️ Tự động nhặt vật phẩm (Auto Collect)
-Tự động nhặt Mặt Trời, Tiền Vàng, Xu Bạc rơi trên sân đấu giúp bạn rảnh tay tập trung bày trận.
-
-### 3. 💾 Tải save về máy tính (Offline Backup)
-Bạn có thể tải file save (.json) về máy tính để cất đi, hoặc import file đã có từ máy tính vào lại game mà không cần mạng.
-
-### 4. 🌐 Hỗ trợ 2 ngôn ngữ
-Hỗ trợ chuyển đổi dễ dàng giữa **Tiếng Việt 🇻🇳** và **English 🇬🇧**.
-
-### 5. 🎨 Giao diện Glassmorphism trực quan
-Giao diện kiểu mờ kính đẹp mắt, dễ sử dụng trên cả máy tính và điện thoại.
+This project is built using **Svelte 5 (Runes)**, **TypeScript**, **Sass/SCSS**, bundled with **Esbuild**, and runs beautifully on both Google Chrome and Mozilla Firefox.
 
 ---
 
-## 🛠️ Hướng dẫn cài đặt (Installation Guide)
+## ⚡ Key Features
 
-Sản phẩm sau khi được build thành công sẽ nằm trong thư mục `/dist`. Bạn có thể cài đặt bản giải nén này vào trình duyệt của mình:
+### 1. 🔄 Automatic Cloud Sync (GitHub Gist)
+* **Prevent Data Loss:** Automatically compares local and cloud saves to prevent accidental overwrites of newer progress.
+* **Auto-Save Timer:** Periodically uploads your save file to the cloud at customizable intervals (e.g., every 5, 10, 30 minutes...).
+* **Timestamp Integrity:** Preserves the correct timestamps inside the save data to prevent in-game clock issues or event resets.
+* **Conflict Resolution:** Displays a clear side-by-side comparison screen if local and cloud saves differ, allowing you to choose which save to keep.
 
-### 1. Dành cho Google Chrome & Các trình duyệt Chromium (Edge, Brave, CocCoc, Opera...)
-1. Đảm bảo bạn đã chạy lệnh build và có thư mục `dist/chrome` (hoặc giải nén tệp `dist/chrome.zip`).
-2. Mở trình duyệt, truy cập địa chỉ [chrome://extensions/](chrome://extensions/).
-3. Bật công tắc **Developer mode** (Chế độ nhà phát triển) ở góc trên bên phải.
-4. Nhấp vào nút **Load unpacked** (Tải tiện ích đã giải nén) ở góc bên trái.
-5. Trỏ tới thư mục `dist/chrome` trên máy tính của bạn và nhấn **Select Folder**.
-6. Ghim biểu tượng Extension lên thanh công cụ của trình duyệt và bắt đầu trải nghiệm!
+### 2. ☀️ Auto-Collect Utility
+Automatically collects Suns, Gold/Silver Coins, and items appearing on the lawn to let you focus fully on your strategic defense.
 
-### 2. Dành cho Mozilla Firefox
-#### Cách 1: Cài đặt tạm thời (Dành cho nhà phát triển - sẽ mất khi tắt trình duyệt)
-1. Mở Firefox, truy cập địa chỉ [about:debugging#/runtime/this-firefox](about:debugging#/runtime/this-firefox).
-2. Nhấp vào nút **Load Temporary Add-on...** (Tải Add-on tạm thời...).
-3. Trỏ tới thư mục `dist/firefox` trên máy tính và chọn tệp `manifest.json`.
+### 3. 💾 Offline Backup & Restore
+Download your active game save directly as a `.json` file to your computer, or import an existing save file to restore your progress instantly without internet.
 
-#### Cách 2: Cài đặt vĩnh viễn (Yêu cầu Firefox Developer Edition hoặc Firefox Nightly)
-1. Mở Firefox Developer/Nightly, truy cập địa chỉ `about:config`.
-2. Tìm từ khóa `xpinstall.signatures.required` và nhấp đúp để chuyển giá trị thành `false`.
-3. Truy cập địa chỉ [about:addons](about:addons), bấm vào biểu tượng bánh răng cài đặt ở góc trên bên phải -> Chọn **Install Add-on From File...** (Cài đặt add-on từ tệp...).
-4. Chọn tệp `dist/firefox.zip` của bạn để cài đặt vĩnh viễn.
+### 4. 🌐 Multilingual Support
+Easily toggle between **English 🇬🇧** and **Tiếng Việt 🇻🇳**.
+
+### 5. 🎨 Stunning Glassmorphism UI
+A gorgeous, modern glass-morphic popup user interface, fully responsive and optimized for both desktop and mobile-sized browser extensions.
 
 ---
 
-## 🔑 Hướng dẫn tạo GitHub Token để lưu save
+## 🛠️ Installation Guide
 
-Để tự động đồng bộ save game lên mạng, extension cần kết nối với GitHub Gist cá nhân của bạn. Các bước thực hiện như sau:
+Once built, the production files are compiled into the `/dist` directory. You can load this unpacked directory into your browser:
 
-1. **Đăng nhập:** Đăng nhập vào tài khoản [GitHub](https://github.com) của bạn.
-2. **Tạo nhanh Token:** Bấm vào link này để mở nhanh trang tạo Token: [Tạo nhanh GitHub Token (Gist)](https://github.com/settings/tokens/new?description=PVZGE%20Sync&scopes=gist).
-3. **Cài đặt:**
-   * **Note:** Đặt tên gợi nhớ (ví dụ: `PvZGE Save`).
-   * **Expiration:** Chọn **No expiration** (Không hết hạn) để không bị lỗi đồng bộ sau này.
-   * **Scopes:** Đảm bảo ô **gist** đã được tích chọn (đây là quyền duy nhất extension cần).
-4. **Tạo & Lưu:** Cuộn xuống dưới cùng và bấm nút màu xanh lá **Generate token**.
-5. **Điền vào extension:** Copy mã Token vừa hiển thị (bắt đầu bằng `ghp_`). Bấm vào icon extension trên trình duyệt, chọn **Cài đặt**, dán mã Token vào ô rồi bấm **Lưu**.
+### 1. Google Chrome & Chromium-based Browsers (Edge, Brave, Opera, Coccoc...)
+1. Run the build script and ensure you have the `dist/chrome` folder (or extract `dist/chrome.zip`).
+2. Open Chrome and navigate to [chrome://extensions/](chrome://extensions/).
+3. Enable **Developer mode** using the toggle switch in the top-right corner.
+4. Click the **Load unpacked** button in the top-left corner.
+5. Select the `dist/chrome` folder on your computer.
+6. Pin the extension icon to your toolbar and enjoy!
+
+### 2. Mozilla Firefox
+#### Method 1: Temporary Installation (For Development - resets when browser closes)
+1. Open Firefox and navigate to [about:debugging#/runtime/this-firefox](about:debugging#/runtime/this-firefox).
+2. Click the **Load Temporary Add-on...** button.
+3. Select the `manifest.json` file inside the `dist/firefox` folder.
+
+#### Method 2: Permanent Installation (Requires Firefox Developer Edition or Firefox Nightly)
+1. Navigate to `about:config` in Firefox.
+2. Search for `xpinstall.signatures.required` and double-click to set it to `false`.
+3. Go to [about:addons](about:addons), click the gear icon in the top-right, and select **Install Add-on From File...**.
+4. Choose the `dist/firefox.zip` file to install it permanently.
+
+---
+
+## 🔑 How to Generate a GitHub Token
+
+To securely connect your game save with the cloud, the extension utilizes your personal GitHub Gists. Follow these simple steps:
+
+1. **Sign In:** Log in to your [GitHub](https://github.com) account.
+2. **Quick Token Creation:** Click this link to open the pre-configured token generation page: [Quick GitHub Token Generation (Gist)](https://github.com/settings/tokens/new?description=PVZGE%20Sync&scopes=gist).
+3. **Configure:**
+   * **Note:** Enter a description (e.g., `PvZGE Save`).
+   * **Expiration:** Select **No expiration** to prevent future sync failures.
+   * **Scopes:** Ensure the **gist** scope checkbox is checked (this is the only permission required).
+4. **Generate:** Scroll to the bottom and click the green **Generate token** button.
+5. **Save Settings:** Copy the generated token string (starts with `ghp_`). Open the extension, click **Settings**, paste it into the GitHub Token field, and click **Save**.
 
 > [!WARNING]
-> **LƯU Ý:** Tuyệt đối không chia sẻ Token này cho người khác. Extension chỉ lưu Token ngay trên máy tính của bạn và gửi trực tiếp tới GitHub, không đi qua bất kỳ server nào khác.
+> **IMPORTANT SECURITY NOTE:** Never share your GitHub Token with anyone else. The extension only stores it locally in your browser's secure storage and communicates directly with GitHub APIs. No middleman or third-party servers are used.
 
 ---
 
-## 📂 Sơ đồ cấu trúc thư mục dự án
+## 📂 Project Structure
 
 ```text
 pvzge-sync/
-├── .github/              # Cấu hình GitHub Actions
-├── dist/                 # Thư mục chứa sản phẩm sau khi build (Chrome & Firefox)
-├── src/                  # Mã nguồn chính của dự án
-│   ├── components/       # Các thành phần giao diện (Svelte 5)
-│   ├── domains/          # Xử lý logic chính
-│   │   ├── game/         # Đọc/ghi save game & Schema kiểm tra save
-│   │   ├── github/       # Kết nối với GitHub Gist API
-│   │   └── sync/         # Logic so sánh file save để đồng bộ
-│   ├── extension/        # Điểm khởi chạy của Extension
-│   │   ├── background.ts # Service Worker nền quản lý Alarm và API
-│   │   └── content.ts    # Content Script tiêm vào game (Auto Collect & Storage)
-│   ├── icons/            # Các biểu tượng ứng dụng với kích thước khác nhau
-│   ├── images/           # Tài nguyên hình ảnh hướng dẫn sử dụng
-│   ├── locales/          # File ngôn ngữ lưu trữ JSON (vi.json, en.json)
-│   ├── shared/           # Trạng thái chung, dịch thuật, cấu hình constants
-│   ├── views/            # Các trang giao diện chính (Main, Settings, Guide, Notice)
-│   ├── guide.html        # Trang hướng dẫn chi tiết
-│   ├── manifest.json     # File cấu hình của Chrome Extension (Manifest V3)
-│   └── popup.html        # Giao diện popup khi nhấp vào icon
-├── build.js              # Script NodeJS đóng gói dự án bằng Esbuild
-├── version.mjs           # Script nâng cấp phiên bản tự động
-├── package.json          # Quản lý dependencies và script định nghĩa
-└── tsconfig.json         # Cấu hình dự án TypeScript
+├── .github/              # GitHub Actions workflows configuration
+├── dist/                 # Compiled production outputs (Chrome & Firefox)
+├── src/                  # Main extension source code
+│   ├── components/       # UI Components (Svelte 5)
+│   ├── domains/          # Core Domain Logic
+│   │   ├── game/         # Save reader/writer & schema validation
+│   │   ├── github/       # GitHub Gist API client
+│   │   └── sync/         # Save comparison & sync manager
+│   ├── extension/        # Extension Entrypoints
+│   │   ├── background.ts # Background script managing alarms, sync schedules
+│   │   └── content.ts    # Content script injected into play.pvzge.com (Auto Collect & storage hooks)
+│   ├── icons/            # Asset icons in multiple sizes
+│   ├── images/           # Images & diagrams used in the user guide
+│   ├── locales/          # Localization JSON files (en.json, vi.json)
+│   ├── shared/           # Common utilities, constants, and i18n states
+│   ├── views/            # Main views (Home view, Settings view, Guide view, Notice dialogs)
+│   ├── guide.html        # Detailed user guide page
+│   ├── manifest.json     # Extension configuration (Manifest V3)
+│   └── popup.html        # Main popup HTML anchor
+├── build.js              # esbuild node compiler & platform post-processor
+├── version.mjs           # Automatic versioning bumping script
+├── package.json          # Node dependencies & npm commands definition
+└── tsconfig.json         # TypeScript configuration
 ```
 
 ---
 
-## 🏗️ Lệnh phát triển (For Developers)
+## 🏗️ Development & Build Commands
 
-### 1. Cài đặt các thư viện phụ thuộc
-Trước khi bắt đầu, hãy cài đặt đầy đủ các thư viện devDependencies cần thiết:
+### 1. Install Dependencies
+Before developing or building, install the required packages:
 ```bash
 npm install
 ```
 
-### 2. Biên dịch và Đóng gói dự án
-Chạy script NodeJS tự động biên dịch toàn bộ mã nguồn:
+### 2. Build the Extension
+Compile, bundle, and package the production zip archives:
 ```bash
 node build.js
 ```
 
 > [!NOTE]
-> **Quy trình hoạt động của lệnh `build.js`:**
-> 1. **Kiểm tra chuẩn mã nguồn:** Tự động chạy `eslint src` (`npm run lint`) để rà soát lỗi code.
-> 2. **Kiểm tra kiểu dữ liệu:** Chạy `svelte-check` (`npm run check`) để xác thực an toàn kiểu dữ liệu TypeScript & Svelte.
-> 3. **Biên dịch SCSS:** Sử dụng bộ biên dịch `sass` chuyển đổi tệp stylesheet `src/styles/app.scss` thành tệp tin css thuần cho popup và trang hướng dẫn của cả Chrome lẫn Firefox.
-> 4. **Đóng gói JS/TS/Svelte:** Sử dụng `esbuild` biên dịch và tối ưu hóa (minify) mã nguồn TypeScript/Svelte 5 với hiệu năng siêu tốc.
-> 5. **Sao chép & Xử lý tài nguyên:** Tự động sao chép các tệp tin HTML, các biểu tượng `icons/` và hình ảnh hướng dẫn `images/` vào thư mục đích.
-> 6. **Cấu hình riêng cho Firefox:** Script tự động điều chỉnh tệp `manifest.json` trong thư mục Firefox (chuyển đổi cấu trúc khởi chạy service worker sang script nền chuẩn Firefox, chèn mã định danh Gecko `pvzge-sync@uongsuadaubung.github.io` và loại bỏ các trường không tương thích).
-> 7. **Tạo gói cài đặt nhanh:** Đóng gói toàn bộ mã nguồn thành tệp tin nén `chrome.zip` và `firefox.zip` nằm trong thư mục `/dist` sẵn sàng để chia sẻ.
+> **What the `build.js` compiler does under the hood:**
+> 1. **Lint Checks:** Runs ESLint (`eslint src`) to verify code formatting and standards.
+> 2. **Type Safety:** Executes `svelte-check` to validate TypeScript in Svelte files.
+> 3. **SCSS Compilation:** Uses the `sass` compiler to convert `src/styles/app.scss` into clean CSS stylesheets for both platforms.
+> 4. **esbuild Bundling:** Bundles and minifies TypeScript and Svelte 5 runes at lightning-fast speed.
+> 5. **Asset Copying:** Copies HTML, assets, images, and icons to their respective platform destinations.
+> 6. **Firefox Manifest Normalization:** Adjusts `manifest.json` for Firefox compatibility (converts service worker to standard background script, injects the Gecko identifier `pvzge-sync@uongsuadaubung.github.io`, and removes Chrome-only flags).
+> 7. **Zip Packaging:** Creates `chrome.zip` and `firefox.zip` in `/dist` for easy distribution.
 
-### 3. Tự động nâng cấp phiên bản (Version Bumping)
-Để nâng cấp phiên bản của extension đồng bộ trong `package.json`, `src/manifest.json` và `package-lock.json`, bạn có thể chạy script chuyên dụng:
+### 3. Version Bumping
+Automatically update version strings across `package.json`, `package-lock.json`, and `src/manifest.json`:
 ```bash
-# Nâng cấp patch version (ví dụ: 0.7.0 -> 0.7.1)
+# Bump patch version (e.g., 0.7.0 -> 0.7.1)
 node version.mjs --patch
 
-# Nâng cấp minor version (ví dụ: 0.7.0 -> 0.8.0)
+# Bump minor version (e.g., 0.7.0 -> 0.8.0)
 node version.mjs --minor
 
-# Nâng cấp major version (ví dụ: 0.7.0 -> 1.0.0)
+# Bump major version (e.g., 0.7.0 -> 1.0.0)
 node version.mjs --major
 ```
 
 ---
 
-Chúc bạn chơi game vui vẻ trên **play.pvzge.com**! Nếu gặp khó khăn gì, hãy bấm nút **Hướng dẫn** ngay trên extension để xem hình ảnh minh họa chi tiết. 🌻🔥
+Have fun playing **play.pvzge.com**! If you need help, click the **User Guide** button directly in the extension to view illustrated steps. 🌻🔥
