@@ -12,6 +12,7 @@ const LangSchema = z.object({
   offline_backup: z.string(),
   btn_export: z.string(),
   btn_import: z.string(),
+  btn_manage_backup: z.string(),
   settings_title: z.string(),
   help_no_token: z.string(),
   help_click_here: z.string(),

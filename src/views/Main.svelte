@@ -225,8 +225,31 @@
       }
       await applyRemoteToGame(parseResult.data);
       appStore.lastSync = Date.now();
+      if (isTabMode) {
+        window.close();
+      }
     } finally {
       loading = false;
+    }
+  }
+
+  const isTabMode = $derived(
+    new URLSearchParams(window.location.search).get("mode") === "tab"
+  );
+
+  const isFirefoxPopup = $derived(
+    navigator.userAgent.toLowerCase().includes("firefox") && !isTabMode
+  );
+
+  async function handleOpenBackupManager() {
+    if (typeof chrome !== "undefined" && chrome.windows) {
+      await chrome.windows.create({
+        url: chrome.runtime.getURL("popup.html?mode=tab"),
+        type: "popup",
+        width: 700,
+        height: 640,
+      });
+      window.close();
     }
   }
 </script>
@@ -234,7 +257,7 @@
 <div class="container">
   <Header 
     showLogo 
-    showSettings 
+    showSettings={!isTabMode} 
     subtitle={lastSyncMsg || t("no_sync")} 
   />
 
@@ -249,34 +272,36 @@
     />
   {:else}
     <main>
-      <div class="group-label">
-        <span>{t("group_tools")}</span>
-        <div class="line"></div>
-      </div>
+      {#if !isTabMode}
+        <div class="group-label">
+          <span>{t("group_tools")}</span>
+          <div class="line"></div>
+        </div>
 
-      <section class="action-section auto-collect">
-        <div class="section-header">
-          <span class="section-icon">☀️</span>
-          <h3>{t("auto_collect")}</h3>
-        </div>
-        <div class="button-group">
-          <Button 
-            variant={appStore.autoCollectEnabled ? "danger" : "primary"}
-            fullWidth 
-            onclick={() => {
-              appStore.updateSettings(
-                appStore.githubToken,
-                appStore.language,
-                appStore.autoSyncEnabled,
-                appStore.autoSyncInterval,
-                !appStore.autoCollectEnabled
-              );
-            }}
-          >
-            {appStore.autoCollectEnabled ? t("btn_auto_collect_off") : t("btn_auto_collect_on")}
-          </Button>
-        </div>
-      </section>
+        <section class="action-section auto-collect">
+          <div class="section-header">
+            <span class="section-icon">☀️</span>
+            <h3>{t("auto_collect")}</h3>
+          </div>
+          <div class="button-group">
+            <Button 
+              variant={appStore.autoCollectEnabled ? "danger" : "primary"}
+              fullWidth 
+              onclick={() => {
+                appStore.updateSettings(
+                  appStore.githubToken,
+                  appStore.language,
+                  appStore.autoSyncEnabled,
+                  appStore.autoSyncInterval,
+                  !appStore.autoCollectEnabled
+                );
+              }}
+            >
+              {appStore.autoCollectEnabled ? t("btn_auto_collect_off") : t("btn_auto_collect_on")}
+            </Button>
+          </div>
+        </section>
+      {/if}
 
       <div class="group-label">
         <span>{t("group_sync")}</span>
@@ -338,12 +363,18 @@
           <h3>{t("offline_backup")}</h3>
         </div>
         <div class="button-grid">
-          <Button variant="outline" onclick={handleExport} disabled={loading}>
-            {t("btn_export")}
-          </Button>
-          <Button variant="outline" onclick={() => fileInput.click()} disabled={loading}>
-            {t("btn_import")}
-          </Button>
+          {#if isFirefoxPopup}
+            <Button variant="outline" onclick={handleOpenBackupManager} style="grid-column: span 2;">
+              📁 {t("btn_manage_backup")}
+            </Button>
+          {:else}
+            <Button variant="outline" onclick={handleExport} disabled={loading}>
+              {t("btn_export")}
+            </Button>
+            <Button variant="outline" onclick={() => fileInput.click()} disabled={loading}>
+              {t("btn_import")}
+            </Button>
+          {/if}
         </div>
       </section>
 
