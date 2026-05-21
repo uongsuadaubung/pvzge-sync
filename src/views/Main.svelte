@@ -7,36 +7,95 @@
   import { appStore } from "@/shared/store.svelte";
   import Header from "@/components/Header.svelte";
   import Button from "@/components/Button.svelte";
+  import SyncConflict from "@/components/SyncConflict.svelte";
+  import Dialog from "@/components/Dialog.svelte";
 
   let fileInput = $state<HTMLInputElement>(null!);
   let downloadAnchor = $state<HTMLAnchorElement>(null!);
   let loading = $state(false);
   let syncCooldown = $state(false);
   let showAdvanced = $state(false);
+  let showConflict = $state(false);
+
+  let dialogResolver = $state<((value: boolean) => void) | null>(null);
+  let dialogConfig = $state({
+    show: false,
+    title: "",
+    message: "",
+    type: "alert" as "alert" | "confirm",
+    severity: "info" as "info" | "success" | "warning" | "error",
+  });
+
+  function showAlert(message: string, severity: "info" | "success" | "warning" | "error" = "info", title?: string): Promise<void> {
+    return new Promise((resolve) => {
+      let defaultTitle = t("dialog_title_info");
+      if (severity === "error") defaultTitle = t("dialog_title_error");
+      if (severity === "success") defaultTitle = t("dialog_title_success");
+      if (severity === "warning") defaultTitle = t("dialog_title_warning");
+      
+      dialogConfig = {
+        show: true,
+        title: title || defaultTitle,
+        message,
+        type: "alert",
+        severity,
+      };
+      dialogResolver = () => {
+        dialogConfig.show = false;
+        resolve();
+      };
+    });
+  }
+
+  function showConfirm(message: string, severity: "info" | "success" | "warning" | "error" = "warning", title?: string): Promise<boolean> {
+    return new Promise((resolve) => {
+      dialogConfig = {
+        show: true,
+        title: title || t("dialog_title_warning"),
+        message,
+        type: "confirm",
+        severity,
+      };
+      dialogResolver = (result: boolean) => {
+        dialogConfig.show = false;
+        resolve(result);
+      };
+    });
+  }
+
+  interface ProfileInfo {
+    name: string;
+    coin: number;
+    gem: number;
+    sprout: number;
+  }
+
+  let localProfile = $state<ProfileInfo | null>(null);
+  let cloudProfile = $state<ProfileInfo | null>(null);
 
   async function handleForceUpload() {
-    if (!confirm(t("msg_force_upload_confirm"))) return;
+    if (!await showConfirm(t("msg_force_upload_confirm"), "warning")) return;
     loading = true;
     try {
       await forceUploadToCloud();
       appStore.lastSync = Date.now();
-      alert(t("msg_force_upload_success"));
+      await showAlert(t("msg_force_upload_success"), "success");
     } catch (e: unknown) {
-      alert("Error: " + (e instanceof Error ? e.message : String(e)));
+      await showAlert("Error: " + (e instanceof Error ? e.message : String(e)), "error");
     } finally {
       loading = false;
     }
   }
 
   async function handleForceDownload() {
-    if (!confirm(t("msg_force_download_confirm"))) return;
+    if (!await showConfirm(t("msg_force_download_confirm"), "warning")) return;
     loading = true;
     try {
       await forceDownloadFromCloud();
       appStore.lastSync = Date.now();
-      alert(t("msg_force_download_success"));
+      await showAlert(t("msg_force_download_success"), "success");
     } catch (e: unknown) {
-      alert("Error: " + (e instanceof Error ? e.message : String(e)));
+      await showAlert("Error: " + (e instanceof Error ? e.message : String(e)), "error");
     } finally {
       loading = false;
     }
@@ -49,17 +108,76 @@
       : t("no_sync"),
   );
 
-
-
   async function handleSync() {
     loading = true;
     syncCooldown = true;
     setTimeout(() => { syncCooldown = false; }, 10_000);
     try {
-      const synced = await smartSync(true);
-      if (synced) appStore.lastSync = Date.now();
+      const res = await smartSync();
+      if (res.type === "conflict") {
+        const local = res.localData;
+        const cloud = res.cloudData;
+
+        if (local && local.PvZ2_PlayerProperties?.[0]) {
+          const lp = local.PvZ2_PlayerProperties[0];
+          localProfile = {
+            name: lp.name || "Unknown",
+            coin: lp.coin || 0,
+            gem: lp.gem || 0,
+            sprout: lp.sprout || 0
+          };
+        } else {
+          localProfile = null;
+        }
+
+        if (cloud && cloud.PvZ2_PlayerProperties?.[0]) {
+          const cp = cloud.PvZ2_PlayerProperties[0];
+          cloudProfile = {
+            name: cp.name || "Unknown",
+            coin: cp.coin || 0,
+            gem: cp.gem || 0,
+            sprout: cp.sprout || 0
+          };
+        } else {
+          cloudProfile = null;
+        }
+
+        showConflict = true;
+      } else if (res.type === "synced") {
+        appStore.lastSync = Date.now();
+      }
     } catch (e: unknown) {
-      alert("Error: " + (e instanceof Error ? e.message : String(e)));
+      await showAlert("Error: " + (e instanceof Error ? e.message : String(e)), "error");
+    } finally {
+      loading = false;
+    }
+  }
+
+  async function handleChooseLocal() {
+    if (!await showConfirm(t("msg_force_upload_confirm"), "warning")) return;
+    loading = true;
+    try {
+      await forceUploadToCloud();
+      appStore.lastSync = Date.now();
+      showConflict = false;
+      await showAlert(t("msg_force_upload_success"), "success");
+    } catch (e: unknown) {
+      await showAlert("Error: " + (e instanceof Error ? e.message : String(e)), "error");
+    } finally {
+      loading = false;
+    }
+  }
+
+  async function handleChooseCloud() {
+    if (!await showConfirm(t("msg_force_download_confirm"), "warning")) return;
+    loading = true;
+    try {
+      await forceDownloadFromCloud();
+      appStore.lastSync = Date.now();
+      showConflict = false;
+      await showAlert(t("msg_force_download_success"), "success");
+    } catch (e: unknown) {
+      await showAlert("Error: " + (e instanceof Error ? e.message : String(e)), "error");
     } finally {
       loading = false;
     }
@@ -68,8 +186,8 @@
   async function handleExport() {
     loading = true;
     try {
-      const data = await getLocalData().catch((e: unknown) => {
-        alert(e instanceof Error ? e.message : String(e));
+      const data = await getLocalData().catch(async (e: unknown) => {
+        await showAlert(e instanceof Error ? e.message : String(e), "error");
         return null;
       });
       if (!data) return;
@@ -92,17 +210,17 @@
     loading = true;
     try {
       const text = await file.text().catch(() => null);
-      if (!text) { alert(t("msg_invalid_json")); return; }
+      if (!text) { await showAlert(t("msg_invalid_json"), "error"); return; }
       let raw: unknown;
       try {
         raw = JSON.parse(text);
       } catch {
-        alert(t("msg_invalid_json"));
+        await showAlert(t("msg_invalid_json"), "error");
         return;
       }
       const parseResult = SaveDataSchema.safeParse(raw);
       if (!parseResult.success) {
-        alert(t("msg_invalid_json"));
+        await showAlert(t("msg_invalid_json"), "error");
         return;
       }
       await applyRemoteToGame(parseResult.data);
@@ -120,120 +238,140 @@
     subtitle={lastSyncMsg || t("no_sync")} 
   />
 
-  <main>
-    <div class="group-label">
-      <span>{t("group_tools")}</span>
-      <div class="line"></div>
-    </div>
-
-    <section class="action-section auto-collect">
-      <div class="section-header">
-        <span class="section-icon">☀️</span>
-        <h3>{t("auto_collect")}</h3>
+  {#if showConflict}
+    <SyncConflict
+      {localProfile}
+      {cloudProfile}
+      {loading}
+      onChooseLocal={handleChooseLocal}
+      onChooseCloud={handleChooseCloud}
+      onCancel={() => { showConflict = false; }}
+    />
+  {:else}
+    <main>
+      <div class="group-label">
+        <span>{t("group_tools")}</span>
+        <div class="line"></div>
       </div>
-      <div class="button-group">
-        <Button 
-          variant={appStore.autoCollectEnabled ? "danger" : "primary"}
-          fullWidth 
-          onclick={() => {
-            appStore.updateSettings(
-              appStore.githubToken,
-              appStore.language,
-              appStore.autoSyncEnabled,
-              appStore.autoSyncInterval,
-              !appStore.autoCollectEnabled
-            );
-          }}
-        >
-          {appStore.autoCollectEnabled ? t("btn_auto_collect_off") : t("btn_auto_collect_on")}
-        </Button>
-      </div>
-    </section>
 
-    <div class="group-label">
-      <span>{t("group_sync")}</span>
-      <div class="line"></div>
-    </div>
-
-    {#if appStore.githubConnected}
-      <section class="action-section cloud">
+      <section class="action-section auto-collect">
         <div class="section-header">
-          <span class="section-icon">☁️</span>
-          <h3>{t("cloud_sync")}</h3>
+          <span class="section-icon">☀️</span>
+          <h3>{t("auto_collect")}</h3>
         </div>
         <div class="button-group">
-          <Button fullWidth onclick={handleSync} disabled={loading || syncCooldown}>
-            {t("btn_sync")}
+          <Button 
+            variant={appStore.autoCollectEnabled ? "danger" : "primary"}
+            fullWidth 
+            onclick={() => {
+              appStore.updateSettings(
+                appStore.githubToken,
+                appStore.language,
+                appStore.autoSyncEnabled,
+                appStore.autoSyncInterval,
+                !appStore.autoCollectEnabled
+              );
+            }}
+          >
+            {appStore.autoCollectEnabled ? t("btn_auto_collect_off") : t("btn_auto_collect_on")}
           </Button>
         </div>
+      </section>
 
-        <div class="advanced-wrapper">
-          <button 
-            type="button" 
-            class="advanced-toggle" 
-            onclick={() => showAdvanced = !showAdvanced}
-            aria-expanded={showAdvanced}
-          >
-            <span>{t("advanced_title")}</span>
-            <span class="arrow-icon {showAdvanced ? 'open' : ''}">▼</span>
-          </button>
+      <div class="group-label">
+        <span>{t("group_sync")}</span>
+        <div class="line"></div>
+      </div>
 
-          {#if showAdvanced}
-            <div class="advanced-content">
-              <Button 
-                variant="outline" 
-                fullWidth 
-                onclick={handleForceUpload} 
-                disabled={loading}
-                class="force-btn force-upload"
-              >
-                {t("btn_force_upload")}
-              </Button>
-              <Button 
-                variant="outline" 
-                fullWidth 
-                onclick={handleForceDownload} 
-                disabled={loading}
-                class="force-btn force-download"
-              >
-                {t("btn_force_download")}
-              </Button>
-            </div>
-          {/if}
+      {#if appStore.githubConnected}
+        <section class="action-section cloud">
+          <div class="section-header">
+            <span class="section-icon">☁️</span>
+            <h3>{t("cloud_sync")}</h3>
+          </div>
+          <div class="button-group">
+            <Button fullWidth onclick={handleSync} disabled={loading || syncCooldown}>
+              {t("btn_sync")}
+            </Button>
+          </div>
+
+          <div class="advanced-wrapper">
+            <button 
+              type="button" 
+              class="advanced-toggle" 
+              onclick={() => showAdvanced = !showAdvanced}
+              aria-expanded={showAdvanced}
+            >
+              <span>{t("advanced_title")}</span>
+              <span class="arrow-icon {showAdvanced ? 'open' : ''}">▼</span>
+            </button>
+
+            {#if showAdvanced}
+              <div class="advanced-content">
+                <Button 
+                  variant="outline" 
+                  fullWidth 
+                  onclick={handleForceUpload} 
+                  disabled={loading}
+                  class="force-btn force-upload"
+                >
+                  {t("btn_force_upload")}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  fullWidth 
+                  onclick={handleForceDownload} 
+                  disabled={loading}
+                  class="force-btn force-download"
+                >
+                  {t("btn_force_download")}
+                </Button>
+              </div>
+            {/if}
+          </div>
+        </section>
+      {/if}
+
+      <section class="action-section local">
+        <div class="section-header">
+          <span class="section-icon">💾</span>
+          <h3>{t("offline_backup")}</h3>
+        </div>
+        <div class="button-grid">
+          <Button variant="outline" onclick={handleExport} disabled={loading}>
+            {t("btn_export")}
+          </Button>
+          <Button variant="outline" onclick={() => fileInput.click()} disabled={loading}>
+            {t("btn_import")}
+          </Button>
         </div>
       </section>
-    {/if}
 
-    <section class="action-section local">
-      <div class="section-header">
-        <span class="section-icon">💾</span>
-        <h3>{t("offline_backup")}</h3>
-      </div>
-      <div class="button-grid">
-        <Button variant="outline" onclick={handleExport} disabled={loading}>
-          {t("btn_export")}
-        </Button>
-        <Button variant="outline" onclick={() => fileInput.click()} disabled={loading}>
-          {t("btn_import")}
-        </Button>
-      </div>
-    </section>
+      <input
+        type="file"
+        bind:this={fileInput}
+        style="display:none"
+        accept=".json"
+        onchange={handleFile}
+      />
+      <a
+        bind:this={downloadAnchor}
+        href={undefined}
+        aria-hidden="true"
+        style="display:none"
+        tabindex="-1"
+      ></a>
+    </main>
+  {/if}
 
-    <input
-      type="file"
-      bind:this={fileInput}
-      style="display:none"
-      accept=".json"
-      onchange={handleFile}
-    />
-    <a
-      bind:this={downloadAnchor}
-      href={undefined}
-      aria-hidden="true"
-      style="display:none"
-      tabindex="-1"
-    ></a>
-  </main>
+  <Dialog
+    show={dialogConfig.show}
+    title={dialogConfig.title}
+    message={dialogConfig.message}
+    type={dialogConfig.type}
+    severity={dialogConfig.severity}
+    onConfirm={(res) => { if (dialogResolver) dialogResolver(res); }}
+  />
 </div>
 
 <style lang="scss">
@@ -360,4 +498,5 @@
       transform: translateY(0);
     }
   }
+
 </style>

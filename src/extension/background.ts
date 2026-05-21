@@ -81,8 +81,8 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name === ALARM_NAME) {
     console.log("[AutoSync] Periodic alarm triggered at:", new Date().toLocaleTimeString());
     try {
-      // Tự động đồng bộ và cho phép đẩy dữ liệu lên (allowPush = true)
-      await smartSync(true);
+      // Tự động đồng bộ
+      await smartSync();
       console.log("[AutoSync] Periodic sync completed.");
     } catch (e) {
       console.error("[AutoSync] Periodic sync failed:", e);
