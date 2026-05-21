@@ -37,6 +37,8 @@ const LangSchema = z.object({
   msg_game_not_open: z.string(),
   not_game_page_title: z.string(),
   not_game_page_body: z.string(),
+  not_game_page_body_prefix: z.string(),
+  not_game_page_body_suffix: z.string(),
   schema_error_title: z.string(),
   btn_sync: z.string(),
   advanced_title: z.string(),

@@ -15,7 +15,12 @@
 
   {#if warnMsg}
     <div class="warn-banner">
-      <strong>🎮 {t("not_game_page_title")}</strong><br />{@html warnMsg}
+      <strong>🎮 {t("not_game_page_title")}</strong><br />
+      {#if warnMsg === t("not_game_page_body")}
+        {t("not_game_page_body_prefix")}<strong>play.pvzge.com</strong>{t("not_game_page_body_suffix")}
+      {:else}
+        {warnMsg}
+      {/if}
       <div class="action-link">
         <a href="https://play.pvzge.com" target="_blank">{t("guide_open_game_btn")} 🚀</a>
       </div>
