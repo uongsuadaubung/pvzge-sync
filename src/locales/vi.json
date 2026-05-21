@@ -25,6 +25,12 @@
   "selected": "ĐÃ CHỌN",
   "btn_confirm_simple": "Xác nhận và Chốt bản này",
   "btn_cancel": "Hủy bỏ",
+  "conflict_title": "Phát hiện bản lưu Đám mây",
+  "conflict_desc": "Đây là lần đầu bạn đồng bộ trên máy này và chúng tôi tìm thấy dữ liệu đã có sẵn trên đám mây (Cloud). Bạn muốn dùng bản lưu nào?",
+  "conflict_use_local": "Giữ dữ liệu máy này (Local)",
+  "conflict_use_local_desc": "Đẩy dữ liệu hiện tại ở máy này lên và ghi đè bản lưu trên đám mây.",
+  "conflict_use_cloud": "Tải dữ liệu đám mây (Cloud)",
+  "conflict_use_cloud_desc": "Tải bản lưu từ đám mây về máy này và ghi đè dữ liệu game hiện tại.",
   "msg_invalid_json": "Lỗi: File JSON không hợp lệ.",
   "msg_game_not_open": "Vui lòng mở trang play.pvzge.com trước.",
   "not_game_page_title": "Không phải trang game",
@@ -116,5 +122,10 @@
   "guide_faq3_q": "Tôi đổi trình duyệt hoặc máy tính khác có dùng tiếp được không?",
   "guide_faq3_a": "Hoàn toàn được! Bạn chỉ cần tải extension này trên trình duyệt mới, nhập đúng mã GitHub Token đã tạo trước đó. Nhấp \"Đồng bộ\", hệ thống sẽ tải bản lưu mới nhất từ đám mây về máy mới.",
   "guide_faq4_q": "Mẹo nhỏ: Xuất File JSON định kỳ",
-  "guide_faq4_a": "Mặc dù đồng bộ đám mây rất an toàn, bạn nên sử dụng nút \"Xuất file JSON\" định kỳ để lưu một bản backup dự phòng cứng ngay trên ổ đĩa máy tính cá nhân."
+  "guide_faq4_a": "Mặc dù đồng bộ đám mây rất an toàn, bạn nên sử dụng nút \"Xuất file JSON\" định kỳ để lưu một bản backup dự phòng cứng ngay trên ổ đĩa máy tính cá nhân.",
+  "dialog_title_info": "Thông báo",
+  "dialog_title_warning": "Xác nhận",
+  "dialog_title_error": "Lỗi",
+  "dialog_title_success": "Thành công",
+  "dialog_btn_ok": "Đồng ý"
 }

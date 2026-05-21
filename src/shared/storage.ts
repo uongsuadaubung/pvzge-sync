@@ -8,6 +8,7 @@ const SettingsSchema = z.object({
   githubToken: z.string().default(""),
   gistId: z.string().default(""),
   lastSync: z.number().default(0),
+  lastSyncedHash: z.string().default(""),
   language: z.enum(SupportLanguage).default(SupportLanguage.En),
   autoSyncEnabled: z.boolean().default(false),
   autoSyncInterval: z.number().default(5),
@@ -60,6 +61,11 @@ export async function getLastSync(): Promise<number> {
   return (await getAllSettings()).lastSync;
 }
 
+/** Lấy mã băm đồng bộ thành công cuối cùng */
+export async function getLastSyncedHash(): Promise<string> {
+  return (await getAllSettings()).lastSyncedHash;
+}
+
 /** Lấy ngôn ngữ hiện tại của ứng dụng */
 export async function getLanguage(): Promise<SupportLanguage> {
   return (await getAllSettings()).language;
@@ -92,6 +98,11 @@ export async function setLastSync() {
   await updateSettings({ lastSync: Date.now() });
 }
 
+/** Lưu mã băm đồng bộ thành công cuối cùng */
+export async function setLastSyncedHash(lastSyncedHash: string) {
+  await updateSettings({ lastSyncedHash });
+}
+
 /**
  * Lưu các thiết lập chính của GitHub và ứng dụng.
  */
@@ -118,6 +129,7 @@ export async function clearAuth() {
     githubToken: "",
     gistId: "",
     lastSync: 0,
+    lastSyncedHash: "",
     autoSyncEnabled: false,
   });
   console.log("[Storage] Auth cleared.");

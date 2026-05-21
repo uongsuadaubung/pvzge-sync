@@ -25,6 +25,12 @@
   "selected": "SELECTED",
   "btn_confirm_simple": "Confirm and Save",
   "btn_cancel": "Cancel",
+  "conflict_title": "Cloud Save Found",
+  "conflict_desc": "This is your first time syncing on this device, and we found an existing cloud backup. Which save data do you want to use?",
+  "conflict_use_local": "Keep Local Data",
+  "conflict_use_local_desc": "Upload your local save and completely overwrite the cloud backup.",
+  "conflict_use_cloud": "Load Cloud Data",
+  "conflict_use_cloud_desc": "Download the cloud backup and completely overwrite your local game data.",
   "msg_invalid_json": "Error: Invalid JSON file.",
   "msg_game_not_open": "Please open play.pvzge.com first.",
   "not_game_page_title": "Not on Game Page",
@@ -116,5 +122,10 @@
   "guide_faq3_q": "Can I continue my progress on a different browser or PC?",
   "guide_faq3_a": "Absolutely! Just install this extension in your new browser, configure it with the same GitHub Token, and click \"Sync\". The system will download your latest cloud save file instantly.",
   "guide_faq4_q": "Pro Tip: Periodic JSON Exports",
-  "guide_faq4_a": "While cloud sync is secure, we recommend clicking \"Export JSON\" once in a while to store a hard backup directly on your local drive for peace of mind."
+  "guide_faq4_a": "While cloud sync is secure, we recommend clicking \"Export JSON\" once in a while to store a hard backup directly on your local drive for peace of mind.",
+  "dialog_title_info": "Notice",
+  "dialog_title_warning": "Confirm",
+  "dialog_title_error": "Error",
+  "dialog_title_success": "Success",
+  "dialog_btn_ok": "OK"
 }

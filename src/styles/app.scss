@@ -44,6 +44,18 @@
   --glow-primary:   rgba(var(--primary-rgb), 0.3);
   --glow-error:     rgba(var(--error-rgb), 0.15);
   --shadow-dark:    rgba(0, 0, 0, 0.5);
+
+  /* Dialog Specific Effects & Colors */
+  --dialog-overlay-bg:     rgba(15, 8, 3, 0.7);
+  --dialog-footer-bg:      rgba(0, 0, 0, 0.15);
+  --dialog-border-success: rgba(146, 230, 42, 0.4);
+  --dialog-glow-success:   rgba(146, 230, 42, 0.25);
+  --dialog-border-error:   rgba(255, 90, 90, 0.4);
+  --dialog-glow-error:     rgba(255, 90, 90, 0.25);
+  --dialog-border-warning: rgba(255, 212, 38, 0.4);
+  --dialog-glow-warning:   rgba(255, 212, 38, 0.25);
+  --dialog-glow-info:      rgba(255, 255, 255, 0.05);
+  --dialog-icon-shadow:    rgba(0, 0, 0, 0.3);
 }
 
 html { height: 100%; }

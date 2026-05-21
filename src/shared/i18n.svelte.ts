@@ -27,6 +27,12 @@ const LangSchema = z.object({
   selected: z.string(),
   btn_confirm_simple: z.string(),
   btn_cancel: z.string(),
+  conflict_title: z.string(),
+  conflict_desc: z.string(),
+  conflict_use_local: z.string(),
+  conflict_use_local_desc: z.string(),
+  conflict_use_cloud: z.string(),
+  conflict_use_cloud_desc: z.string(),
   msg_invalid_json: z.string(),
   msg_game_not_open: z.string(),
   not_game_page_title: z.string(),
@@ -119,6 +125,11 @@ const LangSchema = z.object({
   guide_faq3_a: z.string(),
   guide_faq4_q: z.string(),
   guide_faq4_a: z.string(),
+  dialog_title_info: z.string(),
+  dialog_title_warning: z.string(),
+  dialog_title_error: z.string(),
+  dialog_title_success: z.string(),
+  dialog_btn_ok: z.string(),
 });
 
 type Lang = z.infer<typeof LangSchema>;

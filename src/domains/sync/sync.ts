@@ -1,33 +1,36 @@
 import type { SaveData } from "@/domains/game/schema";
 import type { SyncResponse } from "@/shared/types";
-import { getLastSync, setLastSync } from "@/shared/storage";
+import { setLastSync, getLastSyncedHash, setLastSyncedHash } from "@/shared/storage";
 import { GAME_HOST, IGNORED_KEYS } from "@/shared/constants";
 
 import { uploadToGist, downloadFromGist } from "@/domains/github/api";
 
-/**
- * So sánh sâu hai đối tượng dữ liệu, bỏ qua các trường không cần thiết (như date/time).
- */
-function deepEqual(a: unknown, b: unknown): boolean {
-  if (a === b) return true;
-  if (a === undefined || b === undefined) return false;
-  if (a === null || b === null || typeof a !== typeof b) return false;
-
-  if (Array.isArray(a) && Array.isArray(b)) {
-    if (a.length !== b.length) return false;
-    return a.every((item, i) => deepEqual(item, b[i]));
+function stripIgnoredKeys(obj: unknown): unknown {
+  if (obj === null || obj === undefined) return obj;
+  if (Array.isArray(obj)) {
+    return obj.map(stripIgnoredKeys);
   }
-
-  if (typeof a === "object" && typeof b === "object") {
-    const aObj = a as Record<string, unknown>;
-    const bObj = b as Record<string, unknown>;
-    const aKeys = Object.keys(aObj).filter((k) => !(IGNORED_KEYS as readonly string[]).includes(k));
-    const bKeys = Object.keys(bObj).filter((k) => !(IGNORED_KEYS as readonly string[]).includes(k));
-    if (aKeys.length !== bKeys.length) return false;
-    return aKeys.every((k) => Object.prototype.hasOwnProperty.call(bObj, k) && deepEqual(aObj[k], bObj[k]));
+  if (typeof obj === "object") {
+    const clean: Record<string, unknown> = {};
+    const objRec = obj as Record<string, unknown>;
+    for (const key of Object.keys(objRec)) {
+      if (IGNORED_KEYS.includes(key)) continue;
+      clean[key] = stripIgnoredKeys(objRec[key]);
+    }
+    return clean;
   }
+  return obj;
+}
 
-  return false;
+async function computeHash(obj: unknown): Promise<string> {
+  if (!obj) return "";
+  const cleanObj = stripIgnoredKeys(obj);
+  const str = JSON.stringify(cleanObj);
+  const msgUint8 = new TextEncoder().encode(str);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", msgUint8);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+  return hashHex;
 }
 
 /**
@@ -97,16 +100,20 @@ export async function getLocalData(): Promise<SaveData> {
   });
 }
 
+export type SmartSyncResult =
+  | { type: "no_action" }
+  | { type: "synced" }
+  | { type: "conflict"; localData: SaveData; cloudData: SaveData };
+
 /**
- * Smart Sync Logic:
- * 1. Tải bản lưu từ Cloud (Gist).
- * 2. Nếu Cloud mới hơn (dựa trên updated_at vs lastSync) -> Tải về máy.
- * 3. Nếu local có thay đổi (so với Cloud) và được phép Push -> Đẩy lên Cloud.
- *
- * @param allowPush - Có cho phép ghi đè dữ liệu lên Cloud hay không.
+ * Smart Sync Logic (3-Way Hash-based):
+ * 1. Lấy dữ liệu Local và Cloud.
+ * 2. Tính toán mã băm SHA-256 cho cả 2 bên (đã loại bỏ trường thời gian game).
+ * 3. So sánh 3 chiều giữa Local (H_local), Cloud (H_cloud) và snapshot đồng bộ gần nhất (H_base).
+ * 4. Quyết định hành động an toàn tối ưu hoặc kích hoạt xung đột.
  */
-export async function smartSync(allowPush = false): Promise<boolean> {
-  console.log("[SmartSync] Starting sync process... (allowPush:", allowPush, ")");
+export async function smartSync(): Promise<SmartSyncResult> {
+  console.log("[SmartSync] Starting 3-way sync process...");
 
   const local = await getLocalData().catch(() => {
     console.warn("[SmartSync] Could not get local data (game not open?)");
@@ -114,38 +121,74 @@ export async function smartSync(allowPush = false): Promise<boolean> {
   });
 
   const r = await downloadFromGist();
-  const lastSync = (await getLastSync()) ?? 0;
+  const cloud = (r.success && "data" in r) ? r.data : null;
 
-  // Trường hợp 1: Dữ liệu trên Cloud mới hơn thời điểm đồng bộ cuối cùng
-  if (r.success && "gistUpdatedAt" in r && r.gistUpdatedAt && r.gistUpdatedAt > lastSync) {
-    console.log("[SmartSync] Cloud data is newer. Pulling...");
-    await applyRemoteToGame(local ? preserveLocalDate(r.data, local) : r.data);
-    return true;
+  const H_local = await computeHash(local);
+  const H_cloud = await computeHash(cloud);
+  const H_base = await getLastSyncedHash();
+
+  console.log("[SmartSync] Hash comparison: Local =", H_local, "Cloud =", H_cloud, "Base =", H_base);
+
+  // Nếu cả 2 bên giống nhau y hệt
+  if (H_local === H_cloud) {
+    console.log("[SmartSync] Local and Cloud are already identical.");
+    if (H_base !== H_local) {
+      await setLastSyncedHash(H_local);
+    }
+    return { type: "no_action" };
   }
 
-  // Nếu không cho phép Push hoặc không có dữ liệu local thì dừng ở đây
-  if (!allowPush || !local) {
-    console.log("[SmartSync] No pull needed and push not allowed/possible.");
-    return false;
+  // Trường hợp A: Cả hai bên đều không đổi so với snapshot
+  if (H_local === H_base && H_cloud === H_base) {
+    console.log("[SmartSync] Both Local and Cloud are unchanged.");
+    return { type: "no_action" };
   }
 
-  // Trường hợp 2: Kiểm tra xem Local có gì mới so với Cloud không
-  if (r.success && "data" in r && deepEqual(local, r.data)) {
-    console.log("[SmartSync] Local and Cloud are identical. No action needed.");
-    return false;
+  // Trường hợp B: Chỉ Local thay đổi -> Auto Upload lên Cloud
+  if (H_local !== H_base && H_cloud === H_base) {
+    if (!local) {
+      console.log("[SmartSync] Local changes detected, but local is empty.");
+      return { type: "no_action" };
+    }
+    console.log("[SmartSync] Only Local changed. Auto-uploading to Cloud...");
+    const uploadR = await uploadToGist(local);
+    if (uploadR.success) {
+      await setLastSync();
+      await setLastSyncedHash(H_local);
+      console.log("[SmartSync] Auto-upload completed successfully.");
+      return { type: "synced" };
+    } else {
+      console.error("[SmartSync] Upload failed:", uploadR.error);
+      throw new Error(uploadR.error);
+    }
   }
 
-  // Trường hợp 3: Local mới hơn hoặc Cloud chưa có dữ liệu -> Push lên
-  console.log("[SmartSync] Local changes detected. Uploading to Cloud...");
-  const uploadR = await uploadToGist(local);
-  if (uploadR.success) {
+  // Trường hợp C: Chỉ Cloud thay đổi -> Auto Download về máy
+  if (H_local === H_base && H_cloud !== H_base) {
+    if (!cloud) {
+      console.log("[SmartSync] Cloud changes detected, but cloud is empty.");
+      return { type: "no_action" };
+    }
+    console.log("[SmartSync] Only Cloud changed. Auto-downloading from Cloud...");
+    const dataToApply = local ? preserveLocalDate(cloud, local) : cloud;
+    await applyRemoteToGame(dataToApply);
     await setLastSync();
-    console.log("[SmartSync] Sync completed successfully.");
-    return true;
-  } else {
-    console.error("[SmartSync] Upload failed:", uploadR.error);
-    throw new Error(uploadR.error);
+    await setLastSyncedHash(H_cloud);
+    console.log("[SmartSync] Auto-download completed successfully.");
+    return { type: "synced" };
   }
+
+  // Trường hợp D: Cả hai bên đều thay đổi và khác nhau -> XUNG ĐỘT!
+  if (H_local !== H_base && H_cloud !== H_base && H_local !== H_cloud) {
+    if (!local || !cloud) {
+      console.warn("[SmartSync] Conflict detected but local or cloud is empty.", { local: !!local, cloud: !!cloud });
+      return { type: "no_action" };
+    }
+    console.log("[SmartSync] Real conflict detected! Both Local and Cloud have changed independently.");
+    return { type: "conflict", localData: local, cloudData: cloud };
+  }
+
+  return { type: "no_action" };
 }
 
 /**
@@ -158,7 +201,9 @@ export async function forceUploadToCloud(): Promise<void> {
   if (!uploadR.success) {
     throw new Error(uploadR.error || "Force upload failed");
   }
+  const H_local = await computeHash(local);
   await setLastSync();
+  await setLastSyncedHash(H_local);
   console.log("[Sync] Force upload completed successfully.");
 }
 
@@ -177,5 +222,8 @@ export async function forceDownloadFromCloud(): Promise<void> {
   }
   const dataToApply = local ? preserveLocalDate(r.data, local) : r.data;
   await applyRemoteToGame(dataToApply);
+  const H_cloud = await computeHash(r.data);
+  await setLastSync();
+  await setLastSyncedHash(H_cloud);
   console.log("[Sync] Force download completed successfully.");
 }

@@ -1,5 +1,5 @@
 // Merge
-export const IGNORED_KEYS = ["date", "time", "CamelPlayedTime"];
+export const IGNORED_KEYS = ["date", "time", "CamelPlayedTime", "PvZ2_Settings", "currentWM", "worldChooserPos", "wmx"];
 
 // Game
 export const GAME_HOST = "play.pvzge.com";
