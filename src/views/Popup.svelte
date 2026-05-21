@@ -2,7 +2,6 @@
   import { onMount } from "svelte";
   import { t } from "@/shared/i18n.svelte";
   import { GAME_HOST } from "@/shared/constants";
-  import { smartSync } from "@/domains/sync/sync";
   import Main from "@/views/Main.svelte";
   import Settings from "@/views/Settings.svelte";
   import Notice from "@/views/Notice.svelte";
@@ -29,15 +28,6 @@
       warnMsg = t("not_game_page_body");
       ready = true;
       return;
-    }
-
-    // Auto-sync nếu đã cấu hình GitHub
-    if (appStore.githubConnected) {
-      const synced = await smartSync().catch((e: unknown) => {
-        errorMsg = e instanceof Error ? e.message : String(e);
-        return false;
-      });
-      if (synced) appStore.lastSync = Date.now();
     }
 
     ready = true;
