@@ -23,6 +23,16 @@
   onMount(async () => {
     await appStore.init();
 
+    const isTabMode = new URLSearchParams(window.location.search).get("mode") === "tab";
+    if (isTabMode) {
+      const tabs = await chrome.tabs.query({ url: `*://${GAME_HOST}/*` });
+      if (tabs.length === 0) {
+        warnMsg = t("not_game_page_body");
+      }
+      ready = true;
+      return;
+    }
+
     const tab = await getGameTab();
     if (!tab) {
       warnMsg = t("not_game_page_body");

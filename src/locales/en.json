@@ -10,6 +10,7 @@
   "offline_backup": "Offline Backup",
   "btn_export": "Export JSON",
   "btn_import": "Import JSON",
+  "btn_manage_backup": "Manage Backups",
   "settings_title": "Settings",
   "help_no_token": "No Token?",
   "help_click_here": "Click here to create",

@@ -10,6 +10,7 @@
   "offline_backup": "Lưu file save ra máy",
   "btn_export": "Tải file JSON về máy",
   "btn_import": "Chọn file JSON từ máy",
+  "btn_manage_backup": "Quản lý Sao lưu",
   "settings_title": "Cài đặt",
   "help_no_token": "Chưa có mã Token?",
   "help_click_here": "Bấm vào đây để tạo",
