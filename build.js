@@ -132,7 +132,7 @@ async function runBuild() {
                 if (isFirefox) {
                     manifest.browser_specific_settings = {
                         gecko: {
-                            id: "pvzge-sync@kien.hm",
+                            id: "pvzge-sync@uongsuadaubung.github.io",
                             strict_min_version: "109.0"
                         }
                     };
