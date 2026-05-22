@@ -33,7 +33,6 @@
       "exclude": [
         "no-window",
         "no-window-prefix",
-        "no-explicit-any",
         "jsx-boolean-value",
         "jsx-button-has-type"
       ]

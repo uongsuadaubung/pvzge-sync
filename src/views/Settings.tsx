@@ -44,7 +44,12 @@ export default function Settings() {
       );
       setSaving(false);
       if (!r.success) {
-        setTokenError(r.error ?? t("token_invalid"));
+        const err = r.error;
+        setTokenError(
+          err === "token_invalid"
+            ? t("token_invalid")
+            : (err ?? t("token_invalid")),
+        );
         return;
       }
       setAppStore("githubUser", "githubUser" in r ? r.githubUser : null);

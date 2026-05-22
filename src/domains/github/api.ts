@@ -28,7 +28,7 @@ async function githubRequest(
   options: RequestInit = {},
 ): Promise<unknown> {
   const githubToken = await getGithubToken();
-  if (!githubToken) throw new Error("Chưa cấu hình GitHub Token");
+  if (!githubToken) throw new Error("msg_token_not_configured");
 
   console.debug(`[GitHub API] Requesting: ${path}`, options.method || "GET");
 
@@ -144,13 +144,13 @@ export async function downloadFromGist(): Promise<SyncResponse> {
   try {
     const gistId = await getOrFindGistId();
     if (!gistId) {
-      throw new Error("Không tìm thấy bản lưu trên Cloud. Hãy Upload trước.");
+      throw new Error("msg_cloud_save_not_found");
     }
 
     console.log("[GitHub API] Downloading data from gist:", gistId);
     const gist = await getGist(gistId);
     const file = gist.files[GIST_FILE_NAME];
-    if (!file) throw new Error("Không tìm thấy file lưu trong Gist.");
+    if (!file) throw new Error("msg_gist_file_not_found");
 
     // Xử lý trường hợp content bị cắt (truncate) do file quá lớn
     const content = file.content ||
@@ -180,7 +180,7 @@ async function fetchUserInfo(token: string): Promise<SyncResponse> {
       },
     });
     if (!response.ok) {
-      throw new Error(`Token không hợp lệ (HTTP ${response.status})`);
+      throw new Error("token_invalid");
     }
     const raw = await response.json();
     const githubUser = GithubUserSchema.parse(raw);

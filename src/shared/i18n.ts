@@ -134,6 +134,14 @@ const LangSchema = z.object({
   dialog_title_error: z.string(),
   dialog_title_success: z.string(),
   dialog_btn_ok: z.string(),
+  msg_sync_success_upload: z.string(),
+  msg_sync_success_download: z.string(),
+  msg_sync_no_changes: z.string(),
+  msg_export_success: z.string(),
+  msg_import_success: z.string(),
+  msg_token_not_configured: z.string(),
+  msg_cloud_save_not_found: z.string(),
+  msg_gist_file_not_found: z.string(),
 });
 
 type Lang = z.infer<typeof LangSchema>;

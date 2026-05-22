@@ -68,7 +68,7 @@ export async function getTargetTab(tabId?: number): Promise<number> {
   const tabs = await chrome.tabs.query({ url: `*://${GAME_HOST}/*` });
   if (tabs[0]?.id) return tabs[0].id;
 
-  throw new Error("Game not open");
+  throw new Error("msg_game_not_open");
 }
 
 /**
@@ -129,7 +129,7 @@ export async function getLocalData(): Promise<SaveData> {
 
 export type SmartSyncResult =
   | { type: "no_action" }
-  | { type: "synced" }
+  | { type: "synced"; detail: "upload" | "download" }
   | { type: "conflict"; localData: SaveData; cloudData: SaveData };
 
 /**
@@ -190,7 +190,7 @@ export async function smartSync(): Promise<SmartSyncResult> {
       await setLastSync();
       await setLastSyncedHash(H_local);
       console.log("[SmartSync] Auto-upload completed successfully.");
-      return { type: "synced" };
+      return { type: "synced", detail: "upload" };
     } else {
       console.error("[SmartSync] Upload failed:", uploadR.error);
       throw new Error(uploadR.error);
@@ -211,7 +211,7 @@ export async function smartSync(): Promise<SmartSyncResult> {
     await setLastSync();
     await setLastSyncedHash(H_cloud);
     console.log("[SmartSync] Auto-download completed successfully.");
-    return { type: "synced" };
+    return { type: "synced", detail: "download" };
   }
 
   // Trường hợp D: Cả hai bên đều thay đổi và khác nhau -> XUNG ĐỘT!
