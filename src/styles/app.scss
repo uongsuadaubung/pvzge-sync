@@ -1,3 +1,18 @@
+/* ─── Components ─────────────────────────────────── */
+@use "./components/button";
+@use "./components/checkbox";
+@use "./components/input";
+@use "./components/number-input";
+@use "./components/select";
+@use "./components/dialog";
+@use "./components/user-profile";
+@use "./components/header";
+@use "./components/sync-conflict";
+@use "./components/notice";
+@use "./components/settings";
+@use "./components/main";
+@use "./components/guide";
+
 :root {
   --primary: #ffd426; // Sunflower Yellow
   --primary-rgb: 255, 212, 38;
@@ -96,18 +111,3 @@ body {
   min-height: 100%;
   box-sizing: border-box;
 }
-
-/* ─── Components ─────────────────────────────────── */
-@import "./components/button";
-@import "./components/checkbox";
-@import "./components/input";
-@import "./components/number-input";
-@import "./components/select";
-@import "./components/dialog";
-@import "./components/user-profile";
-@import "./components/header";
-@import "./components/sync-conflict";
-@import "./components/notice";
-@import "./components/settings";
-@import "./components/main";
-@import "./components/guide";

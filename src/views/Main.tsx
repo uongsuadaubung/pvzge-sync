@@ -1,5 +1,5 @@
 import { type Component, createMemo, createSignal, Show } from "solid-js";
-import { t } from "@/shared/i18n.ts";
+import { t, type TranslationKey } from "@/shared/i18n.ts";
 import { appStore, appStoreActions, setAppStore } from "@/shared/store.ts";
 import { setLastSync } from "@/shared/storage.ts";
 import {
@@ -28,7 +28,6 @@ export const Main: Component = () => {
   let downloadAnchor!: HTMLAnchorElement;
 
   const [loading, setLoading] = createSignal(false);
-  const [syncCooldown, setSyncCooldown] = createSignal(false);
   const [showAdvanced, setShowAdvanced] = createSignal(false);
   const [showConflict, setShowConflict] = createSignal(false);
 
@@ -75,6 +74,11 @@ export const Main: Component = () => {
     });
   }
 
+  function getLocalizedError(e: unknown): string {
+    const raw = e instanceof Error ? e.message : String(e);
+    return t(raw as TranslationKey);
+  }
+
   function showConfirm(
     message: string,
     severity: "info" | "success" | "warning" | "error" = "warning",
@@ -104,10 +108,7 @@ export const Main: Component = () => {
       setAppStore("lastSync", Date.now());
       await showAlert(t("msg_force_upload_success"), "success");
     } catch (e: unknown) {
-      await showAlert(
-        "Error: " + (e instanceof Error ? e.message : String(e)),
-        "error",
-      );
+      await showAlert(getLocalizedError(e), "error");
     } finally {
       setLoading(false);
     }
@@ -122,10 +123,7 @@ export const Main: Component = () => {
       setAppStore("lastSync", Date.now());
       await showAlert(t("msg_force_download_success"), "success");
     } catch (e: unknown) {
-      await showAlert(
-        "Error: " + (e instanceof Error ? e.message : String(e)),
-        "error",
-      );
+      await showAlert(getLocalizedError(e), "error");
     } finally {
       setLoading(false);
     }
@@ -139,10 +137,6 @@ export const Main: Component = () => {
 
   async function handleSync() {
     setLoading(true);
-    setSyncCooldown(true);
-    setTimeout(() => {
-      setSyncCooldown(false);
-    }, 10_000);
     try {
       const res = await smartSync();
       if (res.type === "conflict") {
@@ -177,12 +171,16 @@ export const Main: Component = () => {
       } else if (res.type === "synced") {
         await setLastSync();
         setAppStore("lastSync", Date.now());
+        if (res.detail === "upload") {
+          await showAlert(t("msg_sync_success_upload"), "success");
+        } else if (res.detail === "download") {
+          await showAlert(t("msg_sync_success_download"), "success");
+        }
+      } else if (res.type === "no_action") {
+        await showAlert(t("msg_sync_no_changes"), "info");
       }
     } catch (e: unknown) {
-      await showAlert(
-        "Error: " + (e instanceof Error ? e.message : String(e)),
-        "error",
-      );
+      await showAlert(getLocalizedError(e), "error");
     } finally {
       setLoading(false);
     }
@@ -198,10 +196,7 @@ export const Main: Component = () => {
       setShowConflict(false);
       await showAlert(t("msg_force_upload_success"), "success");
     } catch (e: unknown) {
-      await showAlert(
-        "Error: " + (e instanceof Error ? e.message : String(e)),
-        "error",
-      );
+      await showAlert(getLocalizedError(e), "error");
     } finally {
       setLoading(false);
     }
@@ -217,10 +212,7 @@ export const Main: Component = () => {
       setShowConflict(false);
       await showAlert(t("msg_force_download_success"), "success");
     } catch (e: unknown) {
-      await showAlert(
-        "Error: " + (e instanceof Error ? e.message : String(e)),
-        "error",
-      );
+      await showAlert(getLocalizedError(e), "error");
     } finally {
       setLoading(false);
     }
@@ -230,7 +222,7 @@ export const Main: Component = () => {
     setLoading(true);
     try {
       const data = await getLocalData().catch(async (e: unknown) => {
-        await showAlert(e instanceof Error ? e.message : String(e), "error");
+        await showAlert(getLocalizedError(e), "error");
         return null;
       });
       if (!data) return;
@@ -242,6 +234,7 @@ export const Main: Component = () => {
         new Date().toISOString().slice(0, 10) + ".json";
       downloadAnchor.click();
       setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      await showAlert(t("msg_export_success"), "success");
     } finally {
       setLoading(false);
     }
@@ -254,7 +247,6 @@ export const Main: Component = () => {
     try {
       const text = await file.text().catch(() => null);
       if (!text) {
-        await showAlert(t("msg_invalid_json"), "error");
         return;
       }
       let raw: unknown;
@@ -272,6 +264,7 @@ export const Main: Component = () => {
       await applyRemoteToGame(parseResult.data);
       await setLastSync();
       setAppStore("lastSync", Date.now());
+      await showAlert(t("msg_import_success"), "success");
       if (isTabMode()) {
         window.close();
       }
@@ -362,7 +355,7 @@ export const Main: Component = () => {
                     <Button
                       fullWidth
                       onclick={handleSync}
-                      disabled={loading() || syncCooldown()}
+                      disabled={loading()}
                     >
                       {t("btn_sync")}
                     </Button>

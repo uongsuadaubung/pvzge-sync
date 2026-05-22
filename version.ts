@@ -1,7 +1,11 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 
-const manifestPath = path.join(import.meta.dirname || ".", "src", "manifest.json");
+const manifestPath = path.join(
+  import.meta.dirname || ".",
+  "src",
+  "manifest.json",
+);
 
 if (!fs.existsSync(manifestPath)) {
   console.error("Error: src/manifest.json not found!");
@@ -18,7 +22,9 @@ if (!currentVersion) {
 
 const parts = currentVersion.split(".").map(Number);
 if (parts.length !== 3 || parts.some(isNaN)) {
-  console.error(`Error: Invalid version format in src/manifest.json: ${currentVersion}`);
+  console.error(
+    `Error: Invalid version format in src/manifest.json: ${currentVersion}`,
+  );
   Deno.exit(1);
 }
 
@@ -48,7 +54,13 @@ if (type === "major") {
 const newVersion = `${major}.${minor}.${patch}`;
 
 manifest.version = newVersion;
-fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + "\n", "utf8");
+fs.writeFileSync(
+  manifestPath,
+  JSON.stringify(manifest, null, 2) + "\n",
+  "utf8",
+);
 console.log(`✓ Updated src/manifest.json version to ${newVersion}`);
 
-console.log(`\n🎉 Successfully bumped version from ${currentVersion} to ${newVersion} (${type.toUpperCase()})`);
+console.log(
+  `\n🎉 Successfully bumped version from ${currentVersion} to ${newVersion} (${type.toUpperCase()})`,
+);

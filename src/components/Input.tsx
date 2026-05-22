@@ -6,7 +6,7 @@ interface Props {
   error?: boolean;
   oninput?: (e: Event) => void;
   onInput?: (e: Event) => void;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export default function Input(props: Props) {

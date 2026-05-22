@@ -130,5 +130,13 @@
   "dialog_title_warning": "Confirm",
   "dialog_title_error": "Error",
   "dialog_title_success": "Success",
-  "dialog_btn_ok": "OK"
+  "dialog_btn_ok": "OK",
+  "msg_sync_success_upload": "Successfully uploaded the latest save to the Cloud!",
+  "msg_sync_success_download": "Successfully downloaded the latest save from the Cloud!",
+  "msg_sync_no_changes": "Sync complete. No new data changes detected.",
+  "msg_export_success": "Successfully exported JSON save file!",
+  "msg_import_success": "Successfully imported JSON save file and restored progress!",
+  "msg_token_not_configured": "GitHub Token is not configured.",
+  "msg_cloud_save_not_found": "No cloud save found. Please upload first.",
+  "msg_gist_file_not_found": "Save file not found inside Gist."
 }

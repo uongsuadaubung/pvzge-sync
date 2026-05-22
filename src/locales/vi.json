@@ -125,5 +125,18 @@
   "guide_faq3_q": "Tôi sang máy khác hoặc dùng trình duyệt khác có chơi tiếp được không?",
   "guide_faq3_a": "Được chứ! Bạn chỉ cần cài extension này trên trình duyệt mới, điền đúng mã GitHub Token cũ vào rồi bấm nút \"Đồng bộ\". Bản save mới nhất sẽ tự tải về máy mới cho bạn chơi tiếp.",
   "guide_faq4_q": "Mẹo nhỏ: Thỉnh thoảng nên tải save về máy tính",
-  "guide_faq4_a": "Dù lưu trên cloud rất tiện, bạn vẫn nên thỉnh thoảng bấm nút \"Tải file JSON về máy\" để lưu một bản save dự phòng trên máy tính đề phòng sự cố."
+  "guide_faq4_a": "Dù lưu trên cloud rất tiện, bạn vẫn nên thỉnh thoảng bấm nút \"Tải file JSON về máy\" để lưu một bản save dự phòng trên máy tính đề phòng sự cố.",
+  "dialog_title_info": "Thông báo",
+  "dialog_title_warning": "Xác nhận",
+  "dialog_title_error": "Lỗi",
+  "dialog_title_success": "Thành công",
+  "dialog_btn_ok": "OK",
+  "msg_sync_success_upload": "Đã tải tiến trình mới nhất lên Cloud thành công!",
+  "msg_sync_success_download": "Đã tải tiến trình mới từ Cloud về máy thành công!",
+  "msg_sync_no_changes": "Đồng bộ hoàn tất. Dữ liệu hai bên đã trùng khớp, không có thay đổi.",
+  "msg_export_success": "Đã xuất file save JSON thành công!",
+  "msg_import_success": "Đã nhập file và khôi phục save game thành công!",
+  "msg_token_not_configured": "Chưa cấu hình GitHub Token.",
+  "msg_cloud_save_not_found": "Không tìm thấy bản lưu trên Cloud. Hãy Upload trước.",
+  "msg_gist_file_not_found": "Không tìm thấy file lưu trong Gist."
 }

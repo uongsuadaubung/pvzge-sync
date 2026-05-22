@@ -16,8 +16,9 @@ interface Props {
   onclick?: (e: MouseEvent) => void;
   onClick?: (e: MouseEvent) => void;
   title?: string;
+  style?: string | JSX.CSSProperties;
   children?: JSX.Element;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export default function Button(props: Props) {
@@ -35,6 +36,7 @@ export default function Button(props: Props) {
       disabled={props.disabled}
       onClick={handleClick}
       title={props.title}
+      style={props.style}
     >
       {props.children}
     </button>
