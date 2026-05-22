@@ -9,6 +9,7 @@
     showBack?: boolean;
     showSettings?: boolean;
     showLogo?: boolean;
+    showUser?: boolean;
     subtitle?: string;
   }
 
@@ -17,6 +18,7 @@
     showBack = false, 
     showSettings = false, 
     showLogo = false,
+    showUser = true,
     subtitle = ""
   }: Props = $props();
 </script>
@@ -43,7 +45,7 @@
     {/if}
   </div>
 
-  {#if appStore.githubUser && showLogo}
+  {#if appStore.githubUser && showLogo && showUser}
     <div class="header-user">
       <div class="user-pill">
         <img src={appStore.githubUser.avatar_url} alt="User Avatar" />

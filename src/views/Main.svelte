@@ -258,7 +258,8 @@
   <Header 
     showLogo 
     showSettings={!isTabMode} 
-    subtitle={lastSyncMsg || t("no_sync")} 
+    showUser={!isTabMode}
+    subtitle={isTabMode ? "" : (lastSyncMsg || t("no_sync"))} 
   />
 
   {#if showConflict}
@@ -303,58 +304,60 @@
         </section>
       {/if}
 
-      <div class="group-label">
-        <span>{t("group_sync")}</span>
-        <div class="line"></div>
-      </div>
+      {#if !isTabMode}
+        <div class="group-label">
+          <span>{t("group_sync")}</span>
+          <div class="line"></div>
+        </div>
 
-      {#if appStore.githubConnected}
-        <section class="action-section cloud">
-          <div class="section-header">
-            <span class="section-icon">☁️</span>
-            <h3>{t("cloud_sync")}</h3>
-          </div>
-          <div class="button-group">
-            <Button fullWidth onclick={handleSync} disabled={loading || syncCooldown}>
-              {t("btn_sync")}
-            </Button>
-          </div>
+        {#if appStore.githubConnected}
+          <section class="action-section cloud">
+            <div class="section-header">
+              <span class="section-icon">☁️</span>
+              <h3>{t("cloud_sync")}</h3>
+            </div>
+            <div class="button-group">
+              <Button fullWidth onclick={handleSync} disabled={loading || syncCooldown}>
+                {t("btn_sync")}
+              </Button>
+            </div>
 
-          <div class="advanced-wrapper">
-            <button 
-              type="button" 
-              class="advanced-toggle" 
-              onclick={() => showAdvanced = !showAdvanced}
-              aria-expanded={showAdvanced}
-            >
-              <span>{t("advanced_title")}</span>
-              <span class="arrow-icon {showAdvanced ? 'open' : ''}">▼</span>
-            </button>
+            <div class="advanced-wrapper">
+              <button 
+                type="button" 
+                class="advanced-toggle" 
+                onclick={() => showAdvanced = !showAdvanced}
+                aria-expanded={showAdvanced}
+              >
+                <span>{t("advanced_title")}</span>
+                <span class="arrow-icon {showAdvanced ? 'open' : ''}">▼</span>
+              </button>
 
-            {#if showAdvanced}
-              <div class="advanced-content">
-                <Button 
-                  variant="outline" 
-                  fullWidth 
-                  onclick={handleForceUpload} 
-                  disabled={loading}
-                  class="force-btn force-upload"
-                >
-                  {t("btn_force_upload")}
-                </Button>
-                <Button 
-                  variant="outline" 
-                  fullWidth 
-                  onclick={handleForceDownload} 
-                  disabled={loading}
-                  class="force-btn force-download"
-                >
-                  {t("btn_force_download")}
-                </Button>
-              </div>
-            {/if}
-          </div>
-        </section>
+              {#if showAdvanced}
+                <div class="advanced-content">
+                  <Button 
+                    variant="outline" 
+                    fullWidth 
+                    onclick={handleForceUpload} 
+                    disabled={loading}
+                    class="force-btn force-upload"
+                  >
+                    {t("btn_force_upload")}
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    fullWidth 
+                    onclick={handleForceDownload} 
+                    disabled={loading}
+                    class="force-btn force-download"
+                  >
+                    {t("btn_force_download")}
+                  </Button>
+                </div>
+              {/if}
+            </div>
+          </section>
+        {/if}
       {/if}
 
       <section class="action-section local">
