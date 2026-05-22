@@ -16,7 +16,6 @@
     "sass": "npm:sass@^1.99.0",
     "adm-zip": "npm:adm-zip@^0.5.17",
     "zod": "npm:zod@^4.4.3",
-    "@types/chrome": "npm:@types/chrome@^0.1.42",
     "@/": "./src/"
   },
   "tasks": {
