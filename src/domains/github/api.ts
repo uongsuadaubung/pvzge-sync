@@ -1,11 +1,19 @@
 import { z } from "zod";
-import type { SyncResponse } from "@/shared/types";
-import { GistSchema, GistArraySchema, GithubUserSchema } from "@/domains/github/schema";
-import type { Gist } from "@/domains/github/schema";
-import { SaveDataSchema } from "@/domains/game/schema";
-import type { SaveData } from "@/domains/game/schema";
-import { GITHUB_API_BASE, GIST_DESCRIPTION, GIST_FILE_NAME } from "@/shared/constants";
-import { getGithubToken, getGistId, setGistId } from "@/shared/storage";
+import type { SyncResponse } from "@/shared/types.ts";
+import {
+  GistArraySchema,
+  GistSchema,
+  GithubUserSchema,
+} from "@/domains/github/schema.ts";
+import type { Gist } from "@/domains/github/schema.ts";
+import { SaveDataSchema } from "@/domains/game/schema.ts";
+import type { SaveData } from "@/domains/game/schema.ts";
+import {
+  GIST_DESCRIPTION,
+  GIST_FILE_NAME,
+  GITHUB_API_BASE,
+} from "@/shared/constants.ts";
+import { getGistId, getGithubToken, setGistId } from "@/shared/storage.ts";
 
 const GithubErrorSchema = z.object({
   message: z.string().optional(),
@@ -15,9 +23,12 @@ const GithubErrorSchema = z.object({
  * Hàm hỗ trợ thực hiện request đến GitHub API.
  * Tự động thêm header Authorization và xử lý lỗi HTTP.
  */
-async function githubRequest(path: string, options: RequestInit = {}): Promise<unknown> {
+async function githubRequest(
+  path: string,
+  options: RequestInit = {},
+): Promise<unknown> {
   const githubToken = await getGithubToken();
-  if (!githubToken) throw new Error("Chưa cấu hình GitHub Token");
+  if (!githubToken) throw new Error("msg_token_not_configured");
 
   console.debug(`[GitHub API] Requesting: ${path}`, options.method || "GET");
 
@@ -50,7 +61,7 @@ async function getGist(gistId: string): Promise<Gist> {
 /** Cập nhật nội dung file lưu trữ vào Gist hiện có. */
 async function updateGist(gistId: string, data: SaveData) {
   console.log("[GitHub API] Updating existing gist:", gistId);
-  return githubRequest(`/gists/${gistId}`, {
+  return await githubRequest(`/gists/${gistId}`, {
     method: "PATCH",
     body: JSON.stringify({
       description: GIST_DESCRIPTION,
@@ -66,7 +77,7 @@ async function updateGist(gistId: string, data: SaveData) {
 /** Tạo một Gist bí mật mới để lưu trữ dữ liệu. */
 async function createGist(data: SaveData) {
   console.log("[GitHub API] Creating new secret gist...");
-  return githubRequest("/gists", {
+  return await githubRequest("/gists", {
     method: "POST",
     body: JSON.stringify({
       description: GIST_DESCRIPTION,
@@ -119,7 +130,10 @@ export async function uploadToGist(data: SaveData): Promise<SyncResponse> {
     console.log("[GitHub API] Upload success");
     return { success: true };
   } catch (error: unknown) {
-    return { success: false, error: error instanceof Error ? error.message : String(error) };
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
   }
 }
 
@@ -129,15 +143,18 @@ export async function uploadToGist(data: SaveData): Promise<SyncResponse> {
 export async function downloadFromGist(): Promise<SyncResponse> {
   try {
     const gistId = await getOrFindGistId();
-    if (!gistId) throw new Error("Không tìm thấy bản lưu trên Cloud. Hãy Upload trước.");
+    if (!gistId) {
+      throw new Error("msg_cloud_save_not_found");
+    }
 
     console.log("[GitHub API] Downloading data from gist:", gistId);
     const gist = await getGist(gistId);
     const file = gist.files[GIST_FILE_NAME];
-    if (!file) throw new Error("Không tìm thấy file lưu trong Gist.");
+    if (!file) throw new Error("msg_gist_file_not_found");
 
     // Xử lý trường hợp content bị cắt (truncate) do file quá lớn
-    const content = file.content || await fetch(file.raw_url).then((r) => r.text());
+    const content = file.content ||
+      await fetch(file.raw_url).then((r) => r.text());
     const raw = JSON.parse(content);
     const data = SaveDataSchema.parse(raw);
     const gistUpdatedAt = new Date(gist.updated_at).getTime();
@@ -145,7 +162,10 @@ export async function downloadFromGist(): Promise<SyncResponse> {
     console.log("[GitHub API] Download success, updated at:", gist.updated_at);
     return { success: true, data, gistUpdatedAt };
   } catch (error: unknown) {
-    return { success: false, error: error instanceof Error ? error.message : String(error) };
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
   }
 }
 
@@ -159,7 +179,9 @@ async function fetchUserInfo(token: string): Promise<SyncResponse> {
         "Accept": "application/vnd.github.v3+json",
       },
     });
-    if (!response.ok) throw new Error(`Token không hợp lệ (HTTP ${response.status})`);
+    if (!response.ok) {
+      throw new Error("token_invalid");
+    }
     const raw = await response.json();
     const githubUser = GithubUserSchema.parse(raw);
     return {
@@ -167,13 +189,16 @@ async function fetchUserInfo(token: string): Promise<SyncResponse> {
       githubUser,
     };
   } catch (error: unknown) {
-    return { success: false, error: error instanceof Error ? error.message : String(error) };
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
   }
 }
 
 /** API công khai để kiểm tra token. */
 export async function validateToken(token: string): Promise<SyncResponse> {
-  return fetchUserInfo(token);
+  return await fetchUserInfo(token);
 }
 
 /** Lấy thông tin người dùng GitHub đang đăng nhập. */

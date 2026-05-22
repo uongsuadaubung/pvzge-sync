@@ -19,7 +19,10 @@ const FeaturesSchema = z.record(z.string(), z.boolean());
 
 const ProgressEntrySchema = z.object({ progress: z.number() }).strict();
 
-const UpgradePropSchema = z.object({ progress: z.number(), enabled: z.boolean() }).strict();
+const UpgradePropSchema = z.object({
+  progress: z.number(),
+  enabled: z.boolean(),
+}).strict();
 
 const PlantPropSchema = z.object({
   boost: z.number(),
@@ -54,7 +57,9 @@ const WorldPropEntrySchema = z.object({
   wmx: z.number(),
 }).strict();
 
-const WorldPropsSchema = z.object({}).catchall(z.union([WorldPropEntrySchema, z.number()]));
+const WorldPropsSchema = z.object({}).catchall(
+  z.union([WorldPropEntrySchema, z.number()]),
+);
 
 const ZenGardenSlotSchema = z.object({ unlocked: z.boolean() }).strict();
 

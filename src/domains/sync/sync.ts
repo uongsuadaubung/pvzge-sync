@@ -1,9 +1,13 @@
-import type { SaveData } from "@/domains/game/schema";
-import type { SyncResponse } from "@/shared/types";
-import { setLastSync, getLastSyncedHash, setLastSyncedHash } from "@/shared/storage";
-import { GAME_HOST, IGNORED_KEYS } from "@/shared/constants";
+import type { SaveData } from "@/domains/game/schema.ts";
+import type { SyncResponse } from "@/shared/types.ts";
+import {
+  getLastSyncedHash,
+  setLastSync,
+  setLastSyncedHash,
+} from "@/shared/storage.ts";
+import { GAME_HOST, IGNORED_KEYS } from "@/shared/constants.ts";
 
-import { uploadToGist, downloadFromGist } from "@/domains/github/api";
+import { downloadFromGist, uploadToGist } from "@/domains/github/api.ts";
 
 function stripIgnoredKeys(obj: unknown): unknown {
   if (obj === null || obj === undefined) return obj;
@@ -29,7 +33,9 @@ async function computeHash(obj: unknown): Promise<string> {
   const msgUint8 = new TextEncoder().encode(str);
   const hashBuffer = await crypto.subtle.digest("SHA-256", msgUint8);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const hashHex = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+  const hashHex = hashArray.map((b) => b.toString(16).padStart(2, "0")).join(
+    "",
+  );
   return hashHex;
 }
 
@@ -41,7 +47,9 @@ function preserveLocalDate(remote: SaveData, local: SaveData): SaveData {
   return {
     ...remote,
     PvZ2_PlayerProperties: remote.PvZ2_PlayerProperties.map((profile) => {
-      const localProfile = local.PvZ2_PlayerProperties.find((p) => p.name === profile.name);
+      const localProfile = local.PvZ2_PlayerProperties.find((p) =>
+        p.name === profile.name
+      );
       if (!localProfile) return profile;
       return { ...profile, date: localProfile.date, time: localProfile.time };
     }),
@@ -60,7 +68,7 @@ export async function getTargetTab(tabId?: number): Promise<number> {
   const tabs = await chrome.tabs.query({ url: `*://${GAME_HOST}/*` });
   if (tabs[0]?.id) return tabs[0].id;
 
-  throw new Error("Game not open");
+  throw new Error("msg_game_not_open");
 }
 
 /**
@@ -71,13 +79,19 @@ export async function applyRemoteToGame(data: SaveData): Promise<void> {
   console.log("[Sync] Applying data to game tab:", targetId);
 
   await new Promise<void>((resolve, reject) => {
-    chrome.tabs.sendMessage(targetId, { type: "APPLY_REMOTE_DATA", data }, (r: SyncResponse | undefined) => {
-      if (chrome.runtime.lastError || !r?.success) {
-        reject(new Error(chrome.runtime.lastError?.message ?? "Apply failed"));
-        return;
-      }
-      resolve();
-    });
+    chrome.tabs.sendMessage(
+      targetId,
+      { type: "APPLY_REMOTE_DATA", data },
+      (r: SyncResponse | undefined) => {
+        if (chrome.runtime.lastError || !r?.success) {
+          reject(
+            new Error(chrome.runtime.lastError?.message ?? "Apply failed"),
+          );
+          return;
+        }
+        resolve();
+      },
+    );
   });
   await setLastSync();
   console.log("[Sync] Data applied and lastSync updated.");
@@ -91,18 +105,31 @@ export async function getLocalData(): Promise<SaveData> {
   console.log("[Sync] Getting local data from game tab:", targetId);
 
   return new Promise<SaveData>((resolve, reject) => {
-    chrome.tabs.sendMessage(targetId, { type: "GET_LOCAL_DATA" }, (r: SyncResponse | undefined) => {
-      if (chrome.runtime.lastError || !r) { reject(new Error("Connection error")); return; }
-      if (!r.success) { reject(new Error(r.error)); return; }
-      if (!("data" in r)) { reject(new Error("Local data not found")); return; }
-      resolve(r.data);
-    });
+    chrome.tabs.sendMessage(
+      targetId,
+      { type: "GET_LOCAL_DATA" },
+      (r: SyncResponse | undefined) => {
+        if (chrome.runtime.lastError || !r) {
+          reject(new Error("Connection error"));
+          return;
+        }
+        if (!r.success) {
+          reject(new Error(r.error));
+          return;
+        }
+        if (!("data" in r)) {
+          reject(new Error("Local data not found"));
+          return;
+        }
+        resolve(r.data);
+      },
+    );
   });
 }
 
 export type SmartSyncResult =
   | { type: "no_action" }
-  | { type: "synced" }
+  | { type: "synced"; detail: "upload" | "download" }
   | { type: "conflict"; localData: SaveData; cloudData: SaveData };
 
 /**
@@ -127,7 +154,14 @@ export async function smartSync(): Promise<SmartSyncResult> {
   const H_cloud = await computeHash(cloud);
   const H_base = await getLastSyncedHash();
 
-  console.log("[SmartSync] Hash comparison: Local =", H_local, "Cloud =", H_cloud, "Base =", H_base);
+  console.log(
+    "[SmartSync] Hash comparison: Local =",
+    H_local,
+    "Cloud =",
+    H_cloud,
+    "Base =",
+    H_base,
+  );
 
   // Nếu cả 2 bên giống nhau y hệt
   if (H_local === H_cloud) {
@@ -156,7 +190,7 @@ export async function smartSync(): Promise<SmartSyncResult> {
       await setLastSync();
       await setLastSyncedHash(H_local);
       console.log("[SmartSync] Auto-upload completed successfully.");
-      return { type: "synced" };
+      return { type: "synced", detail: "upload" };
     } else {
       console.error("[SmartSync] Upload failed:", uploadR.error);
       throw new Error(uploadR.error);
@@ -169,22 +203,29 @@ export async function smartSync(): Promise<SmartSyncResult> {
       console.log("[SmartSync] Cloud changes detected, but cloud is empty.");
       return { type: "no_action" };
     }
-    console.log("[SmartSync] Only Cloud changed. Auto-downloading from Cloud...");
+    console.log(
+      "[SmartSync] Only Cloud changed. Auto-downloading from Cloud...",
+    );
     const dataToApply = local ? preserveLocalDate(cloud, local) : cloud;
     await applyRemoteToGame(dataToApply);
     await setLastSync();
     await setLastSyncedHash(H_cloud);
     console.log("[SmartSync] Auto-download completed successfully.");
-    return { type: "synced" };
+    return { type: "synced", detail: "download" };
   }
 
   // Trường hợp D: Cả hai bên đều thay đổi và khác nhau -> XUNG ĐỘT!
   if (H_local !== H_base && H_cloud !== H_base && H_local !== H_cloud) {
     if (!local || !cloud) {
-      console.warn("[SmartSync] Conflict detected but local or cloud is empty.", { local: !!local, cloud: !!cloud });
+      console.warn(
+        "[SmartSync] Conflict detected but local or cloud is empty.",
+        { local: !!local, cloud: !!cloud },
+      );
       return { type: "no_action" };
     }
-    console.log("[SmartSync] Real conflict detected! Both Local and Cloud have changed independently.");
+    console.log(
+      "[SmartSync] Real conflict detected! Both Local and Cloud have changed independently.",
+    );
     return { type: "conflict", localData: local, cloudData: cloud };
   }
 

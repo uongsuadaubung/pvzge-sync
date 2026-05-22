@@ -1,6 +1,10 @@
-import { SyncMessageSchema, type SyncResponse } from "@/shared/types";
-import { getAutoCollectEnabled } from "@/shared/storage";
-import { getGameSaveData, getGameCollectKey, setGameSaveData } from "@/domains/game/storage";
+import { SyncMessageSchema, type SyncResponse } from "@/shared/types.ts";
+import { getAutoCollectEnabled } from "@/shared/storage.ts";
+import {
+  getGameCollectKey,
+  getGameSaveData,
+  setGameSaveData,
+} from "@/domains/game/storage.ts";
 
 /**
  * Chuyển đổi định dạng phím của game (ví dụ: "KEY_A", "DIGIT_1", "SPACE")
@@ -11,11 +15,21 @@ function mapGameKeyToEvent(gameKey: string): KeyboardEventInit | null {
   const key = gameKey.toUpperCase();
   if (key.startsWith("KEY_")) {
     const char = key.replace("KEY_", "").toLowerCase();
-    return { key: char, code: `Key${char.toUpperCase()}`, keyCode: char.toUpperCase().charCodeAt(0), which: char.toUpperCase().charCodeAt(0) };
+    return {
+      key: char,
+      code: `Key${char.toUpperCase()}`,
+      keyCode: char.toUpperCase().charCodeAt(0),
+      which: char.toUpperCase().charCodeAt(0),
+    };
   }
   if (key.startsWith("DIGIT_")) {
     const num = key.replace("DIGIT_", "");
-    return { key: num, code: `Digit${num}`, keyCode: num.charCodeAt(0), which: num.charCodeAt(0) };
+    return {
+      key: num,
+      code: `Digit${num}`,
+      keyCode: num.charCodeAt(0),
+      which: num.charCodeAt(0),
+    };
   }
   const specialMap: Record<string, KeyboardEventInit> = {
     "SPACE": { key: " ", code: "Space", keyCode: 32, which: 32 },
@@ -24,7 +38,11 @@ function mapGameKeyToEvent(gameKey: string): KeyboardEventInit | null {
     "TAB": { key: "Tab", code: "Tab", keyCode: 9, which: 9 },
   };
   if (specialMap[key]) return specialMap[key];
-  return { key: gameKey, code: gameKey, keyCode: gameKey.length === 1 ? gameKey.toUpperCase().charCodeAt(0) : 0 };
+  return {
+    key: gameKey,
+    code: gameKey,
+    keyCode: gameKey.length === 1 ? gameKey.toUpperCase().charCodeAt(0) : 0,
+  };
 }
 
 let collectInterval: number | undefined;
@@ -71,23 +89,36 @@ async function syncAutoCollect() {
 // Khởi chạy lần đầu
 syncAutoCollect();
 
-chrome.runtime.onMessage.addListener((rawMessage: unknown, _sender, sendResponse: (r: SyncResponse) => void) => {
-  const result = SyncMessageSchema.safeParse(rawMessage);
-  if (!result.success) {
-    console.error("[Content] Invalid message received:", result.error.format());
-    return;
-  }
+chrome.runtime.onMessage.addListener(
+  (
+    rawMessage: unknown,
+    _sender: chrome.runtime.MessageSender,
+    sendResponse: (r: SyncResponse) => void,
+  ) => {
+    const result = SyncMessageSchema.safeParse(rawMessage);
+    if (!result.success) {
+      console.error(
+        "[Content] Invalid message received:",
+        result.error.format(),
+      );
+      return;
+    }
 
-  const message = result.data;
-  if (message.type === "GET_LOCAL_DATA") {
-    const { data, errors } = getGameSaveData();
-    sendResponse(data ? { success: true, data } : { success: false, error: errors?.join("; ") || "Unknown error" });
-  } else if (message.type === "APPLY_REMOTE_DATA") {
-    setGameSaveData(message.data);
-    sendResponse({ success: true });
-    window.location.reload();
-  } else if (message.type === "SETTINGS_UPDATED") {
-    syncAutoCollect();
-    sendResponse({ success: true });
-  }
-});
+    const message = result.data;
+    if (message.type === "GET_LOCAL_DATA") {
+      const { data, errors } = getGameSaveData();
+      sendResponse(
+        data
+          ? { success: true, data }
+          : { success: false, error: errors?.join("; ") || "Unknown error" },
+      );
+    } else if (message.type === "APPLY_REMOTE_DATA") {
+      setGameSaveData(message.data);
+      sendResponse({ success: true });
+      window.location.reload();
+    } else if (message.type === "SETTINGS_UPDATED") {
+      syncAutoCollect();
+      sendResponse({ success: true });
+    }
+  },
+);
