@@ -25,6 +25,7 @@
 
     const isTabMode = new URLSearchParams(window.location.search).get("mode") === "tab";
     if (isTabMode) {
+      document.body.classList.add("tab-mode");
       const tabs = await chrome.tabs.query({ url: `*://${GAME_HOST}/*` });
       if (tabs.length === 0) {
         warnMsg = t("not_game_page_body");
