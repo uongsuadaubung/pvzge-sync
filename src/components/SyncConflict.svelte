@@ -142,8 +142,8 @@
   }
 
   .conflict-options {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+    display: flex;
+    flex-direction: column;
     gap: 12px;
     margin-bottom: 20px;
   }
