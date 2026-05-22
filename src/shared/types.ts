@@ -1,9 +1,13 @@
 import { z } from "zod";
-import { SaveDataSchema } from "@/domains/game/schema";
-import { GithubUserSchema } from "@/domains/github/schema";
-import type { GithubUser } from "@/domains/github/schema";
+import { SaveDataSchema } from "@/domains/game/schema.ts";
+import { GithubUserSchema } from "@/domains/github/schema.ts";
+import type { GithubUser } from "@/domains/github/schema.ts";
 
-export enum View { Main = "main", Settings = "settings", Guide = "guide" }
+export enum View {
+  Main = "main",
+  Settings = "settings",
+  Guide = "guide",
+}
 
 export const SyncMessageSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("UPLOAD_TO_GIST"), data: SaveDataSchema }),
@@ -16,7 +20,11 @@ export const SyncMessageSchema = z.discriminatedUnion("type", [
 ]);
 
 export const SyncResponseSchema = z.union([
-  z.object({ success: z.literal(true), data: SaveDataSchema, gistUpdatedAt: z.number().optional() }),
+  z.object({
+    success: z.literal(true),
+    data: SaveDataSchema,
+    gistUpdatedAt: z.number().optional(),
+  }),
   z.object({ success: z.literal(true), githubUser: GithubUserSchema }),
   z.object({ success: z.literal(true) }),
   z.object({ success: z.literal(false), error: z.string() }),

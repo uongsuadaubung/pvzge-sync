@@ -1,71 +1,72 @@
-
 :root {
-  --primary:        #ffd426; // Sunflower Yellow
-  --primary-rgb:    255, 212, 38;
-  --primary-dark:   #e5bf22;
-  
-  --secondary:      #92e62a; // Pea Green
-  --secondary-rgb:  146, 230, 42;
-  --secondary-dark: #74b822;
-  
-  --bg:             #1a0f05; // Deep Soil Brown
-  --bg-rgb:         26, 15, 5;
-  
-  --surface:        #2a180a; // Warm Wood Surface
-  --surface-light:  #3d2610;
-  
-  --text:           #fff9e6; // Warm Cream Text
-  --text-dim:       #b09e84;
-  
-  --border:         #452b14;
-  --error:          #ff5a5a;
-  --error-rgb:      255, 90, 90;
-  
-  --sun:            #ffd700;
-  --accent:         #ff8c00;
+  --primary: #ffd426; // Sunflower Yellow
+  --primary-rgb: 255, 212, 38;
+  --primary-dark: #e5bf22;
 
-  --success:        #4caf50;
-  --warning:        #ff9800;
-  
+  --secondary: #92e62a; // Pea Green
+  --secondary-rgb: 146, 230, 42;
+  --secondary-dark: #74b822;
+
+  --bg: #1a0f05; // Deep Soil Brown
+  --bg-rgb: 26, 15, 5;
+
+  --surface: #2a180a; // Warm Wood Surface
+  --surface-light: #3d2610;
+
+  --text: #fff9e6; // Warm Cream Text
+  --text-dim: #b09e84;
+
+  --border: #452b14;
+  --error: #ff5a5a;
+  --error-rgb: 255, 90, 90;
+
+  --sun: #ffd700;
+  --accent: #ff8c00;
+
+  --success: #4caf50;
+  --warning: #ff9800;
+
   /* Notice/Banner States */
-  --notice-error-bg:     #2d0a06;
+  --notice-error-bg: #2d0a06;
   --notice-error-border: #8b1a0a;
-  --notice-error-text:   #ff8a6a;
-  --notice-warn-bg:      #261d00;
-  --notice-warn-border:  #5e4b00;
-  --notice-warn-text:    #d4aa4a;
-  
+  --notice-error-text: #ff8a6a;
+  --notice-warn-bg: #261d00;
+  --notice-warn-border: #5e4b00;
+  --notice-warn-text: #d4aa4a;
+
   /* Component Specific Variants */
-  --primary-light:       #ffea4d;
-  --secondary-light:     #a2f242;
-  --surface-hover:       #36210d;
+  --primary-light: #ffea4d;
+  --secondary-light: #a2f242;
+  --surface-hover: #36210d;
 
   /* Reusable Effects */
-  --glow-primary:   rgba(var(--primary-rgb), 0.3);
-  --glow-error:     rgba(var(--error-rgb), 0.15);
-  --shadow-dark:    rgba(0, 0, 0, 0.5);
+  --glow-primary: rgba(var(--primary-rgb), 0.3);
+  --glow-error: rgba(var(--error-rgb), 0.15);
+  --shadow-dark: rgba(0, 0, 0, 0.5);
 
   /* Dialog Specific Effects & Colors */
-  --dialog-overlay-bg:     rgba(15, 8, 3, 0.7);
-  --dialog-footer-bg:      rgba(0, 0, 0, 0.15);
+  --dialog-overlay-bg: rgba(15, 8, 3, 0.7);
+  --dialog-footer-bg: rgba(0, 0, 0, 0.15);
   --dialog-border-success: rgba(146, 230, 42, 0.4);
-  --dialog-glow-success:   rgba(146, 230, 42, 0.25);
-  --dialog-border-error:   rgba(255, 90, 90, 0.4);
-  --dialog-glow-error:     rgba(255, 90, 90, 0.25);
+  --dialog-glow-success: rgba(146, 230, 42, 0.25);
+  --dialog-border-error: rgba(255, 90, 90, 0.4);
+  --dialog-glow-error: rgba(255, 90, 90, 0.25);
   --dialog-border-warning: rgba(255, 212, 38, 0.4);
-  --dialog-glow-warning:   rgba(255, 212, 38, 0.25);
-  --dialog-glow-info:      rgba(255, 255, 255, 0.05);
-  --dialog-icon-shadow:    rgba(0, 0, 0, 0.3);
+  --dialog-glow-warning: rgba(255, 212, 38, 0.25);
+  --dialog-glow-info: rgba(255, 255, 255, 0.05);
+  --dialog-icon-shadow: rgba(0, 0, 0, 0.3);
 }
 
-html { height: 100%; }
+html {
+  height: 100%;
+}
 
 body {
   margin: 0;
-  font-family: 'Fredoka', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: "Fredoka", -apple-system, BlinkMacSystemFont, sans-serif;
   font-weight: 400;
   background-color: var(--bg);
-  background-image: 
+  background-image:
     radial-gradient(circle at 50% -20%, #452b0a 0%, transparent 80%),
     radial-gradient(circle at 100% 100%, #1a2e05 0%, transparent 50%);
   color: var(--text);
@@ -96,3 +97,17 @@ body {
   box-sizing: border-box;
 }
 
+/* ─── Components ─────────────────────────────────── */
+@import "./components/button";
+@import "./components/checkbox";
+@import "./components/input";
+@import "./components/number-input";
+@import "./components/select";
+@import "./components/dialog";
+@import "./components/user-profile";
+@import "./components/header";
+@import "./components/sync-conflict";
+@import "./components/notice";
+@import "./components/settings";
+@import "./components/main";
+@import "./components/guide";

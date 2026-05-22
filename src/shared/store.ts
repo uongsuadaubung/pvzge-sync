@@ -1,22 +1,23 @@
+import { createStore } from "solid-js/store";
 import {
+  clearAuth,
+  getAutoCollectEnabled,
+  getAutoSyncEnabled,
+  getAutoSyncInterval,
   getGithubToken,
   getLanguage,
   getLastSync,
-  getAutoSyncEnabled,
-  getAutoSyncInterval,
-  getAutoCollectEnabled,
   setGithubSettings,
-  clearAuth,
-} from "@/shared/storage";
-import { setLanguage } from "@/shared/i18n.svelte";
-import { SupportLanguage } from "@/shared/i18n.svelte";
-import { SyncResponseSchema, View, type GithubUser } from "@/shared/types";
+} from "@/shared/storage.ts";
+import { setLanguage } from "@/shared/i18n.ts";
+import { SupportLanguage } from "@/shared/i18n.ts";
+import { type GithubUser, SyncResponseSchema, View } from "@/shared/types.ts";
 
 /**
- * App Store sử dụng Svelte 5 Runes ($state).
+ * App Store sử dụng SolidJS Store.
  * Quản lý trạng thái toàn cục của ứng dụng, đồng bộ giữa Storage và UI.
  */
-export const appStore = $state({
+export const [appStore, setAppStore] = createStore({
   // --- Dữ liệu từ Storage ---
   githubToken: "",
   language: SupportLanguage.En,
@@ -34,37 +35,54 @@ export const appStore = $state({
   get githubConnected() {
     return !!this.githubToken;
   },
+});
 
+export const appStoreActions = {
   /**
    * Khởi tạo store: Load dữ liệu từ storage và lấy thông tin User GitHub nếu có token.
    */
   async init() {
     console.log("[Store] Initializing...");
-    this.githubToken = (await getGithubToken()) ?? "";
-    this.language = await getLanguage();
-    this.lastSync = await getLastSync();
-    this.autoSyncEnabled = await getAutoSyncEnabled();
-    this.autoSyncInterval = await getAutoSyncInterval();
-    this.autoCollectEnabled = await getAutoCollectEnabled();
+    const token = (await getGithubToken()) ?? "";
+    const language = await getLanguage();
+    const lastSync = await getLastSync();
+    const autoSyncEnabled = await getAutoSyncEnabled();
+    const autoSyncInterval = await getAutoSyncInterval();
+    const autoCollectEnabled = await getAutoCollectEnabled();
 
-    await setLanguage(this.language);
+    setAppStore({
+      githubToken: token,
+      language,
+      lastSync,
+      autoSyncEnabled,
+      autoSyncInterval,
+      autoCollectEnabled,
+    });
 
-    if (this.githubToken) {
+    await setLanguage(language);
+
+    if (token) {
       // Lấy thông tin user thông qua background để đảm bảo tính nhất quán
       const rawResponse = await new Promise((resolve) =>
-        chrome.runtime.sendMessage({ type: "GET_USER_INFO" }, resolve),
+        chrome.runtime.sendMessage({ type: "GET_USER_INFO" }, resolve)
       );
 
       const result = SyncResponseSchema.safeParse(rawResponse);
       if (result.success && "githubUser" in result.data) {
-        this.githubUser = result.data.githubUser;
-        console.log("[Store] GitHub user loaded:", this.githubUser.login);
+        setAppStore("githubUser", result.data.githubUser);
+        console.log(
+          "[Store] GitHub user loaded:",
+          result.data.githubUser.login,
+        );
       } else if (!result.success) {
-        console.warn("[Store] Failed to load GitHub user info:", result.error.format());
+        console.warn(
+          "[Store] Failed to load GitHub user info:",
+          result.error.format(),
+        );
       }
     }
 
-    this.isLoaded = true;
+    setAppStore("isLoaded", true);
     console.log("[Store] Initialization complete.");
   },
 
@@ -87,13 +105,15 @@ export const appStore = $state({
       autoCollectEnabled,
     );
 
-    this.githubToken = token;
-    this.language = lang;
-    this.autoSyncEnabled = autoSyncEnabled;
-    this.autoSyncInterval = autoSyncInterval;
-    this.autoCollectEnabled = autoCollectEnabled;
+    setAppStore({
+      githubToken: token,
+      language: lang,
+      autoSyncEnabled,
+      autoSyncInterval,
+      autoCollectEnabled,
+      githubUser: !token ? null : appStore.githubUser,
+    });
 
-    if (!token) this.githubUser = null;
     await setLanguage(lang);
 
     // Thông báo cho các thành phần khác (background, content)
@@ -106,10 +126,12 @@ export const appStore = $state({
     await clearAuth();
 
     // Cập nhật lại trạng thái local trong store
-    this.githubToken = "";
-    this.autoSyncEnabled = false;
-    this.lastSync = 0;
-    this.githubUser = null;
+    setAppStore({
+      githubToken: "",
+      autoSyncEnabled: false,
+      lastSync: 0,
+      githubUser: null,
+    });
 
     // Thông báo cho background để dừng Alarm và thông báo cho tabs
     chrome.runtime.sendMessage({ type: "SETTINGS_UPDATED" });
@@ -117,7 +139,7 @@ export const appStore = $state({
 
   /** Chuyển đổi màn hình hiển thị trong Popup. */
   navigate(newView: View) {
-    this.view = newView;
+    setAppStore("view", newView);
     console.debug("[Store] Navigated to:", newView);
   },
-});
+};

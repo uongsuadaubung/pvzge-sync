@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { createSignal } from "solid-js";
 
 const LangSchema = z.object({
   app_name: z.string(),
@@ -145,17 +146,19 @@ export enum SupportLanguage {
 export type TranslationKey = keyof Lang;
 
 const loaders: Record<SupportLanguage, () => Promise<unknown>> = {
-  [SupportLanguage.En]: () => import("@/locales/en.json").then((m) => m.default),
-  [SupportLanguage.Vi]: () => import("@/locales/vi.json").then((m) => m.default),
+  [SupportLanguage.En]: () =>
+    import("@/locales/en.json").then((m) => m.default),
+  [SupportLanguage.Vi]: () =>
+    import("@/locales/vi.json").then((m) => m.default),
 };
 
-let translations = $state<Partial<Lang>>({});
+const [translations, setTranslations] = createSignal<Partial<Lang>>({});
 
 export async function setLanguage(code: SupportLanguage): Promise<void> {
   const raw = await loaders[code]();
-  translations = LangSchema.parse(raw);
+  setTranslations(LangSchema.parse(raw));
 }
 
 export function t(key: TranslationKey): string {
-  return translations[key] ?? key;
+  return translations()[key] ?? key;
 }
