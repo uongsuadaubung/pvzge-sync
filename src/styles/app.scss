@@ -61,8 +61,6 @@
 html { height: 100%; }
 
 body {
-  min-width: 680px;
-  min-height: 600px;
   margin: 0;
   font-family: 'Fredoka', -apple-system, BlinkMacSystemFont, sans-serif;
   font-weight: 400;
@@ -72,6 +70,22 @@ body {
     radial-gradient(circle at 100% 100%, #1a2e05 0%, transparent 50%);
   color: var(--text);
   overflow-x: hidden;
+
+  &.popup-body {
+    width: 380px;
+    min-height: 280px;
+
+    &.tab-mode {
+      width: auto;
+      min-width: 100%;
+      min-height: 100%;
+    }
+  }
+
+  &.guide-body {
+    min-width: 680px;
+    min-height: 600px;
+  }
 }
 
 /* ─── Layout ─────────────────────────────────────── */

@@ -246,8 +246,8 @@
       await chrome.windows.create({
         url: chrome.runtime.getURL("popup.html?mode=tab"),
         type: "popup",
-        width: 700,
-        height: 640,
+        width: 480,
+        height: 320,
       });
       window.close();
     }
