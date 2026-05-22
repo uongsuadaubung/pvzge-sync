@@ -18,7 +18,7 @@
       {#if showConnectedText}
         <span class="connected-text">{t("connected_as")}</span>
       {/if}
-      <span class="username">{user.name ?? user.login}</span>
+      <span class="username">{user.login}</span>
       {#if showBio && user.bio}
         <span class="user-bio">{user.bio}</span>
       {/if}

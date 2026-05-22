@@ -89,14 +89,13 @@
     {#if autoSyncEnabled}
       <div class="input-group">
         <label for="input-interval">{t("auto_sync_interval")}</label>
-        <div class="flex-row">
-          <NumberInput
-            id="input-interval"
-            bind:value={autoSyncInterval}
-            min={5}
-          />
-          <span style="margin-left: 12px;">{t("auto_sync_mins")}</span>
-        </div>
+        <NumberInput
+          id="input-interval"
+          bind:value={autoSyncInterval}
+          min={1}
+          step={1}
+          fullWidth
+        />
       </div>
     {/if}
 
@@ -179,10 +178,6 @@
 
 
 
-    .flex-row {
-      display: flex;
-      align-items: center;
-    }
 
     .token-error {
       color: var(--error);
