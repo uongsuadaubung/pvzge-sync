@@ -6,6 +6,7 @@
     step?: number;
     id?: string;
     onchange?: (val: number) => void;
+    fullWidth?: boolean;
   }
 
   let { 
@@ -14,7 +15,8 @@
     max = Infinity, 
     step = 1,
     id = "",
-    onchange
+    onchange,
+    fullWidth = false
   }: Props = $props();
 
   function decrease() {
@@ -37,7 +39,7 @@
   }
 </script>
 
-<div class="number-stepper">
+<div class="number-stepper {fullWidth ? 'full-width' : ''}">
   <button
     type="button"
     class="stepper-btn"
@@ -81,6 +83,16 @@
     overflow: hidden;
     width: fit-content;
     transition: border-color 0.2s, box-shadow 0.2s;
+
+    &.full-width {
+      width: 100%;
+      display: flex;
+
+      input {
+        flex: 1;
+        width: 100%;
+      }
+    }
 
     &:focus-within {
       border-color: var(--primary-dark);
