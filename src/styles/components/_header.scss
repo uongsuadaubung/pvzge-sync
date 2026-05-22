@@ -1,0 +1,190 @@
+header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  position: relative;
+  min-width: 0;
+
+  @media (max-width: 480px) {
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+
+  .logo-wrapper {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    padding: 6px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 14px var(--glow-primary);
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+
+    .logo {
+      width: 26px;
+      height: 26px;
+      transition: all 0.2s ease;
+    }
+
+    @media (max-width: 480px) {
+      padding: 5px;
+      border-radius: 10px;
+
+      .logo {
+        width: 22px;
+        height: 22px;
+      }
+    }
+  }
+
+  .header-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+
+    h1 {
+      font-size: 1.15rem;
+      margin: 0;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      transition: font-size 0.2s ease;
+
+      @media (max-width: 480px) {
+        font-size: 1.02rem;
+      }
+    }
+    small {
+      color: var(--text-dim);
+      font-size: 0.72rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-top: 1px;
+      opacity: 0.85;
+
+      @media (max-width: 480px) {
+        font-size: 0.68rem;
+      }
+    }
+  }
+
+  .header-user {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+
+    .user-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--surface-light);
+      padding: 4px 8px 4px 4px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--text);
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+
+      img {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        border: 1px solid var(--primary-dark);
+        transition: all 0.25s ease;
+      }
+
+      span {
+        transition: opacity 0.2s ease, max-width 0.2s ease;
+        max-width: 100px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      @media (max-width: 480px) {
+        padding: 3px;
+        border-radius: 50%;
+        background: transparent;
+        border-color: transparent;
+
+        img {
+          width: 24px;
+          height: 24px;
+          border: 2px solid var(--border);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        span {
+          display: none;
+        }
+
+        &:hover {
+          background: var(--surface-light);
+          border-color: var(--primary-dark);
+
+          img {
+            border-color: var(--primary);
+            box-shadow: 0 0 10px var(--glow-primary);
+          }
+        }
+      }
+    }
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+
+    .btn.settings {
+      background: transparent;
+      padding: 6px;
+      border-radius: 8px;
+      color: var(--text-dim);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      transition: all 0.2s ease;
+
+      &:hover:not(:disabled) {
+        color: var(--primary);
+        background: var(--surface-light);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+
+        svg {
+          transform: rotate(30deg);
+        }
+      }
+
+      svg {
+        width: 18px;
+        height: 18px;
+        transition: transform 0.3s ease;
+      }
+
+      @media (max-width: 480px) {
+        width: 28px;
+        height: 28px;
+        padding: 5px;
+
+        svg {
+          width: 16px;
+          height: 16px;
+        }
+      }
+    }
+  }
+}

@@ -1,15 +1,24 @@
-import { SAVE_KEYS } from "@/shared/constants";
-import { validateSaveData, validateSettings, type SaveData } from "@/domains/game/schema";
+import { SAVE_KEYS } from "@/shared/constants.ts";
+import {
+  type SaveData,
+  validateSaveData,
+  validateSettings,
+} from "@/domains/game/schema.ts";
 
 /**
  * Đọc dữ liệu thô từ localStorage của game.
  */
-export function getGameSaveData(): { data: SaveData | null; errors: string[] | null } {
+export function getGameSaveData(): {
+  data: SaveData | null;
+  errors: string[] | null;
+} {
   const obj: Record<string, unknown> = {};
 
   for (const key of SAVE_KEYS) {
     const raw = localStorage.getItem(key);
-    if (!raw) return { data: null, errors: [`Game data key '${key}' not found`] };
+    if (!raw) {
+      return { data: null, errors: [`Game data key '${key}' not found`] };
+    }
 
     try {
       obj[key] = JSON.parse(raw);
@@ -43,7 +52,10 @@ export function getGameCollectKey(): string | null {
 
     const result = validateSettings(rawJson);
     if (!result.success) {
-      console.warn("[GameStorage] Settings validation failed:", result.error.format());
+      console.warn(
+        "[GameStorage] Settings validation failed:",
+        result.error.format(),
+      );
       return null;
     }
 
