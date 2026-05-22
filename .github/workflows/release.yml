@@ -3,6 +3,7 @@ name: Build on Release
 on:
   release:
     types: [published]
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -13,31 +14,29 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - uses: denoland/setup-deno@v2
         with:
-          node-version: 20
-          cache: npm
+          deno-version: v2.x
 
-      - run: npm ci
+      - name: Build extension packages
+        run: deno task build
 
-      - run: node build.js
-
-      - name: Upload Chrome package to release
-        uses: actions/upload-release-asset@v1
+      - name: Upload packages to Release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: dist/chrome.zip
-          asset_name: pvzge-sync-chrome-${{ github.event.release.tag_name }}.zip
-          asset_content_type: application/zip
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Determine the tag name, default to the latest git tag if manual run
+          TAG_NAME="${{ github.event.release.tag_name }}"
+          if [ -z "$TAG_NAME" ]; then
+            TAG_NAME=$(git describe --tags --abbrev=0 2>/dev/null || echo "v1.0.0")
+          fi
 
-      - name: Upload Firefox package to release
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: dist/firefox.zip
-          asset_name: pvzge-sync-firefox-${{ github.event.release.tag_name }}.zip
-          asset_content_type: application/zip
+          # Create and rename output files
+          CHROME_FILE="pvzge-sync-chrome-${TAG_NAME}.zip"
+          FIREFOX_FILE="pvzge-sync-firefox-${TAG_NAME}.zip"
+
+          cp dist/chrome.zip "$CHROME_FILE"
+          cp dist/firefox.zip "$FIREFOX_FILE"
+
+          echo "Uploading $CHROME_FILE and $FIREFOX_FILE to release $TAG_NAME..."
+          gh release upload "$TAG_NAME" "$CHROME_FILE" "$FIREFOX_FILE" --clobber

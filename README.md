@@ -1,7 +1,8 @@
 # PvZGE Sync Browser Extension 🌻🎮
 
-[![Svelte 5](https://img.shields.io/badge/Svelte-5-ff3e00?style=for-the-badge&logo=svelte&logoColor=white)](https://svelte.dev)
+[![SolidJS](https://img.shields.io/badge/SolidJS-1.9-2c4f7c?style=for-the-badge&logo=solid&logoColor=white)](https://solidjs.com)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178c6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![Deno](https://img.shields.io/badge/Deno-2.x-black?style=for-the-badge&logo=deno&logoColor=white)](https://deno.com)
 [![Esbuild](https://img.shields.io/badge/Esbuild-0.28-ffcf00?style=for-the-badge&logo=esbuild&logoColor=black)](https://esbuild.github.io)
 [![Manifest V3](https://img.shields.io/badge/Manifest-V3-4285f4?style=for-the-badge&logo=google-chrome&logoColor=white)](https://developer.chrome.com/docs/extensions/mv3/intro/)
 [![License: ISC](https://img.shields.io/badge/License-ISC-blue?style=for-the-badge)](https://opensource.org/licenses/ISC)
@@ -11,9 +12,9 @@ automatic resource collection, and offline backup for **Plants vs. Zombies
 Gardenless Edition (PvZGE)** on the official website
 [play.pvzge.com](https://play.pvzge.com).
 
-This project is built using **Svelte 5 (Runes)**, **TypeScript**, **Sass/SCSS**,
-bundled with **Esbuild**, and runs beautifully on both Google Chrome and Mozilla
-Firefox.
+This project is built using **SolidJS**, **TypeScript**, **Sass/SCSS**, running
+on **Deno v2**, bundled with **Esbuild**, and runs beautifully on both Google
+Chrome and Mozilla Firefox.
 
 ---
 
@@ -29,6 +30,8 @@ Firefox.
   to prevent in-game clock issues or event resets.
 - **Conflict Resolution:** Displays a clear side-by-side comparison screen if
   local and cloud saves differ, allowing you to choose which save to keep.
+- **Dynamic Alerts:** Shows premium-styled glassmorphic notifications for
+  successful uploads, downloads, or when there are no new changes.
 
 ### 2. ☀️ Auto-Collect Utility
 
@@ -39,7 +42,7 @@ to let you focus fully on your strategic defense.
 
 Download your active game save directly as a `.json` file to your computer, or
 import an existing save file to restore your progress instantly without
-internet.
+internet. Fully localized alerts notify you of successful exports/imports.
 
 ### 4. 🌐 Multilingual Support
 
@@ -122,7 +125,7 @@ pvzge-sync/
 ├── .github/              # GitHub Actions workflows configuration
 ├── dist/                 # Compiled production outputs (Chrome & Firefox)
 ├── src/                  # Main extension source code
-│   ├── components/       # UI Components (Svelte 5)
+│   ├── components/       # UI Components (SolidJS)
 │   ├── domains/          # Core Domain Logic
 │   │   ├── game/         # Save reader/writer & schema validation
 │   │   ├── github/       # GitHub Gist API client
@@ -134,70 +137,73 @@ pvzge-sync/
 │   ├── images/           # Images & diagrams used in the user guide
 │   ├── locales/          # Localization JSON files (en.json, vi.json)
 │   ├── shared/           # Common utilities, constants, and i18n states
+│   │   ├── i18n.ts       # Localization engine
+│   │   └── store.ts      # Global state store (SolidJS reactive store)
 │   ├── views/            # Main views (Home view, Settings view, Guide view, Notice dialogs)
 │   ├── guide.html        # Detailed user guide page
 │   ├── manifest.json     # Extension configuration (Manifest V3)
 │   └── popup.html        # Main popup HTML anchor
-├── build.js              # esbuild node compiler & platform post-processor
-├── version.mjs           # Automatic versioning bumping script
-├── package.json          # Node dependencies & npm commands definition
-└── tsconfig.json         # TypeScript configuration
+├── build.ts              # esbuild compiler & platform post-processor (TypeScript)
+├── deno.json             # Deno configuration & tasks (instead of package.json / tsconfig.json)
+├── deno.lock             # Deno lock file managing dependencies securely
+└── version.ts            # Automatic versioning bumping script (TypeScript)
 ```
 
 ---
 
 ## 🏗️ Development & Build Commands
 
-### 1. Install Dependencies
+This project uses **Deno** natively to develop, lint, format, and bundle.
 
-Before developing or building, install the required packages:
-
-```bash
-npm install
-```
-
-### 2. Build the Extension
+### 1. Build the Extension
 
 Compile, bundle, and package the production zip archives:
 
 ```bash
-node build.js
+deno task build
 ```
 
 > [!NOTE]
-> **What the `build.js` compiler does under the hood:**
+> **What the `build.ts` compiler does under the hood:**
 >
-> 1. **Lint Checks:** Runs ESLint (`eslint src`) to verify code formatting and
->    standards.
-> 2. **Type Safety:** Executes `svelte-check` to validate TypeScript in Svelte
->    files.
-> 3. **SCSS Compilation:** Uses the `sass` compiler to convert
+> 1. **SCSS Compilation:** Uses Deno's Sass compiler to convert
 >    `src/styles/app.scss` into clean CSS stylesheets for both platforms.
-> 4. **esbuild Bundling:** Bundles and minifies TypeScript and Svelte 5 runes at
->    lightning-fast speed.
-> 5. **Asset Copying:** Copies HTML, assets, images, and icons to their
+> 2. **esbuild Bundling:** Bundles and minifies TypeScript and SolidJS
+>    components at lightning-fast speed.
+> 3. **Asset Copying:** Copies HTML, assets, images, and icons to their
 >    respective platform destinations.
-> 6. **Firefox Manifest Normalization:** Adjusts `manifest.json` for Firefox
+> 4. **Firefox Manifest Normalization:** Adjusts `manifest.json` for Firefox
 >    compatibility (converts service worker to standard background script,
 >    injects the Gecko identifier `pvzge-sync@uongsuadaubung.github.io`, and
 >    removes Chrome-only flags).
-> 7. **Zip Packaging:** Creates `chrome.zip` and `firefox.zip` in `/dist` for
+> 5. **Zip Packaging:** Creates `chrome.zip` and `firefox.zip` in `/dist` for
 >    easy distribution.
+
+### 2. Linting & Formatting
+
+Validate style guidelines and auto-format files using Deno's built-in tools:
+
+```bash
+# Run strict code linter (with forbidden 'any' rule enabled)
+deno task lint
+
+# Format codebase according to styles
+deno task fmt
+```
 
 ### 3. Version Bumping
 
-Automatically update version strings across `package.json`, `package-lock.json`,
-and `src/manifest.json`:
+Automatically update version strings inside `src/manifest.json`:
 
 ```bash
-# Bump patch version (e.g., 0.7.0 -> 0.7.1)
-node version.mjs --patch
+# Bump patch version (e.g., 1.0.0 -> 1.0.1)
+deno task bump-version --patch
 
-# Bump minor version (e.g., 0.7.0 -> 0.8.0)
-node version.mjs --minor
+# Bump minor version (e.g., 1.0.0 -> 1.1.0)
+deno task bump-version --minor
 
-# Bump major version (e.g., 0.7.0 -> 1.0.0)
-node version.mjs --major
+# Bump major version (e.g., 1.0.0 -> 2.0.0)
+deno task bump-version --major
 ```
 
 ---
