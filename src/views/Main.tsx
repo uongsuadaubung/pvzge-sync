@@ -1,4 +1,11 @@
-import { type Component, createMemo, createSignal, Show } from "solid-js";
+import {
+  type Component,
+  createMemo,
+  createSignal,
+  onCleanup,
+  onMount,
+  Show,
+} from "solid-js";
 import { isTranslationKey, t } from "@/shared/i18n.ts";
 import { appStore, appStoreActions, setAppStore } from "@/shared/store.ts";
 import { setLastSync } from "@/shared/storage.ts";
@@ -31,6 +38,66 @@ export const Main: Component = () => {
   const [loading, setLoading] = createSignal(false);
   const [showAdvanced, setShowAdvanced] = createSignal(false);
   const [showConflict, setShowConflict] = createSignal(false);
+
+  const [countdownText, setCountdownText] = createSignal("00:00");
+  const [progressPercent, setProgressPercent] = createSignal(0);
+
+  let timerId: ReturnType<typeof setInterval> | undefined;
+
+  onMount(() => {
+    async function updateTimer() {
+      if (!appStore.autoSyncEnabled || appStore.autoSyncInterval <= 0) {
+        return;
+      }
+
+      if (typeof chrome === "undefined" || !chrome.alarms) {
+        const lastSync = appStore.lastSync || Date.now();
+        const totalIntervalMs = appStore.autoSyncInterval * 60 * 1000;
+        const elapsed = (Date.now() - lastSync) % totalIntervalMs;
+        const remaining = Math.max(0, totalIntervalMs - elapsed);
+
+        const m = Math.floor(remaining / 60000);
+        const s = Math.floor((remaining % 60000) / 1000);
+        setCountdownText(
+          `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`,
+        );
+        setProgressPercent((elapsed / totalIntervalMs) * 100);
+        return;
+      }
+
+      try {
+        const alarm = await chrome.alarms.get("auto-sync-alarm");
+        if (alarm) {
+          const now = Date.now();
+          const scheduled = alarm.scheduledTime;
+          const remaining = Math.max(0, scheduled - now);
+          const totalIntervalMs = appStore.autoSyncInterval * 60 * 1000;
+
+          const safeRemaining = Math.min(remaining, totalIntervalMs);
+          const elapsed = totalIntervalMs - safeRemaining;
+
+          const m = Math.floor(safeRemaining / 60000);
+          const s = Math.floor((safeRemaining % 60000) / 1000);
+          setCountdownText(
+            `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`,
+          );
+          setProgressPercent((elapsed / totalIntervalMs) * 100);
+        } else {
+          setCountdownText("00:00");
+          setProgressPercent(0);
+        }
+      } catch (err) {
+        console.error("Lỗi lấy thông tin alarm:", err);
+      }
+    }
+
+    updateTimer();
+    timerId = setInterval(updateTimer, 1000);
+  });
+
+  onCleanup(() => {
+    if (timerId) clearInterval(timerId);
+  });
 
   const [dialogResolver, setDialogResolver] = createSignal<
     ((value: boolean) => void) | null
@@ -354,6 +421,25 @@ export const Main: Component = () => {
                     <span class="section-icon">☁️</span>
                     <h3>{t("cloud_sync")}</h3>
                   </div>
+
+                  <Show when={appStore.autoSyncEnabled}>
+                    <div class="auto-sync-status">
+                      <div class="auto-sync-info">
+                        <span class="auto-sync-label">
+                          ⏰ {t("next_sync_in")}
+                        </span>
+                        <span class="countdown-timer">{countdownText()}</span>
+                      </div>
+                      <div class="progress-bar-container">
+                        <div
+                          class="progress-bar-fill"
+                          style={{ width: `${progressPercent()}%` }}
+                        >
+                        </div>
+                      </div>
+                    </div>
+                  </Show>
+
                   <div class="button-group">
                     <Button
                       fullWidth

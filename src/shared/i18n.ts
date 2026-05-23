@@ -4,6 +4,7 @@ import { createSignal } from "solid-js";
 const LangSchema = z.object({
   app_name: z.string(),
   last_sync: z.string(),
+  next_sync_in: z.string(),
   no_sync: z.string(),
   status_no_github: z.string(),
   status_connected: z.string(),

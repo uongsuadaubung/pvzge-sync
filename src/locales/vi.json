@@ -1,6 +1,7 @@
 {
   "app_name": "PVZGE Sync",
   "last_sync": "Lần cuối: ",
+  "next_sync_in": "Đồng bộ tiếp theo: ",
   "no_sync": "Chưa đồng bộ lần nào",
   "status_no_github": "Chưa điền GitHub Token",
   "status_connected": "Đã kết nối GitHub",

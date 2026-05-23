@@ -1,6 +1,7 @@
 {
   "app_name": "PVZGE Sync",
   "last_sync": "Last sync: ",
+  "next_sync_in": "Next sync in: ",
   "no_sync": "Never synced",
   "status_no_github": "GitHub not configured",
   "status_connected": "GitHub Connected",
