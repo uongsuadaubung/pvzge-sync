@@ -40,13 +40,13 @@ const EndlessMiniGamePropsSchema = z.object({
 }).strict();
 
 const EndlessPropsSchema = z.object({
-  initialPlants: z.array(z.unknown()),
+  initialPlants: z.array(z.number()),
   level: z.number(),
   mower: z.array(z.boolean()),
-  obtainedPlants: z.array(z.unknown()),
+  obtainedPlants: z.array(z.number()),
   plantChosen: z.boolean(),
   plantfood: z.number(),
-  plantsToChoose: z.array(z.unknown()).nullable(),
+  plantsToChoose: z.array(z.number()).nullable(),
 }).strict();
 
 const WorldPropEntrySchema = z.object({
@@ -63,12 +63,24 @@ const WorldPropsSchema = z.object({}).catchall(
 
 const ZenGardenSlotSchema = z.object({ unlocked: z.boolean() }).strict();
 
+const ZenGardenPlantSchema = z.object({
+  ID: z.number(),
+  grownTime: z.number(),
+  inZen: z.number(),
+  oldTime: z.number(),
+  pos: z.number(),
+  requirement: z.number(),
+  stuck: z.boolean(),
+  waterCD: z.number(),
+  waterLeftTime: z.number(),
+}).strict();
+
 const ZenGardenSchema = z.object({
-  plantInCart: z.unknown().nullable(),
-  plantsInBeach: z.array(z.unknown()),
-  plantsInMain: z.array(z.unknown()),
-  plantsInMushroom: z.array(z.unknown()),
-  plantsInNight: z.array(z.unknown()),
+  plantInCart: ZenGardenPlantSchema.nullable(),
+  plantsInBeach: z.array(ZenGardenPlantSchema),
+  plantsInMain: z.array(ZenGardenPlantSchema),
+  plantsInMushroom: z.array(ZenGardenPlantSchema),
+  plantsInNight: z.array(ZenGardenPlantSchema),
   slotsInBeach: z.array(ZenGardenSlotSchema),
   slotsInMain: z.array(ZenGardenSlotSchema),
   slotsInMushroom: z.array(ZenGardenSlotSchema),

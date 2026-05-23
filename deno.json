@@ -21,8 +21,7 @@
   "tasks": {
     "build": "deno run --node-modules-dir=auto -A build.ts",
     "bump-version": "deno run -A version.ts",
-    "lint": "deno lint",
-    "fmt": "deno fmt"
+    "analyze": "deno run -A analyze.ts"
   },
   "fmt": {
     "semiColons": true,

@@ -7,8 +7,13 @@ import type { SaveData } from "./schema.ts";
  * - levelProps, trophyProps, zombieProps, upgradeProps trống trơn
  * - plantProps chỉ có đúng 4 cây mặc định: peashooter, sunflower, wallnut, potatomine.
  */
-export function hasProgress(save: SaveData | null | undefined): save is SaveData {
-  if (!save || !save.PvZ2_PlayerProperties || save.PvZ2_PlayerProperties.length === 0) {
+export function hasProgress(
+  save: SaveData | null | undefined,
+): save is SaveData {
+  if (
+    !save || !save.PvZ2_PlayerProperties ||
+    save.PvZ2_PlayerProperties.length === 0
+  ) {
     return false;
   }
   return save.PvZ2_PlayerProperties.some((profile) => {
