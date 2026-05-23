@@ -15,19 +15,18 @@ function stripIgnoredKeys(obj: unknown): unknown {
   if (Array.isArray(obj)) {
     return obj.map(stripIgnoredKeys);
   }
-  if (typeof obj === "object") {
+  if (typeof obj === "object" && obj !== null) {
     const clean: Record<string, unknown> = {};
-    const objRec = obj as Record<string, unknown>;
-    for (const key of Object.keys(objRec)) {
+    for (const [key, val] of Object.entries(obj)) {
       if (IGNORED_KEYS.includes(key)) continue;
-      clean[key] = stripIgnoredKeys(objRec[key]);
+      clean[key] = stripIgnoredKeys(val);
     }
     return clean;
   }
   return obj;
 }
 
-async function computeHash(obj: unknown): Promise<string> {
+export async function computeHash(obj: unknown): Promise<string> {
   if (!obj) return "";
   const cleanObj = stripIgnoredKeys(obj);
   const str = JSON.stringify(cleanObj);
@@ -44,7 +43,7 @@ async function computeHash(obj: unknown): Promise<string> {
  * Giữ nguyên thông tin thời gian cục bộ (date/time) khi áp dụng dữ liệu từ Cloud.
  * Điều này tránh gây xung đột logic thời gian trong game.
  */
-function preserveLocalDate(remote: SaveData, local: SaveData): SaveData {
+export function preserveLocalDate(remote: SaveData, local: SaveData): SaveData {
   return {
     ...remote,
     PvZ2_PlayerProperties: remote.PvZ2_PlayerProperties.map((profile) => {
@@ -278,4 +277,18 @@ export async function forceDownloadFromCloud(): Promise<void> {
   await setLastSync();
   await setLastSyncedHash(H_cloud);
   console.log("[Sync] Force download completed successfully.");
+}
+
+/**
+ * Khôi phục phiên bản Save Data từ lịch sử.
+ */
+export async function restoreHistoryVersion(data: SaveData): Promise<void> {
+  console.log("[Sync] Restoring save data from historical commit...");
+  const local = await getLocalData().catch(() => null);
+  const dataToApply = local ? preserveLocalDate(data, local) : data;
+  await applyRemoteToGame(dataToApply);
+  const H_cloud = await computeHash(data);
+  await setLastSync();
+  await setLastSyncedHash(H_cloud);
+  console.log("[Sync] Historical save data restored successfully.");
 }

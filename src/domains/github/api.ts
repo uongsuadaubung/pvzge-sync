@@ -207,3 +207,77 @@ export async function getUserInfo(): Promise<SyncResponse> {
   if (!token) return { success: false, error: "No token configured" };
   return fetchUserInfo(token);
 }
+
+export interface HistoryItem {
+  version: string;
+  committedAt: string;
+  saveData: SaveData | null;
+  error?: string;
+}
+
+/** Tải danh sách lịch sử sao lưu (5 bản ghi gần nhất) từ Gist. */
+export async function fetchGistHistory(): Promise<HistoryItem[]> {
+  const gistId = await getOrFindGistId();
+  if (!gistId) {
+    throw new Error("msg_cloud_save_not_found");
+  }
+
+  console.log("[GitHub API] Fetching gist commits for history:", gistId);
+  const commitsRaw = await githubRequest(`/gists/${gistId}/commits`);
+
+  const commitsSchema = z.array(
+    z.object({
+      version: z.string(),
+      committed_at: z.string(),
+    }),
+  );
+
+  const commits = commitsSchema.parse(commitsRaw);
+
+  // Lấy tối đa 5 bản ghi gần nhất theo yêu cầu của người chơi
+  const latestCommits = commits.slice(0, 5);
+
+  const items: HistoryItem[] = await Promise.all(
+    latestCommits.map(async (commit) => {
+      try {
+        const detailRaw = await githubRequest(
+          `/gists/${gistId}/${commit.version}`,
+        );
+        const gistDetail = GistSchema.parse(detailRaw);
+        const file = gistDetail.files[GIST_FILE_NAME];
+        if (!file) {
+          return {
+            version: commit.version,
+            committedAt: commit.committed_at,
+            saveData: null,
+            error: "msg_gist_file_not_found",
+          };
+        }
+
+        const content = file.content ||
+          await fetch(file.raw_url).then((r) => r.text());
+        const rawData = JSON.parse(content);
+        const saveData = SaveDataSchema.parse(rawData);
+
+        return {
+          version: commit.version,
+          committedAt: commit.committed_at,
+          saveData,
+        };
+      } catch (err: unknown) {
+        console.error(
+          `[GitHub API] Error fetching history commit ${commit.version}:`,
+          err,
+        );
+        return {
+          version: commit.version,
+          committedAt: commit.committed_at,
+          saveData: null,
+          error: err instanceof Error ? err.message : String(err),
+        };
+      }
+    }),
+  );
+
+  return items;
+}

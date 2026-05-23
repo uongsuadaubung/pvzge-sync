@@ -82,26 +82,39 @@ body.guide-body-native {
       align-items: center;
       gap: 8px;
       background: var(--surface-light);
-      padding: 6px 12px;
+      padding: 4px 12px;
       border-radius: 20px;
       border: 1px solid var(--border);
+      min-width: 145px;
+      justify-content: space-between;
 
       span {
         font-size: 0.9rem;
+        flex-shrink: 0;
       }
 
-      select {
-        background: transparent;
-        border: none;
-        color: var(--text);
-        font-size: 0.85rem;
-        font-weight: 600;
-        cursor: pointer;
-        outline: none;
+      .custom-select {
+        width: 105px;
+        flex-shrink: 0;
 
-        option {
-          background: var(--surface);
+        .select-trigger {
+          background: transparent;
+          border: none;
+          padding: 2px 0;
+          font-size: 0.82rem;
+          font-weight: 600;
           color: var(--text);
+          height: auto;
+
+          &:focus {
+            box-shadow: none;
+          }
+        }
+
+        .options-list {
+          width: 120px;
+          right: 0;
+          left: auto;
         }
       }
     }

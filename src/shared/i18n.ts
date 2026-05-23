@@ -82,6 +82,18 @@ const LangSchema = z.object({
   guide_tab_token: z.string(),
   guide_tab_features: z.string(),
   guide_tab_faq: z.string(),
+  guide_tab_policy: z.string(),
+  policy_title: z.string(),
+  policy_desc: z.string(),
+  policy_item1_title: z.string(),
+  policy_item1_desc: z.string(),
+  policy_item2_title: z.string(),
+  policy_item2_desc: z.string(),
+  policy_item3_title: z.string(),
+  policy_item3_desc: z.string(),
+  policy_item4_title: z.string(),
+  policy_item4_desc: z.string(),
+  policy_summary: z.string(),
   guide_token_title: z.string(),
   guide_token_desc: z.string(),
   guide_token_step1_title: z.string(),
@@ -119,6 +131,18 @@ const LangSchema = z.object({
   guide_feature3_export_desc: z.string(),
   guide_feature3_import: z.string(),
   guide_feature3_import_desc: z.string(),
+  guide_feature4_title: z.string(),
+  guide_feature4_desc: z.string(),
+  guide_feature4_how_to: z.string(),
+  guide_feature4_how_to_desc: z.string(),
+  guide_feature4_limit: z.string(),
+  guide_feature4_limit_desc: z.string(),
+  guide_feature5_title: z.string(),
+  guide_feature5_desc: z.string(),
+  guide_feature5_upload: z.string(),
+  guide_feature5_upload_desc: z.string(),
+  guide_feature5_download: z.string(),
+  guide_feature5_download_desc: z.string(),
   guide_faq_title: z.string(),
   guide_faq_desc: z.string(),
   guide_faq1_q: z.string(),
@@ -129,6 +153,10 @@ const LangSchema = z.object({
   guide_faq3_a: z.string(),
   guide_faq4_q: z.string(),
   guide_faq4_a: z.string(),
+  guide_faq5_q: z.string(),
+  guide_faq5_a: z.string(),
+  guide_faq6_q: z.string(),
+  guide_faq6_a: z.string(),
   dialog_title_info: z.string(),
   dialog_title_warning: z.string(),
   dialog_title_error: z.string(),
@@ -142,6 +170,16 @@ const LangSchema = z.object({
   msg_token_not_configured: z.string(),
   msg_cloud_save_not_found: z.string(),
   msg_gist_file_not_found: z.string(),
+  btn_history: z.string(),
+  history_title: z.string(),
+  history_empty: z.string(),
+  history_loading: z.string(),
+  history_overwrite_confirm: z.string(),
+  history_overwrite_success: z.string(),
+  history_coins: z.string(),
+  history_gems: z.string(),
+  history_sprouts: z.string(),
+  history_plants: z.string(),
 });
 
 type Lang = z.infer<typeof LangSchema>;
@@ -152,6 +190,10 @@ export enum SupportLanguage {
 }
 
 export type TranslationKey = keyof Lang;
+
+export function isTranslationKey(key: string): key is TranslationKey {
+  return key in LangSchema.shape;
+}
 
 const loaders: Record<SupportLanguage, () => Promise<unknown>> = {
   [SupportLanguage.En]: () =>

@@ -2,18 +2,13 @@ import type { SaveData } from "./schema.ts";
 
 /**
  * Kiểm tra xem dữ liệu SaveData có tiến trình chơi game thực tế hay không.
- * Đối chiếu giữa dữ liệu mới tinh (data fresh.txt) và dữ liệu có tiến trình (has data.txt):
+ * Đối chiếu giữa dữ liệu mới tinh và dữ liệu có tiến trình :
  * - Bản save mới tinh chỉ có name = "New Player", coin = 0, gem = 0, sprout = 0.
- * - levelProps, trophyProps, zombieProps, upgradeProps trống trơn ({})
+ * - levelProps, trophyProps, zombieProps, upgradeProps trống trơn
  * - plantProps chỉ có đúng 4 cây mặc định: peashooter, sunflower, wallnut, potatomine.
  */
-export function hasProgress(
-  save: SaveData | null | undefined,
-): save is SaveData {
-  if (
-    !save || !save.PvZ2_PlayerProperties ||
-    save.PvZ2_PlayerProperties.length === 0
-  ) {
+export function hasProgress(save: SaveData | null | undefined): save is SaveData {
+  if (!save || !save.PvZ2_PlayerProperties || save.PvZ2_PlayerProperties.length === 0) {
     return false;
   }
   return save.PvZ2_PlayerProperties.some((profile) => {

@@ -1,5 +1,5 @@
 import { type Component, createMemo, createSignal, Show } from "solid-js";
-import { t, type TranslationKey } from "@/shared/i18n.ts";
+import { isTranslationKey, t } from "@/shared/i18n.ts";
 import { appStore, appStoreActions, setAppStore } from "@/shared/store.ts";
 import { setLastSync } from "@/shared/storage.ts";
 import {
@@ -10,6 +10,7 @@ import {
   smartSync,
 } from "@/domains/sync/sync.ts";
 import { SaveDataSchema } from "@/domains/game/schema.ts";
+import { type DialogConfig, View } from "@/shared/types.ts";
 
 import Header from "@/components/Header.tsx";
 import Button from "@/components/Button.tsx";
@@ -34,12 +35,12 @@ export const Main: Component = () => {
   const [dialogResolver, setDialogResolver] = createSignal<
     ((value: boolean) => void) | null
   >(null);
-  const [dialogConfig, setDialogConfig] = createSignal({
+  const [dialogConfig, setDialogConfig] = createSignal<DialogConfig>({
     show: false,
     title: "",
     message: "",
-    type: "alert" as "alert" | "confirm",
-    severity: "info" as "info" | "success" | "warning" | "error",
+    type: "alert",
+    severity: "info",
   });
 
   const [localProfile, setLocalProfile] = createSignal<ProfileInfo | null>(
@@ -76,7 +77,7 @@ export const Main: Component = () => {
 
   function getLocalizedError(e: unknown): string {
     const raw = e instanceof Error ? e.message : String(e);
-    return t(raw as TranslationKey);
+    return isTranslationKey(raw) ? t(raw) : raw;
   }
 
   function showConfirm(
@@ -241,7 +242,9 @@ export const Main: Component = () => {
   }
 
   async function handleFile(e: Event) {
-    const file = (e.target as HTMLInputElement).files?.[0];
+    const target = e.target;
+    if (!(target instanceof HTMLInputElement)) return;
+    const file = target.files?.[0];
     if (!file) return;
     setLoading(true);
     try {
@@ -395,6 +398,15 @@ export const Main: Component = () => {
                           class="force-btn force-download"
                         >
                           {t("btn_force_download")}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          fullWidth
+                          onclick={() => appStoreActions.navigate(View.History)}
+                          disabled={loading()}
+                          class="force-btn"
+                        >
+                          {t("btn_history")}
                         </Button>
                       </div>
                     </Show>

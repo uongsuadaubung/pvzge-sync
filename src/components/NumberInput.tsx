@@ -24,11 +24,13 @@ export default function NumberInput(props: Props) {
   }
 
   function handleInput(e: Event) {
-    const target = e.target as HTMLInputElement;
-    const val = parseInt(target.value);
-    if (!isNaN(val)) {
-      const newVal = Math.max(minVal(), Math.min(maxVal(), val));
-      props.onchange?.(newVal);
+    const target = e.target;
+    if (target instanceof HTMLInputElement) {
+      const val = parseInt(target.value);
+      if (!isNaN(val)) {
+        const newVal = Math.max(minVal(), Math.min(maxVal(), val));
+        props.onchange?.(newVal);
+      }
     }
   }
 

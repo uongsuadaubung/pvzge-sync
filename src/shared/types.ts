@@ -7,6 +7,7 @@ export enum View {
   Main = "main",
   Settings = "settings",
   Guide = "guide",
+  History = "history",
 }
 
 export const SyncMessageSchema = z.discriminatedUnion("type", [
@@ -33,3 +34,11 @@ export const SyncResponseSchema = z.union([
 export type SyncMessage = z.infer<typeof SyncMessageSchema>;
 export type SyncResponse = z.infer<typeof SyncResponseSchema>;
 export type { GithubUser };
+
+export interface DialogConfig {
+  show: boolean;
+  title: string;
+  message: string;
+  type: "alert" | "confirm";
+  severity: "info" | "success" | "warning" | "error";
+}

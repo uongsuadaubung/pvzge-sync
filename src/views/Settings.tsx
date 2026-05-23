@@ -143,9 +143,11 @@ export default function Settings() {
                   placeholder="ghp_xxxxxxxxxxxx"
                   error={!!tokenError()}
                   oninput={(e: Event) => {
-                    const target = e.target as HTMLInputElement;
-                    setTokenInput(target.value);
-                    setTokenError("");
+                    const target = e.target;
+                    if (target instanceof HTMLInputElement) {
+                      setTokenInput(target.value);
+                      setTokenError("");
+                    }
                   }}
                 />
                 {tokenError() && <p class="token-error">{tokenError()}</p>}

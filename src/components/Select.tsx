@@ -29,7 +29,11 @@ export default function Select(props: Props) {
   }
 
   function handleOutsideClick(e: MouseEvent) {
-    if (isOpen() && !(e.target as HTMLElement).closest(".custom-select")) {
+    const target = e.target;
+    if (
+      isOpen() && target instanceof HTMLElement &&
+      !target.closest(".custom-select")
+    ) {
       setIsOpen(false);
     }
   }

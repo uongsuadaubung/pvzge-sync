@@ -4,6 +4,7 @@ import { GAME_HOST } from "@/shared/constants.ts";
 import Main from "@/views/Main.tsx";
 import Settings from "@/views/Settings.tsx";
 import Notice from "@/views/Notice.tsx";
+import History from "@/views/History.tsx";
 import { appStore, appStoreActions } from "@/shared/store.ts";
 import { View } from "@/shared/types.ts";
 
@@ -55,6 +56,9 @@ export const Popup: Component = () => {
       </Match>
       <Match when={appStore.view === View.Settings}>
         <Settings />
+      </Match>
+      <Match when={appStore.view === View.History}>
+        <History />
       </Match>
       <Match when={warnMsg() || errorMsg()}>
         <Notice warnMsg={warnMsg()} errorMsg={errorMsg()} />

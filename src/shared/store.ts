@@ -13,11 +13,24 @@ import { setLanguage } from "@/shared/i18n.ts";
 import { SupportLanguage } from "@/shared/i18n.ts";
 import { type GithubUser, SyncResponseSchema, View } from "@/shared/types.ts";
 
+export interface AppStore {
+  githubToken: string;
+  language: SupportLanguage;
+  lastSync: number;
+  autoSyncEnabled: boolean;
+  autoSyncInterval: number;
+  autoCollectEnabled: boolean;
+  isLoaded: boolean;
+  view: View;
+  githubUser: GithubUser | null;
+  readonly githubConnected: boolean;
+}
+
 /**
  * App Store sử dụng SolidJS Store.
  * Quản lý trạng thái toàn cục của ứng dụng, đồng bộ giữa Storage và UI.
  */
-export const [appStore, setAppStore] = createStore({
+export const [appStore, setAppStore] = createStore<AppStore>({
   // --- Dữ liệu từ Storage ---
   githubToken: "",
   language: SupportLanguage.En,
@@ -29,7 +42,7 @@ export const [appStore, setAppStore] = createStore({
   // --- Trạng thái Giao diện (UI State) ---
   isLoaded: false,
   view: View.Main,
-  githubUser: null as GithubUser | null,
+  githubUser: null,
 
   /** Kiểm tra xem đã cấu hình GitHub hay chưa (dựa trên token) */
   get githubConnected() {
