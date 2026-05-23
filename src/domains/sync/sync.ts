@@ -1,4 +1,5 @@
 import type { SaveData } from "@/domains/game/schema.ts";
+import { hasProgress } from "@/domains/game/progress.ts";
 import type { SyncResponse } from "@/shared/types.ts";
 import {
   getLastSyncedHash,
@@ -184,6 +185,16 @@ export async function smartSync(): Promise<SmartSyncResult> {
       console.log("[SmartSync] Local changes detected, but local is empty.");
       return { type: "no_action" };
     }
+
+    // Nếu dữ liệu local là "New Game" (không có tiến trình) trong khi cloud đã có tiến trình chơi thực tế,
+    // ta không được auto-upload ghi đè lên cloud mà phải kích hoạt trạng thái xung đột (conflict).
+    if (!hasProgress(local) && hasProgress(cloud)) {
+      console.warn(
+        "[SmartSync] Local has no progress (new game) but Cloud has progress. Triggering conflict to prevent cloud save overwrite.",
+      );
+      return { type: "conflict", localData: local, cloudData: cloud };
+    }
+
     console.log("[SmartSync] Only Local changed. Auto-uploading to Cloud...");
     const uploadR = await uploadToGist(local);
     if (uploadR.success) {
