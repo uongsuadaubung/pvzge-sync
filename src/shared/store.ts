@@ -4,22 +4,34 @@ import {
   getAutoCollectEnabled,
   getAutoSyncEnabled,
   getAutoSyncInterval,
+  getAutoSyncStatus,
+  getCachedGithubUser,
+  getGistId,
   getGithubToken,
   getLanguage,
   getLastSync,
   setGithubSettings,
+  subscribeToSettings,
 } from "@/shared/storage.ts";
 import { setLanguage } from "@/shared/i18n.ts";
 import { SupportLanguage } from "@/shared/i18n.ts";
-import { type GithubUser, SyncResponseSchema, View } from "@/shared/types.ts";
+import {
+  type GithubUser,
+  SyncResponseSchema,
+  type SyncStatusType,
+  View,
+} from "@/shared/types.ts";
 
 export interface AppStore {
   githubToken: string;
+  gistId: string;
   language: SupportLanguage;
   lastSync: number;
   autoSyncEnabled: boolean;
   autoSyncInterval: number;
   autoCollectEnabled: boolean;
+  autoSyncStatus: string;
+  autoSyncStatusType: SyncStatusType;
   isLoaded: boolean;
   view: View;
   githubUser: GithubUser | null;
@@ -33,11 +45,14 @@ export interface AppStore {
 export const [appStore, setAppStore] = createStore<AppStore>({
   // --- Dữ liệu từ Storage ---
   githubToken: "",
+  gistId: "",
   language: SupportLanguage.En,
   lastSync: 0,
   autoSyncEnabled: false,
   autoSyncInterval: 5,
   autoCollectEnabled: false,
+  autoSyncStatus: "",
+  autoSyncStatusType: "info",
 
   // --- Trạng thái Giao diện (UI State) ---
   isLoaded: false,
@@ -51,30 +66,35 @@ export const [appStore, setAppStore] = createStore<AppStore>({
 });
 
 export const appStoreActions = {
-  /**
-   * Khởi tạo store: Load dữ liệu từ storage và lấy thông tin User GitHub nếu có token.
-   */
   async init() {
     console.log("[Store] Initializing...");
     const token = (await getGithubToken()) ?? "";
+    const gistId = (await getGistId()) ?? "";
     const language = await getLanguage();
     const lastSync = await getLastSync();
     const autoSyncEnabled = await getAutoSyncEnabled();
     const autoSyncInterval = await getAutoSyncInterval();
     const autoCollectEnabled = await getAutoCollectEnabled();
+    const autoSyncStatusObj = await getAutoSyncStatus();
+    const cachedUser = await getCachedGithubUser();
 
     setAppStore({
       githubToken: token,
+      gistId,
       language,
       lastSync,
       autoSyncEnabled,
       autoSyncInterval,
       autoCollectEnabled,
+      autoSyncStatus: autoSyncStatusObj.status,
+      autoSyncStatusType: autoSyncStatusObj.type,
+      githubUser: cachedUser,
     });
 
     await setLanguage(language);
 
-    if (token) {
+    // Chỉ gọi API lấy thông tin nếu có token nhưng chưa có dữ liệu lưu tạm (cache)
+    if (token && !cachedUser) {
       // Lấy thông tin user thông qua background để đảm bảo tính nhất quán
       const rawResponse = await new Promise((resolve) =>
         chrome.runtime.sendMessage({ type: "GET_USER_INFO" }, resolve)
@@ -90,10 +110,26 @@ export const appStoreActions = {
       } else if (!result.success) {
         console.warn(
           "[Store] Failed to load GitHub user info:",
-          result.error.format(),
+          result.error,
         );
       }
     }
+
+    // Đăng ký lắng nghe thay đổi từ storage để tự động cập nhật store
+    subscribeToSettings((settings) => {
+      setAppStore({
+        githubToken: settings.githubToken,
+        gistId: settings.gistId,
+        language: settings.language,
+        lastSync: settings.lastSync,
+        autoSyncEnabled: settings.autoSyncEnabled,
+        autoSyncInterval: settings.autoSyncInterval,
+        autoCollectEnabled: settings.autoCollectEnabled,
+        autoSyncStatus: settings.autoSyncStatus || "",
+        autoSyncStatusType: settings.autoSyncStatusType,
+        githubUser: settings.cachedGithubUser,
+      });
+    });
 
     setAppStore("isLoaded", true);
     console.log("[Store] Initialization complete.");
@@ -141,6 +177,7 @@ export const appStoreActions = {
     // Cập nhật lại trạng thái local trong store
     setAppStore({
       githubToken: "",
+      gistId: "",
       autoSyncEnabled: false,
       lastSync: 0,
       githubUser: null,

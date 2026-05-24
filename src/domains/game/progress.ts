@@ -19,7 +19,9 @@ export function hasProgress(
   return save.PvZ2_PlayerProperties.some((profile) => {
     const levelCount = Object.keys(profile.levelProps || {}).length;
     const trophyCount = Object.keys(profile.trophyProps || {}).length;
-    const plantCount = Object.keys(profile.plantProps || {}).length;
+    const plantCount = Object.values(profile.plantProps || {}).filter(
+      (p) => p.progress > 0,
+    ).length;
     const zombieCount = Object.keys(profile.zombieProps || {}).length;
     const upgradeCount = Object.keys(profile.upgradeProps || {}).length;
 

@@ -55,13 +55,27 @@ export default function Header(props: Props) {
 
       {appStore.githubUser && props.showLogo && getShowUser() && (
         <div class="header-user">
-          <div class="user-pill" title={appStore.githubUser.login}>
+          <a
+            href={appStore.gistId
+              ? `https://gist.github.com/${appStore.gistId}`
+              : `https://gist.github.com/${appStore.githubUser.login}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="user-pill"
+            title={appStore.language === "vi"
+              ? (appStore.gistId
+                ? "Mở Gist sao lưu trên GitHub"
+                : "Mở danh sách Gist của bạn")
+              : (appStore.gistId
+                ? "Open backup Gist repository"
+                : "Open your Gists list")}
+          >
             <img
               src={appStore.githubUser.avatar_url}
               alt={appStore.githubUser.login}
             />
             <span>{appStore.githubUser.login}</span>
-          </div>
+          </a>
         </div>
       )}
 

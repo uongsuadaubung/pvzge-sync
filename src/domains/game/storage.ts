@@ -54,7 +54,7 @@ export function getGameCollectKey(): string | null {
     if (!result.success) {
       console.warn(
         "[GameStorage] Settings validation failed:",
-        result.error.format(),
+        result.error,
       );
       return null;
     }

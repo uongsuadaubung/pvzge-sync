@@ -6,9 +6,8 @@ import {
   onMount,
   Show,
 } from "solid-js";
-import { isTranslationKey, t } from "@/shared/i18n.ts";
-import { appStore, appStoreActions, setAppStore } from "@/shared/store.ts";
-import { setLastSync } from "@/shared/storage.ts";
+import { formatDateTime, isTranslationKey, t } from "@/shared/i18n.ts";
+import { appStore, appStoreActions } from "@/shared/store.ts";
 import {
   applyRemoteToGame,
   forceDownloadFromCloud,
@@ -17,7 +16,11 @@ import {
   smartSync,
 } from "@/domains/sync/sync.ts";
 import { SaveDataSchema } from "@/domains/game/schema.ts";
-import { type DialogConfig, View } from "@/shared/types.ts";
+import {
+  type DialogConfig,
+  type SyncStatusType,
+  View,
+} from "@/shared/types.ts";
 
 import Header from "@/components/Header.tsx";
 import Button from "@/components/Button.tsx";
@@ -119,7 +122,7 @@ export const Main: Component = () => {
 
   function showAlert(
     message: string,
-    severity: "info" | "success" | "warning" | "error" = "info",
+    severity: SyncStatusType = "info",
     title?: string,
   ): Promise<void> {
     return new Promise((resolve) => {
@@ -149,7 +152,7 @@ export const Main: Component = () => {
 
   function showConfirm(
     message: string,
-    severity: "info" | "success" | "warning" | "error" = "warning",
+    severity: SyncStatusType = "warning",
     title?: string,
   ): Promise<boolean> {
     return new Promise((resolve) => {
@@ -172,8 +175,6 @@ export const Main: Component = () => {
     setLoading(true);
     try {
       await forceUploadToCloud();
-      await setLastSync();
-      setAppStore("lastSync", Date.now());
       await showAlert(t("msg_force_upload_success"), "success");
     } catch (e: unknown) {
       await showAlert(getLocalizedError(e), "error");
@@ -187,8 +188,6 @@ export const Main: Component = () => {
     setLoading(true);
     try {
       await forceDownloadFromCloud();
-      await setLastSync();
-      setAppStore("lastSync", Date.now());
       await showAlert(t("msg_force_download_success"), "success");
     } catch (e: unknown) {
       await showAlert(getLocalizedError(e), "error");
@@ -199,9 +198,15 @@ export const Main: Component = () => {
 
   const lastSyncMsg = createMemo(() =>
     appStore.lastSync
-      ? t("last_sync") + new Date(appStore.lastSync).toLocaleString()
+      ? t("last_sync") + formatDateTime(appStore.lastSync)
       : t("no_sync")
   );
+
+  const localizedAutoSyncStatus = createMemo(() => {
+    const status = appStore.autoSyncStatus;
+    if (!status) return "";
+    return isTranslationKey(status) ? t(status) : status;
+  });
 
   async function handleSync() {
     setLoading(true);
@@ -237,8 +242,6 @@ export const Main: Component = () => {
 
         setShowConflict(true);
       } else if (res.type === "synced") {
-        await setLastSync();
-        setAppStore("lastSync", Date.now());
         if (res.detail === "upload") {
           await showAlert(t("msg_sync_success_upload"), "success");
         } else if (res.detail === "download") {
@@ -259,8 +262,6 @@ export const Main: Component = () => {
     setLoading(true);
     try {
       await forceUploadToCloud();
-      await setLastSync();
-      setAppStore("lastSync", Date.now());
       setShowConflict(false);
       await showAlert(t("msg_force_upload_success"), "success");
     } catch (e: unknown) {
@@ -275,8 +276,6 @@ export const Main: Component = () => {
     setLoading(true);
     try {
       await forceDownloadFromCloud();
-      await setLastSync();
-      setAppStore("lastSync", Date.now());
       setShowConflict(false);
       await showAlert(t("msg_force_download_success"), "success");
     } catch (e: unknown) {
@@ -332,8 +331,6 @@ export const Main: Component = () => {
         return;
       }
       await applyRemoteToGame(parseResult.data);
-      await setLastSync();
-      setAppStore("lastSync", Date.now());
       await showAlert(t("msg_import_success"), "success");
       if (isTabMode()) {
         window.close();
@@ -437,6 +434,15 @@ export const Main: Component = () => {
                         >
                         </div>
                       </div>
+                      <Show when={localizedAutoSyncStatus()}>
+                        <div
+                          class={`auto-sync-status-msg ${
+                            appStore.autoSyncStatusType || "info"
+                          }`}
+                        >
+                          {localizedAutoSyncStatus()}
+                        </div>
+                      </Show>
                     </div>
                   </Show>
 

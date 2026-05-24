@@ -13,7 +13,13 @@ import {
   GIST_FILE_NAME,
   GITHUB_API_BASE,
 } from "@/shared/constants.ts";
-import { getGistId, getGithubToken, setGistId } from "@/shared/storage.ts";
+import {
+  getCachedGithubUser,
+  getGistId,
+  getGithubToken,
+  setCachedGithubUser,
+  setGistId,
+} from "@/shared/storage.ts";
 
 const GithubErrorSchema = z.object({
   message: z.string().optional(),
@@ -205,7 +211,22 @@ export async function validateToken(token: string): Promise<SyncResponse> {
 export async function getUserInfo(): Promise<SyncResponse> {
   const token = await getGithubToken();
   if (!token) return { success: false, error: "No token configured" };
-  return fetchUserInfo(token);
+
+  const cached = await getCachedGithubUser();
+  if (cached) {
+    console.debug("[GitHub API] Returning cached user info:", cached.login);
+    return { success: true, githubUser: cached };
+  }
+
+  const response = await fetchUserInfo(token);
+  if (response.success && "githubUser" in response) {
+    await setCachedGithubUser(response.githubUser);
+    console.log(
+      "[GitHub API] Fetched and cached user info:",
+      response.githubUser.login,
+    );
+  }
+  return response;
 }
 
 export interface HistoryItem {

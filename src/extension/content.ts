@@ -99,7 +99,7 @@ chrome.runtime.onMessage.addListener(
     if (!result.success) {
       console.error(
         "[Content] Invalid message received:",
-        result.error.format(),
+        result.error,
       );
       return;
     }

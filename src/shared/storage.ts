@@ -1,5 +1,7 @@
 import { z } from "zod";
-import { SupportLanguage } from "@/shared/i18n.ts";
+import { SupportLanguage, SupportLanguageSchema } from "@/shared/i18n.ts";
+import { type SyncStatusType, SyncStatusTypeSchema } from "@/shared/types.ts";
+import { type GithubUser, GithubUserSchema } from "@/domains/github/schema.ts";
 
 /**
  * Schema định nghĩa cấu trúc dữ liệu lưu trữ trong chrome.storage.local.
@@ -9,15 +11,18 @@ const SettingsSchema = z.object({
   gistId: z.string().default(""),
   lastSync: z.number().default(0),
   lastSyncedHash: z.string().default(""),
-  language: z.enum(SupportLanguage).default(SupportLanguage.En),
+  language: SupportLanguageSchema.default(SupportLanguage.En),
   autoSyncEnabled: z.boolean().default(false),
   autoSyncInterval: z.number().default(5),
   autoCollectEnabled: z.boolean().default(false),
+  autoSyncStatus: z.string().default(""),
+  autoSyncStatusType: SyncStatusTypeSchema.default("info"),
+  cachedGithubUser: GithubUserSchema.nullable().default(null),
 });
 
 export type AppSettings = z.infer<typeof SettingsSchema>;
 
-const STORAGE_KEY = "pvzge_sync_settings";
+export const STORAGE_KEY = "pvzge_sync_settings";
 
 /**
  * Lấy toàn bộ settings từ chrome.storage.local.
@@ -113,13 +118,18 @@ export async function setGithubSettings(
   autoSyncInterval: number,
   autoCollectEnabled: boolean,
 ) {
-  await updateSettings({
+  const currentToken = await getGithubToken();
+  const patch: Partial<AppSettings> = {
     githubToken,
     language,
     autoSyncEnabled,
     autoSyncInterval,
     autoCollectEnabled,
-  });
+  };
+  if (currentToken !== githubToken) {
+    patch.cachedGithubUser = null;
+  }
+  await updateSettings(patch);
 }
 /**
  * Đăng xuất: Xóa toàn bộ thông tin liên quan đến GitHub và đồng bộ.
@@ -131,6 +141,59 @@ export async function clearAuth() {
     lastSync: 0,
     lastSyncedHash: "",
     autoSyncEnabled: false,
+    autoSyncStatus: "",
+    autoSyncStatusType: "info",
+    cachedGithubUser: null,
   });
   console.log("[Storage] Auth cleared.");
+}
+
+/** Đăng ký lắng nghe các thay đổi cấu hình từ các tiến trình khác (như background) */
+export function subscribeToSettings(callback: (settings: AppSettings) => void) {
+  if (
+    typeof chrome === "undefined" || !chrome.storage ||
+    !chrome.storage.onChanged
+  ) return;
+  chrome.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName === "local" && changes[STORAGE_KEY]) {
+      const newValue = changes[STORAGE_KEY].newValue;
+      if (newValue) {
+        try {
+          const parsed = SettingsSchema.parse(newValue);
+          callback(parsed);
+        } catch (e) {
+          console.error("[Storage] Failed to parse updated settings:", e);
+        }
+      }
+    }
+  });
+}
+
+/** Lấy trạng thái đồng bộ tự động hiện tại */
+export async function getAutoSyncStatus(): Promise<
+  { status: string; type: SyncStatusType }
+> {
+  const settings = await getAllSettings();
+  return {
+    status: settings.autoSyncStatus || "",
+    type: settings.autoSyncStatusType,
+  };
+}
+
+/** Cập nhật trạng thái đồng bộ tự động */
+export async function setAutoSyncStatus(
+  status: string,
+  type: SyncStatusType = "info",
+) {
+  await updateSettings({ autoSyncStatus: status, autoSyncStatusType: type });
+}
+
+/** Lấy thông tin user GitHub đang được lưu trong cache */
+export async function getCachedGithubUser(): Promise<GithubUser | null> {
+  return (await getAllSettings()).cachedGithubUser;
+}
+
+/** Cập nhật thông tin user GitHub vào cache */
+export async function setCachedGithubUser(cachedGithubUser: GithubUser | null) {
+  await updateSettings({ cachedGithubUser });
 }

@@ -1,6 +1,6 @@
 import { type Component, createSignal, For, onMount, Show } from "solid-js";
-import { isTranslationKey, t } from "@/shared/i18n.ts";
-import { type DialogConfig } from "@/shared/types.ts";
+import { formatDateTime, isTranslationKey, t } from "@/shared/i18n.ts";
+import { type DialogConfig, type SyncStatusType } from "@/shared/types.ts";
 import Header from "@/components/Header.tsx";
 import Button from "@/components/Button.tsx";
 import Dialog from "@/components/Dialog.tsx";
@@ -40,7 +40,7 @@ export const History: Component = () => {
 
   function showConfirm(
     message: string,
-    severity: "info" | "success" | "warning" | "error" = "warning",
+    severity: SyncStatusType = "warning",
     title?: string,
   ): Promise<boolean> {
     return new Promise((resolve) => {
@@ -60,7 +60,7 @@ export const History: Component = () => {
 
   function showAlert(
     message: string,
-    severity: "info" | "success" | "warning" | "error" = "info",
+    severity: SyncStatusType = "info",
     title?: string,
   ): Promise<void> {
     return new Promise((resolve) => {
@@ -149,7 +149,9 @@ export const History: Component = () => {
                     const gems = profile?.gem ?? 0;
                     const sprouts = profile?.sprout ?? 0;
                     const plantCount = profile?.plantProps
-                      ? Object.keys(profile.plantProps).length
+                      ? Object.values(profile.plantProps).filter(
+                        (p) => p.progress > 0,
+                      ).length
                       : 0;
 
                     return (
@@ -158,7 +160,7 @@ export const History: Component = () => {
                           <div class="history-time">
                             <span class="time-icon">🕒</span>
                             <span>
-                              {new Date(item.committedAt).toLocaleString()}
+                              {formatDateTime(item.committedAt)}
                             </span>
                           </div>
                           <Show when={item.saveData}>

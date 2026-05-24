@@ -180,4 +180,34 @@
       box-shadow: 0 0 6px var(--glow-primary);
     }
   }
+
+  .auto-sync-status-msg {
+    font-size: 0.7rem;
+    line-height: 1.4;
+    padding: 6px 8px;
+    border-radius: 6px;
+    margin-top: 4px;
+    word-break: break-word;
+
+    &.info {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-dim);
+    }
+    &.success {
+      background: rgba(146, 230, 42, 0.08);
+      border: 1px solid rgba(146, 230, 42, 0.2);
+      color: var(--secondary-light);
+    }
+    &.warning {
+      background: var(--notice-warn-bg);
+      border: 1px solid var(--notice-warn-border);
+      color: var(--notice-warn-text);
+    }
+    &.error {
+      background: var(--notice-error-bg);
+      border: 1px solid var(--notice-error-border);
+      color: var(--notice-error-text);
+    }
+  }
 }

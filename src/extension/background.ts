@@ -9,6 +9,7 @@ import {
   getAutoSyncEnabled,
   getAutoSyncInterval,
   getGithubToken,
+  setAutoSyncStatus,
 } from "@/shared/storage.ts";
 import { smartSync } from "@/domains/sync/sync.ts";
 
@@ -27,7 +28,7 @@ chrome.runtime.onMessage.addListener(
     if (!result.success) {
       console.error(
         "[Background] Invalid message received:",
-        result.error.format(),
+        result.error,
       );
       return false;
     }
@@ -75,13 +76,34 @@ chrome.runtime.onMessage.addListener(
 
 const ALARM_NAME = "auto-sync-alarm";
 
+let lastAlarmEnabled: boolean | null = null;
+let lastAlarmInterval: number | null = null;
+let lastAlarmToken: string | null = null;
+
 /**
  * Thiết lập hoặc xóa Alarm dựa trên cấu hình người dùng.
  */
 async function setupAlarm() {
   const enabled = await getAutoSyncEnabled();
   const interval = await getAutoSyncInterval();
-  const token = await getGithubToken();
+  const token = (await getGithubToken()) ?? "";
+
+  // Tránh reset timer của Alarm nếu các cấu hình liên quan đến Alarm không đổi
+  if (
+    lastAlarmEnabled === enabled &&
+    lastAlarmInterval === interval &&
+    lastAlarmToken === token
+  ) {
+    console.debug(
+      "[AutoSync] Alarm configuration unchanged. Keeping current alarm timer.",
+    );
+    return;
+  }
+
+  // Cập nhật trạng thái cấu hình hiện tại
+  lastAlarmEnabled = enabled;
+  lastAlarmInterval = interval;
+  lastAlarmToken = token;
 
   await chrome.alarms.clear(ALARM_NAME);
 
@@ -108,11 +130,13 @@ chrome.alarms.onAlarm.addListener(async (alarm: chrome.alarms.Alarm) => {
       new Date().toLocaleTimeString(),
     );
     try {
-      // Tự động đồng bộ
-      await smartSync();
+      // Tự động đồng bộ với tham số isAuto = true
+      await smartSync(true);
       console.log("[AutoSync] Periodic sync completed.");
     } catch (e) {
       console.error("[AutoSync] Periodic sync failed:", e);
+      const errorMsg = e instanceof Error ? e.message : String(e);
+      await setAutoSyncStatus(errorMsg, "error");
     }
   }
 });

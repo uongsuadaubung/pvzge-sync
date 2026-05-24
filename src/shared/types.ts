@@ -35,10 +35,20 @@ export type SyncMessage = z.infer<typeof SyncMessageSchema>;
 export type SyncResponse = z.infer<typeof SyncResponseSchema>;
 export type { GithubUser };
 
+export const SyncStatusTypeSchema = z.enum([
+  "info",
+  "success",
+  "warning",
+  "error",
+]);
+export type SyncStatusType = z.infer<typeof SyncStatusTypeSchema>;
+
+export type DialogType = "alert" | "confirm";
+
 export interface DialogConfig {
   show: boolean;
   title: string;
   message: string;
-  type: "alert" | "confirm";
-  severity: "info" | "success" | "warning" | "error";
+  type: DialogType;
+  severity: SyncStatusType;
 }

@@ -177,5 +177,11 @@
   "history_coins": "Coins",
   "history_gems": "Gems",
   "history_sprouts": "Sprouts",
-  "history_plants": "Plants"
+  "history_plants": "Plants",
+  "status_auto_sync_download_blocked": "Auto sync: New cloud save detected but automatic download is disabled.",
+  "status_auto_sync_conflict": "Auto sync: Conflict detected between local and cloud saves.",
+  "status_auto_sync_success_upload": "Auto sync: Successfully uploaded the latest progress to the cloud!",
+  "status_auto_sync_no_changes": "Auto sync: No changes to back up.",
+  "status_auto_sync_identical": "Auto sync: Progress is already identical.",
+  "status_auto_sync_empty_local": "Auto sync: Cannot back up because local progress is empty."
 }

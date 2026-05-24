@@ -15,7 +15,6 @@ export default function Settings() {
   const [langInput, setLangInput] = createSignal(SupportLanguage.En);
   const [autoSyncEnabled, setAutoSyncEnabled] = createSignal(false);
   const [autoSyncInterval, setAutoSyncInterval] = createSignal(30);
-  const [autoCollectEnabled, setAutoCollectEnabled] = createSignal(false);
   const [saving, setSaving] = createSignal(false);
   const [tokenError, setTokenError] = createSignal("");
 
@@ -29,7 +28,6 @@ export default function Settings() {
     setLangInput(appStore.language);
     setAutoSyncEnabled(appStore.autoSyncEnabled);
     setAutoSyncInterval(appStore.autoSyncInterval);
-    setAutoCollectEnabled(appStore.autoCollectEnabled);
   });
 
   async function save() {
@@ -60,7 +58,7 @@ export default function Settings() {
       langInput(),
       autoSyncEnabled(),
       autoSyncInterval(),
-      autoCollectEnabled(),
+      appStore.autoCollectEnabled,
     );
     appStoreActions.navigate(View.Main);
   }
@@ -105,15 +103,6 @@ export default function Settings() {
             />
           </div>
         )}
-
-        <div class="input-group">
-          <Checkbox
-            id="check-autocollect"
-            checked={autoCollectEnabled()}
-            label={t("auto_collect")}
-            onchange={setAutoCollectEnabled}
-          />
-        </div>
 
         <div class="input-group">
           <label for="input-token">{t("token_label")}</label>

@@ -181,6 +181,12 @@ const LangSchema = z.object({
   history_gems: z.string(),
   history_sprouts: z.string(),
   history_plants: z.string(),
+  status_auto_sync_download_blocked: z.string(),
+  status_auto_sync_conflict: z.string(),
+  status_auto_sync_success_upload: z.string(),
+  status_auto_sync_no_changes: z.string(),
+  status_auto_sync_identical: z.string(),
+  status_auto_sync_empty_local: z.string(),
 });
 
 type Lang = z.infer<typeof LangSchema>;
@@ -189,6 +195,8 @@ export enum SupportLanguage {
   En = "en",
   Vi = "vi",
 }
+
+export const SupportLanguageSchema = z.enum(SupportLanguage);
 
 export type TranslationKey = keyof Lang;
 
@@ -204,12 +212,39 @@ const loaders: Record<SupportLanguage, () => Promise<unknown>> = {
 };
 
 const [translations, setTranslations] = createSignal<Partial<Lang>>({});
+const [currentLanguageCode, setCurrentLanguageCode] = createSignal<
+  SupportLanguage
+>(SupportLanguage.En);
 
 export async function setLanguage(code: SupportLanguage): Promise<void> {
   const raw = await loaders[code]();
   setTranslations(LangSchema.parse(raw));
+  setCurrentLanguageCode(code);
 }
 
 export function t(key: TranslationKey): string {
   return translations()[key] ?? key;
+}
+
+/**
+ * Định dạng ngày giờ tự động dựa trên ngôn ngữ/khu vực hoạt động hiện tại.
+ * - Tiếng Việt (vi): DD/MM/YYYY HH:mm:ss (Định dạng Việt Nam)
+ * - Tiếng Anh (en): MM/DD/YYYY, HH:mm:ss (Định dạng Mỹ/Quốc tế)
+ */
+export function formatDateTime(dateInput: Date | number | string): string {
+  const d = new Date(dateInput);
+  if (isNaN(d.getTime())) return "";
+
+  const locale = currentLanguageCode() === SupportLanguage.Vi
+    ? "vi-VN"
+    : "en-US";
+  return d.toLocaleString(locale, {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
 }

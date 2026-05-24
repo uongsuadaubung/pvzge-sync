@@ -177,5 +177,11 @@
   "history_coins": "Vàng",
   "history_gems": "Ngọc",
   "history_sprouts": "Sprout",
-  "history_plants": "Cây"
+  "history_plants": "Cây",
+  "status_auto_sync_download_blocked": "Tự động đồng bộ: Phát hiện bản lưu mới trên Cloud nhưng không tự động tải về.",
+  "status_auto_sync_conflict": "Tự động đồng bộ: Có sự xung đột tiến trình chơi giữa máy này và Cloud.",
+  "status_auto_sync_success_upload": "Tự động đồng bộ: Đã tải tiến trình mới nhất lên Cloud thành công!",
+  "status_auto_sync_no_changes": "Tự động đồng bộ: Không có thay đổi mới nào cần sao lưu.",
+  "status_auto_sync_identical": "Tự động đồng bộ: Bản lưu trên máy và Cloud đã trùng khớp hoàn toàn.",
+  "status_auto_sync_empty_local": "Tự động đồng bộ: Không thể thực hiện vì tiến trình cục bộ trống."
 }

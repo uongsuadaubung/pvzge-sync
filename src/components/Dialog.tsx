@@ -1,12 +1,13 @@
 import { t } from "@/shared/i18n.ts";
 import Button from "@/components/Button.tsx";
+import type { DialogType, SyncStatusType } from "@/shared/types.ts";
 
 interface Props {
   show: boolean;
   title: string;
   message: string;
-  type?: "alert" | "confirm";
-  severity?: "info" | "success" | "warning" | "error";
+  type?: DialogType;
+  severity?: SyncStatusType;
   onConfirm: (result: boolean) => void;
 }
 

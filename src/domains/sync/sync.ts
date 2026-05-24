@@ -3,6 +3,7 @@ import { hasProgress } from "@/domains/game/progress.ts";
 import type { SyncResponse } from "@/shared/types.ts";
 import {
   getLastSyncedHash,
+  setAutoSyncStatus,
   setLastSync,
   setLastSyncedHash,
 } from "@/shared/storage.ts";
@@ -130,7 +131,8 @@ export async function getLocalData(): Promise<SaveData> {
 export type SmartSyncResult =
   | { type: "no_action" }
   | { type: "synced"; detail: "upload" | "download" }
-  | { type: "conflict"; localData: SaveData; cloudData: SaveData };
+  | { type: "conflict"; localData: SaveData; cloudData: SaveData }
+  | { type: "download_blocked" };
 
 /**
  * Smart Sync Logic (3-Way Hash-based):
@@ -139,7 +141,7 @@ export type SmartSyncResult =
  * 3. So sánh 3 chiều giữa Local (H_local), Cloud (H_cloud) và snapshot đồng bộ gần nhất (H_base).
  * 4. Quyết định hành động an toàn tối ưu hoặc kích hoạt xung đột.
  */
-export async function smartSync(): Promise<SmartSyncResult> {
+export async function smartSync(isAuto = false): Promise<SmartSyncResult> {
   console.log("[SmartSync] Starting 3-way sync process...");
 
   const local = await getLocalData().catch(() => {
@@ -169,12 +171,18 @@ export async function smartSync(): Promise<SmartSyncResult> {
     if (H_base !== H_local) {
       await setLastSyncedHash(H_local);
     }
+    if (isAuto) {
+      await setAutoSyncStatus("status_auto_sync_identical", "success");
+    }
     return { type: "no_action" };
   }
 
   // Trường hợp A: Cả hai bên đều không đổi so với snapshot
   if (H_local === H_base && H_cloud === H_base) {
     console.log("[SmartSync] Both Local and Cloud are unchanged.");
+    if (isAuto) {
+      await setAutoSyncStatus("status_auto_sync_no_changes", "info");
+    }
     return { type: "no_action" };
   }
 
@@ -182,6 +190,9 @@ export async function smartSync(): Promise<SmartSyncResult> {
   if (H_local !== H_base && H_cloud === H_base) {
     if (!local) {
       console.log("[SmartSync] Local changes detected, but local is empty.");
+      if (isAuto) {
+        await setAutoSyncStatus("status_auto_sync_empty_local", "warning");
+      }
       return { type: "no_action" };
     }
 
@@ -191,6 +202,9 @@ export async function smartSync(): Promise<SmartSyncResult> {
       console.warn(
         "[SmartSync] Local has no progress (new game) but Cloud has progress. Triggering conflict to prevent cloud save overwrite.",
       );
+      if (isAuto) {
+        await setAutoSyncStatus("status_auto_sync_conflict", "warning");
+      }
       return { type: "conflict", localData: local, cloudData: cloud };
     }
 
@@ -200,9 +214,15 @@ export async function smartSync(): Promise<SmartSyncResult> {
       await setLastSync();
       await setLastSyncedHash(H_local);
       console.log("[SmartSync] Auto-upload completed successfully.");
+      if (isAuto) {
+        await setAutoSyncStatus("status_auto_sync_success_upload", "success");
+      }
       return { type: "synced", detail: "upload" };
     } else {
       console.error("[SmartSync] Upload failed:", uploadR.error);
+      if (isAuto) {
+        await setAutoSyncStatus(uploadR.error || "Upload failed", "error");
+      }
       throw new Error(uploadR.error);
     }
   }
@@ -211,7 +231,17 @@ export async function smartSync(): Promise<SmartSyncResult> {
   if (H_local === H_base && H_cloud !== H_base) {
     if (!cloud) {
       console.log("[SmartSync] Cloud changes detected, but cloud is empty.");
+      if (isAuto) {
+        await setAutoSyncStatus("status_auto_sync_no_changes", "info");
+      }
       return { type: "no_action" };
+    }
+    if (isAuto) {
+      console.log(
+        "[SmartSync] Cloud changed, but auto-sync is enabled. Download is blocked.",
+      );
+      await setAutoSyncStatus("status_auto_sync_download_blocked", "warning");
+      return { type: "download_blocked" };
     }
     console.log(
       "[SmartSync] Only Cloud changed. Auto-downloading from Cloud...",
@@ -231,14 +261,23 @@ export async function smartSync(): Promise<SmartSyncResult> {
         "[SmartSync] Conflict detected but local or cloud is empty.",
         { local: !!local, cloud: !!cloud },
       );
+      if (isAuto) {
+        await setAutoSyncStatus("status_auto_sync_no_changes", "info");
+      }
       return { type: "no_action" };
     }
     console.log(
       "[SmartSync] Real conflict detected! Both Local and Cloud have changed independently.",
     );
+    if (isAuto) {
+      await setAutoSyncStatus("status_auto_sync_conflict", "warning");
+    }
     return { type: "conflict", localData: local, cloudData: cloud };
   }
 
+  if (isAuto) {
+    await setAutoSyncStatus("status_auto_sync_no_changes", "info");
+  }
   return { type: "no_action" };
 }
 
