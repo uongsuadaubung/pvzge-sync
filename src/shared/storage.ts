@@ -117,6 +117,7 @@ export async function setGithubSettings(
   autoSyncEnabled: boolean,
   autoSyncInterval: number,
   autoCollectEnabled: boolean,
+  cachedGithubUser?: GithubUser | null,
 ) {
   const currentToken = await getGithubToken();
   const patch: Partial<AppSettings> = {
@@ -127,7 +128,7 @@ export async function setGithubSettings(
     autoCollectEnabled,
   };
   if (currentToken !== githubToken) {
-    patch.cachedGithubUser = null;
+    patch.cachedGithubUser = cachedGithubUser !== undefined ? cachedGithubUser : null;
   }
   await updateSettings(patch);
 }

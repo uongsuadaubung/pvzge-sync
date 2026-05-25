@@ -152,6 +152,7 @@ export const appStoreActions = {
       autoSyncEnabled,
       autoSyncInterval,
       autoCollectEnabled,
+      token ? appStore.githubUser : null,
     );
 
     setAppStore({
