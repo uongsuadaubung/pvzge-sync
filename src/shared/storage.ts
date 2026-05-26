@@ -128,7 +128,9 @@ export async function setGithubSettings(
     autoCollectEnabled,
   };
   if (currentToken !== githubToken) {
-    patch.cachedGithubUser = cachedGithubUser !== undefined ? cachedGithubUser : null;
+    patch.cachedGithubUser = cachedGithubUser !== undefined
+      ? cachedGithubUser
+      : null;
   }
   await updateSettings(patch);
 }

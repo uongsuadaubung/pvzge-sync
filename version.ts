@@ -1,18 +1,18 @@
-import * as fs from "node:fs";
-import * as path from "node:path";
+import { existsSync, readFileSync, writeFileSync } from "fs";
+import { join } from "path";
 
-const manifestPath = path.join(
+const manifestPath = join(
   import.meta.dirname || ".",
   "src",
   "manifest.json",
 );
 
-if (!fs.existsSync(manifestPath)) {
+if (!existsSync(manifestPath)) {
   console.error("Error: src/manifest.json not found!");
   Deno.exit(1);
 }
 
-const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
 const currentVersion = manifest.version;
 
 if (!currentVersion) {
@@ -54,7 +54,7 @@ if (type === "major") {
 const newVersion = `${major}.${minor}.${patch}`;
 
 manifest.version = newVersion;
-fs.writeFileSync(
+writeFileSync(
   manifestPath,
   JSON.stringify(manifest, null, 2) + "\n",
   "utf8",

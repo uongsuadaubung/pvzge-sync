@@ -9,6 +9,8 @@
     ]
   },
   "imports": {
+    "fs": "node:fs",
+    "path": "node:path",
     "solid-js": "npm:solid-js@^1.9.3",
     "solid-js/web": "npm:solid-js@^1.9.3/web",
     "esbuild": "npm:esbuild@^0.28.0",
