@@ -199,18 +199,18 @@ deno task fmt
 
 ### 3. Tự động tăng số phiên bản
 
-Tự động cập nhật chuỗi phiên bản trong tệp `src/manifest.json`:
+Tự động cập nhật chuỗi phiên bản trong tệp `src/manifest.json` theo định dạng ngày tháng tương thích (`yyyy.m.d`):
 
 ```bash
-# Tăng số phiên bản patch (ví dụ: 1.0.0 -> 1.0.1)
-deno task bump-version --patch
-
-# Tăng số phiên bản minor (ví dụ: 1.0.0 -> 1.1.0)
-deno task bump-version --minor
-
-# Tăng số phiên bản major (ví dụ: 1.0.0 -> 2.0.0)
-deno task bump-version --major
+# Tự động tạo mới hoặc tăng số phiên bản hôm nay (ví dụ: 2026.5.26)
+deno task bump-version
 ```
+
+> [!NOTE]
+> **Logic của Cơ chế Phiên bản theo Ngày:**
+> - **Tự động chuyển ngày:** Chạy lệnh vào ngày mới sẽ tự khởi tạo phiên bản là `yyyy.m.d` (ví dụ: `2026.5.27`).
+> - **Phát hành nhiều lần trong ngày (Revision):** Nếu chạy nhiều lần trong cùng một ngày, kịch bản sẽ tự động chèn và tăng số revision phụ ở phân đoạn thứ 4 (ví dụ: `2026.5.26` ➔ `2026.5.26.1` ➔ `2026.5.26.2`). Cách này giúp tuân thủ tuyệt đối quy định 4 phân đoạn của Chrome & Firefox Extension mà vẫn hỗ trợ build không giới hạn số lần một ngày.
+> - **Tương thích Firefox:** Định dạng này loại bỏ hoàn toàn số 0 đi đầu ở Tháng và Ngày (dùng `.5` thay vì `.05`), đảm bảo vượt qua 100% các vòng kiểm duyệt nghiêm ngặt của Firefox Add-ons (AMO).
 
 ---
 

@@ -1,6 +1,7 @@
 import { createStore } from "solid-js/store";
 import {
   clearAuth,
+  clearSessionGistCache,
   getAutoCollectEnabled,
   getAutoSyncEnabled,
   getAutoSyncInterval,
@@ -174,6 +175,7 @@ export const appStoreActions = {
   async logout() {
     console.log("[Store] Logging out...");
     await clearAuth();
+    await clearSessionGistCache();
 
     // Cập nhật lại trạng thái local trong store
     setAppStore({

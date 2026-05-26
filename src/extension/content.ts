@@ -89,6 +89,15 @@ async function syncAutoCollect() {
 // Khởi chạy lần đầu
 syncAutoCollect();
 
+// Gửi tín hiệu báo hiệu trang game được tải/tải lại (F5) để xóa cache
+chrome.runtime.sendMessage({ type: "GAME_PAGE_LOADED" }).catch((err) => {
+  // Bỏ qua lỗi nếu background chưa sẵn sàng nhận tin nhắn
+  console.debug(
+    "[PVZGE-Sync] Failed to send GAME_PAGE_LOADED to background:",
+    err,
+  );
+});
+
 chrome.runtime.onMessage.addListener(
   (
     rawMessage: unknown,
@@ -105,20 +114,25 @@ chrome.runtime.onMessage.addListener(
     }
 
     const message = result.data;
-    if (message.type === "GET_LOCAL_DATA") {
-      const { data, errors } = getGameSaveData();
-      sendResponse(
-        data
-          ? { success: true, data }
-          : { success: false, error: errors?.join("; ") || "Unknown error" },
-      );
-    } else if (message.type === "APPLY_REMOTE_DATA") {
-      setGameSaveData(message.data);
-      sendResponse({ success: true });
-      window.location.reload();
-    } else if (message.type === "SETTINGS_UPDATED") {
-      syncAutoCollect();
-      sendResponse({ success: true });
+    switch (message.type) {
+      case "GET_LOCAL_DATA": {
+        const { data, errors } = getGameSaveData();
+        sendResponse(
+          data
+            ? { success: true, data }
+            : { success: false, error: errors?.join("; ") || "Unknown error" },
+        );
+        break;
+      }
+      case "APPLY_REMOTE_DATA":
+        setGameSaveData(message.data);
+        sendResponse({ success: true });
+        window.location.reload();
+        break;
+      case "SETTINGS_UPDATED":
+        syncAutoCollect();
+        sendResponse({ success: true });
+        break;
     }
   },
 );

@@ -15,7 +15,7 @@ import {
   getLocalData,
   smartSync,
 } from "@/domains/sync/sync.ts";
-import { SaveDataSchema } from "@/domains/game/schema.ts";
+import { type SaveData, SaveDataSchema } from "@/domains/game/schema.ts";
 import {
   type DialogConfig,
   type SyncStatusType,
@@ -208,47 +208,40 @@ export const Main: Component = () => {
     return isTranslationKey(status) ? t(status) : status;
   });
 
+  function getProfileInfo(
+    data: SaveData | null | undefined,
+  ): ProfileInfo | null {
+    const profile = data?.PvZ2_PlayerProperties?.[0];
+    if (!profile) return null;
+    return {
+      name: profile.name || "Unknown",
+      coin: profile.coin || 0,
+      gem: profile.gem || 0,
+      sprout: profile.sprout || 0,
+    };
+  }
+
   async function handleSync() {
     setLoading(true);
     try {
       const res = await smartSync();
-      if (res.type === "conflict") {
-        const local = res.localData;
-        const cloud = res.cloudData;
-
-        if (local && local.PvZ2_PlayerProperties?.[0]) {
-          const lp = local.PvZ2_PlayerProperties[0];
-          setLocalProfile({
-            name: lp.name || "Unknown",
-            coin: lp.coin || 0,
-            gem: lp.gem || 0,
-            sprout: lp.sprout || 0,
-          });
-        } else {
-          setLocalProfile(null);
+      switch (res.type) {
+        case "conflict": {
+          setLocalProfile(getProfileInfo(res.localData));
+          setCloudProfile(getProfileInfo(res.cloudData));
+          setShowConflict(true);
+          break;
         }
-
-        if (cloud && cloud.PvZ2_PlayerProperties?.[0]) {
-          const cp = cloud.PvZ2_PlayerProperties[0];
-          setCloudProfile({
-            name: cp.name || "Unknown",
-            coin: cp.coin || 0,
-            gem: cp.gem || 0,
-            sprout: cp.sprout || 0,
-          });
-        } else {
-          setCloudProfile(null);
+        case "synced": {
+          const msgKey = res.detail === "upload"
+            ? "msg_sync_success_upload"
+            : "msg_sync_success_download";
+          await showAlert(t(msgKey), "success");
+          break;
         }
-
-        setShowConflict(true);
-      } else if (res.type === "synced") {
-        if (res.detail === "upload") {
-          await showAlert(t("msg_sync_success_upload"), "success");
-        } else if (res.detail === "download") {
-          await showAlert(t("msg_sync_success_download"), "success");
-        }
-      } else if (res.type === "no_action") {
-        await showAlert(t("msg_sync_no_changes"), "info");
+        case "no_action":
+          await showAlert(t("msg_sync_no_changes"), "info");
+          break;
       }
     } catch (e: unknown) {
       await showAlert(getLocalizedError(e), "error");
@@ -314,7 +307,10 @@ export const Main: Component = () => {
     if (!file) return;
     setLoading(true);
     try {
-      const text = await file.text().catch(() => null);
+      const text = await file.text().catch((err) => {
+        console.error("[Main] Failed to read imported file:", err);
+        return null;
+      });
       if (!text) {
         return;
       }

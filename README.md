@@ -193,18 +193,18 @@ deno task fmt
 
 ### 3. Version Bumping
 
-Automatically update version strings inside `src/manifest.json`:
+Automatically update version strings inside `src/manifest.json` using the compliant date-based format (`yyyy.m.d`):
 
 ```bash
-# Bump patch version (e.g., 1.0.0 -> 1.0.1)
-deno task bump-version --patch
-
-# Bump minor version (e.g., 1.0.0 -> 1.1.0)
-deno task bump-version --minor
-
-# Bump major version (e.g., 1.0.0 -> 2.0.0)
-deno task bump-version --major
+# Auto-generate or bump today's version (e.g., 2026.5.26)
+deno task bump-version
 ```
+
+> [!NOTE]
+> **Date-based Versioning Logic:**
+> - **Daily Reset:** Running the task on a new day automatically initializes the version to `yyyy.m.d` (e.g., `2026.5.27`).
+> - **Same-day Re-releases:** If run multiple times on the same day, it automatically appends and increments a fourth segment revision (e.g., `2026.5.26` ➔ `2026.5.26.1` ➔ `2026.5.26.2`). This maintains strict compatibility with Chrome and Firefox extension stores while supporting unlimited daily builds.
+> - **Firefox Compatibility:** Unlike simple ISO strings, this format strictly avoids leading zeros (e.g., uses `.5` instead of `.05`), ensuring 100% compliance with Firefox AMO version validation rules.
 
 ---
 

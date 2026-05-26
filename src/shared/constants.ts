@@ -7,6 +7,7 @@ export const IGNORED_KEYS = [
   "currentWM",
   "worldChooserPos",
   "wmx",
+  "zengarden",
 ];
 
 // Game

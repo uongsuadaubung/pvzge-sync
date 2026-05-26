@@ -13,45 +13,30 @@ if (!existsSync(manifestPath)) {
 }
 
 const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
-const currentVersion = manifest.version;
+const currentVersion = manifest.version || "";
 
-if (!currentVersion) {
-  console.error("Error: No version found in src/manifest.json!");
-  Deno.exit(1);
+const now = new Date();
+const yyyy = now.getFullYear();
+const m = now.getMonth() + 1; // 1-12 (không có số 0 đi đầu)
+const d = now.getDate(); // 1-31 (không có số 0 đi đầu)
+const datePrefix = `${yyyy}.${m}.${d}`;
+
+let newVersion = datePrefix;
+
+// Nếu phiên bản hiện tại đã bắt đầu bằng ngày hôm nay, tăng revision phụ lên 1 đơn vị
+if (currentVersion.startsWith(datePrefix)) {
+  const rest = currentVersion.slice(datePrefix.length);
+  if (rest === "") {
+    newVersion = `${datePrefix}.1`;
+  } else if (rest.startsWith(".")) {
+    const rev = parseInt(rest.slice(1), 10);
+    if (!isNaN(rev)) {
+      newVersion = `${datePrefix}.${rev + 1}`;
+    } else {
+      newVersion = `${datePrefix}.1`;
+    }
+  }
 }
-
-const parts = currentVersion.split(".").map(Number);
-if (parts.length !== 3 || parts.some(isNaN)) {
-  console.error(
-    `Error: Invalid version format in src/manifest.json: ${currentVersion}`,
-  );
-  Deno.exit(1);
-}
-
-let [major, minor, patch] = parts;
-let type = "minor";
-const args = Deno.args;
-
-if (args.includes("--patch") || args.includes("patch")) {
-  type = "patch";
-} else if (args.includes("--major") || args.includes("major")) {
-  type = "major";
-} else if (args.includes("--minor") || args.includes("minor")) {
-  type = "minor";
-}
-
-if (type === "major") {
-  major += 1;
-  minor = 0;
-  patch = 0;
-} else if (type === "minor") {
-  minor += 1;
-  patch = 0;
-} else if (type === "patch") {
-  patch += 1;
-}
-
-const newVersion = `${major}.${minor}.${patch}`;
 
 manifest.version = newVersion;
 writeFileSync(
@@ -62,5 +47,7 @@ writeFileSync(
 console.log(`✓ Updated src/manifest.json version to ${newVersion}`);
 
 console.log(
-  `\n🎉 Successfully bumped version from ${currentVersion} to ${newVersion} (${type.toUpperCase()})`,
+  `\n🎉 Successfully bumped version from ${
+    currentVersion || "none"
+  } to ${newVersion}`,
 );

@@ -3,9 +3,11 @@ import { hasProgress } from "@/domains/game/progress.ts";
 import type { SyncResponse } from "@/shared/types.ts";
 import {
   getLastSyncedHash,
+  getSessionGistCache,
   setAutoSyncStatus,
   setLastSync,
   setLastSyncedHash,
+  setSessionGistCache,
 } from "@/shared/storage.ts";
 import { GAME_HOST, IGNORED_KEYS } from "@/shared/constants.ts";
 
@@ -149,8 +151,19 @@ export async function smartSync(isAuto = false): Promise<SmartSyncResult> {
     return null;
   });
 
-  const r = await downloadFromGist();
-  const cloud = (r.success && "data" in r) ? r.data : null;
+  // Đọc dữ liệu từ Session Cache
+  let cloud: SaveData | null = await getSessionGistCache();
+
+  if (cloud) {
+    console.log("[SmartSync] Using cached Cloud data from RAM session.");
+  } else {
+    console.log("[SmartSync] Cache is empty. Fetching fresh from Gist...");
+    const r = await downloadFromGist();
+    cloud = (r.success && "data" in r) ? r.data : null;
+    if (cloud) {
+      await setSessionGistCache(cloud);
+    }
+  }
 
   const H_local = await computeHash(local);
   const H_cloud = await computeHash(cloud);
@@ -211,6 +224,7 @@ export async function smartSync(isAuto = false): Promise<SmartSyncResult> {
     console.log("[SmartSync] Only Local changed. Auto-uploading to Cloud...");
     const uploadR = await uploadToGist(local);
     if (uploadR.success) {
+      await setSessionGistCache(local); // Đồng bộ cache local vừa upload thành cloud cache
       await setLastSync();
       await setLastSyncedHash(H_local);
       console.log("[SmartSync] Auto-upload completed successfully.");
@@ -291,6 +305,7 @@ export async function forceUploadToCloud(): Promise<void> {
   if (!uploadR.success) {
     throw new Error(uploadR.error || "Force upload failed");
   }
+  await setSessionGistCache(local); // Cập nhật cache
   const H_local = await computeHash(local);
   await setLastSync();
   await setLastSyncedHash(H_local);
@@ -302,7 +317,10 @@ export async function forceUploadToCloud(): Promise<void> {
  */
 export async function forceDownloadFromCloud(): Promise<void> {
   console.log("[Sync] Force downloading remote data from cloud...");
-  const local = await getLocalData().catch(() => null);
+  const local = await getLocalData().catch((err) => {
+    console.warn("[Sync] Could not get local data for force download (game not open?):", err);
+    return null;
+  });
   const r = await downloadFromGist();
   if (!r.success) {
     throw new Error(r.error || "Force download failed");
@@ -310,6 +328,7 @@ export async function forceDownloadFromCloud(): Promise<void> {
   if (!("data" in r)) {
     throw new Error("No data found in Gist response");
   }
+  await setSessionGistCache(r.data); // Ghi lại cache mới
   const dataToApply = local ? preserveLocalDate(r.data, local) : r.data;
   await applyRemoteToGame(dataToApply);
   const H_cloud = await computeHash(r.data);
@@ -323,7 +342,11 @@ export async function forceDownloadFromCloud(): Promise<void> {
  */
 export async function restoreHistoryVersion(data: SaveData): Promise<void> {
   console.log("[Sync] Restoring save data from historical commit...");
-  const local = await getLocalData().catch(() => null);
+  await setSessionGistCache(data); // Cập nhật cache của lịch sử làm cache đám mây hiện hành
+  const local = await getLocalData().catch((err) => {
+    console.warn("[Sync] Could not get local data for restore (game not open?):", err);
+    return null;
+  });
   const dataToApply = local ? preserveLocalDate(data, local) : data;
   await applyRemoteToGame(dataToApply);
   const H_cloud = await computeHash(data);

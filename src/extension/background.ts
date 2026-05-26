@@ -6,6 +6,7 @@ import {
   validateToken,
 } from "@/domains/github/api.ts";
 import {
+  clearSessionGistCache,
   getAutoSyncEnabled,
   getAutoSyncInterval,
   getGithubToken,
@@ -36,39 +37,49 @@ chrome.runtime.onMessage.addListener(
     const message = result.data;
     console.debug("[Background] Received message:", message.type);
 
-    if (message.type === "UPLOAD_TO_GIST") {
-      uploadToGist(message.data).then(sendResponse);
-      return true; // Giữ kênh message mở cho phản hồi async
-    } else if (message.type === "DOWNLOAD_FROM_GIST") {
-      downloadFromGist().then(sendResponse);
-      return true;
-    } else if (message.type === "VALIDATE_TOKEN") {
-      validateToken(message.token).then(sendResponse);
-      return true;
-    } else if (message.type === "GET_USER_INFO") {
-      getUserInfo().then(sendResponse);
-      return true;
-    } else if (message.type === "SETTINGS_UPDATED") {
-      console.log(
-        "[Background] Settings updated, resetting alarm and notifying tabs...",
-      );
-      setupAlarm();
-
-      // Phát tín hiệu cho các content script ở các tab đang mở
-      chrome.tabs.query({}, (tabs: chrome.tabs.Tab[]) => {
-        tabs.forEach((tab: chrome.tabs.Tab) => {
-          if (tab.id) {
-            chrome.tabs.sendMessage(tab.id, { type: "SETTINGS_UPDATED" }).catch(
-              () => {
-                // Bỏ qua lỗi nếu tab không có content script
-              },
-            );
-          }
+    switch (message.type) {
+      case "UPLOAD_TO_GIST":
+        uploadToGist(message.data).then(sendResponse);
+        return true; // Giữ kênh message mở cho phản hồi async
+      case "DOWNLOAD_FROM_GIST":
+        downloadFromGist().then(sendResponse);
+        return true;
+      case "VALIDATE_TOKEN":
+        validateToken(message.token).then(sendResponse);
+        return true;
+      case "GET_USER_INFO":
+        getUserInfo().then(sendResponse);
+        return true;
+      case "GAME_PAGE_LOADED":
+        clearSessionGistCache().catch((err) => {
+          console.error("[Background] Failed to clear session Gist cache:", err);
         });
-      });
-      return false;
+        return false;
+      case "SETTINGS_UPDATED": {
+        console.log(
+          "[Background] Settings updated, resetting alarm and notifying tabs...",
+        );
+        setupAlarm();
+
+        // Phát tín hiệu cho các content script ở các tab đang mở
+        chrome.tabs.query({}, (tabs: chrome.tabs.Tab[]) => {
+          tabs.forEach((tab: chrome.tabs.Tab) => {
+            if (tab.id) {
+              chrome.tabs.sendMessage(tab.id, { type: "SETTINGS_UPDATED" })
+                .catch(
+                  (err) => {
+                    // Ghi nhận debug lỗi gửi tin nhắn (ví dụ: tab không có content script chạy - được phép bỏ qua)
+                    console.debug(`[Background] Failed to send SETTINGS_UPDATED to tab ${tab.id}:`, err);
+                  },
+                );
+            }
+          });
+        });
+        return false;
+      }
+      default:
+        return false;
     }
-    return false;
   },
 );
 

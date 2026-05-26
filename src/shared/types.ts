@@ -18,6 +18,7 @@ export const SyncMessageSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("VALIDATE_TOKEN"), token: z.string() }),
   z.object({ type: z.literal("GET_USER_INFO") }),
   z.object({ type: z.literal("SETTINGS_UPDATED") }),
+  z.object({ type: z.literal("GAME_PAGE_LOADED") }),
 ]);
 
 export const SyncResponseSchema = z.union([

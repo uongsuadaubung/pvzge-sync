@@ -6,7 +6,8 @@
     "strict": true,
     "types": [
       "npm:@types/chrome@^0.1.42"
-    ]
+    ],
+    "verbatimModuleSyntax": true
   },
   "imports": {
     "fs": "node:fs",
