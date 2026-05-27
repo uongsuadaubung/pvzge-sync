@@ -20,8 +20,11 @@ function stripIgnoredKeys(obj: unknown): unknown {
   }
   if (typeof obj === "object" && obj !== null) {
     const clean: Record<string, unknown> = {};
-    for (const [key, val] of Object.entries(obj)) {
+    // Sắp xếp các khóa của object theo thứ tự bảng chữ cái để đảm bảo thứ tự các khóa luôn đồng nhất (canonical JSON)
+    const keys = Object.keys(obj).sort();
+    for (const key of keys) {
       if (IGNORED_KEYS.includes(key)) continue;
+      const val = (obj as Record<string, unknown>)[key];
       clean[key] = stripIgnoredKeys(val);
     }
     return clean;
