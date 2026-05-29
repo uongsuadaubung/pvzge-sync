@@ -44,7 +44,9 @@ async function getAllSettings(): Promise<AppSettings> {
 async function updateSettings(patch: Partial<AppSettings>) {
   const current = await getAllSettings();
   const next = { ...current, ...patch };
-  await chrome.storage.local.set({ [STORAGE_KEY]: next });
+  // Chốt chặn bảo vệ triệt tiêu hoàn toàn mọi Proxy (nếu có) bằng cách parse qua Zod Schema trước khi ghi vào storage
+  const safeNext = SettingsSchema.parse(next);
+  await chrome.storage.local.set({ [STORAGE_KEY]: safeNext });
   console.log("[Storage] Settings updated:", patch);
 }
 
@@ -222,7 +224,9 @@ export async function getSessionGistCache(): Promise<SaveData | null> {
 export async function setSessionGistCache(data: SaveData) {
   if (typeof chrome === "undefined" || !chrome.storage?.session) return;
   try {
-    await chrome.storage.session.set({ [SESSION_CACHE_KEY]: data });
+    // Chốt chặn bảo vệ triệt tiêu hoàn toàn Proxy bằng cách parse qua Zod Schema trước khi đưa vào storage
+    const safeData = SaveDataSchema.parse(data);
+    await chrome.storage.session.set({ [SESSION_CACHE_KEY]: safeData });
     console.log("[Storage] Session cache updated.");
   } catch (e) {
     console.error("[Storage] Failed to set session cache:", e);
