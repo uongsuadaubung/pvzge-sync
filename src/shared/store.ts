@@ -16,6 +16,7 @@ import {
 } from "@/shared/storage.ts";
 import { setLanguage } from "@/shared/i18n.ts";
 import { SupportLanguage } from "@/shared/i18n.ts";
+import { clearLocalGameData } from "@/domains/sync/sync.ts";
 import {
   type GithubUser,
   SyncResponseSchema,
@@ -172,8 +173,12 @@ export const appStoreActions = {
   },
 
   /** Đăng xuất: Xóa toàn bộ thông tin liên quan đến GitHub và dừng đồng bộ. */
-  async logout() {
+  async logout(clearLocalProgress?: boolean) {
     console.log("[Store] Logging out...");
+    if (clearLocalProgress) {
+      await clearLocalGameData();
+    }
+
     await clearAuth();
     await clearSessionGistCache();
 

@@ -9,6 +9,7 @@ import NumberInput from "@/components/NumberInput.tsx";
 import Select from "@/components/Select.tsx";
 import Checkbox from "@/components/Checkbox.tsx";
 import Input from "@/components/Input.tsx";
+import LogoutDialog from "@/components/LogoutDialog.tsx";
 
 export default function Settings() {
   const [tokenInput, setTokenInput] = createSignal("");
@@ -17,6 +18,7 @@ export default function Settings() {
   const [autoSyncInterval, setAutoSyncInterval] = createSignal(30);
   const [saving, setSaving] = createSignal(false);
   const [tokenError, setTokenError] = createSignal("");
+  const [showLogoutDialog, setShowLogoutDialog] = createSignal(false);
 
   const langOptions = [
     { value: "en", label: "English" },
@@ -114,9 +116,7 @@ export default function Settings() {
                   variant="danger"
                   fullWidth
                   onclick={() => {
-                    appStoreActions.logout();
-                    setTokenInput("");
-                    setAutoSyncEnabled(false);
+                    setShowLogoutDialog(true);
                   }}
                 >
                   {t("btn_logout")}
@@ -170,6 +170,16 @@ export default function Settings() {
           </Button>
         </div>
       </main>
+
+      <LogoutDialog
+        show={showLogoutDialog()}
+        onClose={() => setShowLogoutDialog(false)}
+        onSuccess={() => {
+          setShowLogoutDialog(false);
+          setTokenInput("");
+          setAutoSyncEnabled(false);
+        }}
+      />
     </div>
   );
 }

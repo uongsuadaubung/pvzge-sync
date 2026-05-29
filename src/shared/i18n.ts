@@ -187,6 +187,10 @@ const LangSchema = z.object({
   status_auto_sync_no_changes: z.string(),
   status_auto_sync_identical: z.string(),
   status_auto_sync_empty_local: z.string(),
+  msg_logout_warning: z.string(),
+  check_clear_progress_label: z.string(),
+  btn_logout_confirm: z.string(),
+  dialog_loading: z.string(),
 });
 
 type Lang = z.infer<typeof LangSchema>;

@@ -183,5 +183,9 @@
   "status_auto_sync_success_upload": "Auto sync: Successfully uploaded the latest progress to the cloud!",
   "status_auto_sync_no_changes": "Auto sync: No changes to back up.",
   "status_auto_sync_identical": "Auto sync: Progress is already identical.",
-  "status_auto_sync_empty_local": "Auto sync: Cannot back up because local progress is empty."
+  "status_auto_sync_empty_local": "Auto sync: Cannot back up because local progress is empty.",
+  "msg_logout_warning": "Are you sure you want to log out? This will stop automatic backup syncing and disconnect from cloud backup.",
+  "check_clear_progress_label": "Clear all local game progress on this device",
+  "btn_logout_confirm": "Logout",
+  "dialog_loading": "Processing..."
 }

@@ -19,6 +19,7 @@ export const SyncMessageSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("GET_USER_INFO") }),
   z.object({ type: z.literal("SETTINGS_UPDATED") }),
   z.object({ type: z.literal("GAME_PAGE_LOADED") }),
+  z.object({ type: z.literal("CLEAR_LOCAL_DATA") }),
 ]);
 
 export const SyncResponseSchema = z.union([

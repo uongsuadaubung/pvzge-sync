@@ -357,3 +357,27 @@ export async function restoreHistoryVersion(data: SaveData): Promise<void> {
   await setLastSyncedHash(H_cloud);
   console.log("[Sync] Historical save data restored successfully.");
 }
+
+/**
+ * Xóa sạch tiến trình game cục bộ trên trang game (thông qua Content Script).
+ */
+export async function clearLocalGameData(): Promise<void> {
+  const targetId = await getTargetTab();
+  console.log("[Sync] Clearing local game data on tab:", targetId);
+
+  await new Promise<void>((resolve, reject) => {
+    chrome.tabs.sendMessage(
+      targetId,
+      { type: "CLEAR_LOCAL_DATA" },
+      (r: SyncResponse | undefined) => {
+        if (chrome.runtime.lastError || !r?.success) {
+          reject(
+            new Error(chrome.runtime.lastError?.message ?? "Clear failed"),
+          );
+          return;
+        }
+        resolve();
+      },
+    );
+  });
+}

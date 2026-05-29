@@ -129,6 +129,12 @@ chrome.runtime.onMessage.addListener(
         sendResponse({ success: true });
         window.location.reload();
         break;
+      case "CLEAR_LOCAL_DATA":
+        localStorage.removeItem("PvZ2_PlayerProperties");
+        localStorage.removeItem("PvZ2_Settings");
+        sendResponse({ success: true });
+        window.location.reload();
+        break;
       case "SETTINGS_UPDATED":
         syncAutoCollect();
         sendResponse({ success: true });
