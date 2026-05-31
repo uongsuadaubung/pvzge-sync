@@ -1,14 +1,15 @@
 {
   "manifest_version": 3,
   "name": "PVZGE Sync",
-  "version": "2026.5.29",
+  "version": "2026.5.31",
   "description": "Sync PVZGE game save data across browsers via Gist or JSON",
   "permissions": [
     "storage",
     "alarms"
   ],
   "host_permissions": [
-    "https://play.pvzge.com/*"
+    "https://play.pvzge.com/*",
+    "http://localhost/*"
   ],
   "action": {
     "default_popup": "popup.html",
@@ -25,7 +26,8 @@
   "content_scripts": [
     {
       "matches": [
-        "https://play.pvzge.com/*"
+        "https://play.pvzge.com/*",
+        "http://localhost/*"
       ],
       "js": [
         "content.js"

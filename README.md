@@ -90,6 +90,36 @@ can load this unpacked directory into your browser:
 
 ---
 
+## 🐳 Running PVZGE Locally (Docker / Podman)
+
+If you prefer to play the game offline or host your own local server, you can
+deploy the PVZGE game container locally using **Docker** or **Podman**. The
+extension is pre-configured with host permissions for `http://localhost/*` and
+will automatically detect and sync your saves exactly like the official site.
+
+### 1. Using Docker
+
+Run the following command in your terminal to pull the latest image and run it
+on port `8080`:
+
+```bash
+docker run -d -p 8080:80 --name pvzge gaozih/pvzge:latest
+```
+
+### 2. Using Podman
+
+If you prefer rootless containers, run:
+
+```bash
+podman run -d -p 8080:80 --name pvzge docker.io/gaozih/pvzge:latest
+```
+
+Once running, simply navigate to [http://localhost:8080](http://localhost:8080)
+in your browser. The sync popup will immediately identify the active game and
+let you manage your saves.
+
+---
+
 ## 🔑 How to Generate a GitHub Token
 
 To securely connect your game save with the cloud, the extension utilizes your
@@ -193,7 +223,8 @@ deno task fmt
 
 ### 3. Version Bumping
 
-Automatically update version strings inside `src/manifest.json` using the compliant date-based format (`yyyy.m.d`):
+Automatically update version strings inside `src/manifest.json` using the
+compliant date-based format (`yyyy.m.d`):
 
 ```bash
 # Auto-generate or bump today's version (e.g., 2026.5.26)
@@ -202,9 +233,17 @@ deno task bump-version
 
 > [!NOTE]
 > **Date-based Versioning Logic:**
-> - **Daily Reset:** Running the task on a new day automatically initializes the version to `yyyy.m.d` (e.g., `2026.5.27`).
-> - **Same-day Re-releases:** If run multiple times on the same day, it automatically appends and increments a fourth segment revision (e.g., `2026.5.26` ➔ `2026.5.26.1` ➔ `2026.5.26.2`). This maintains strict compatibility with Chrome and Firefox extension stores while supporting unlimited daily builds.
-> - **Firefox Compatibility:** Unlike simple ISO strings, this format strictly avoids leading zeros (e.g., uses `.5` instead of `.05`), ensuring 100% compliance with Firefox AMO version validation rules.
+>
+> - **Daily Reset:** Running the task on a new day automatically initializes the
+>   version to `yyyy.m.d` (e.g., `2026.5.27`).
+> - **Same-day Re-releases:** If run multiple times on the same day, it
+>   automatically appends and increments a fourth segment revision (e.g.,
+>   `2026.5.26` ➔ `2026.5.26.1` ➔ `2026.5.26.2`). This maintains strict
+>   compatibility with Chrome and Firefox extension stores while supporting
+>   unlimited daily builds.
+> - **Firefox Compatibility:** Unlike simple ISO strings, this format strictly
+>   avoids leading zeros (e.g., uses `.5` instead of `.05`), ensuring 100%
+>   compliance with Firefox AMO version validation rules.
 
 ---
 

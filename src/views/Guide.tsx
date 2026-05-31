@@ -8,6 +8,7 @@ import TokenTab from "@/components/guide/TokenTab.tsx";
 import FeaturesTab from "@/components/guide/FeaturesTab.tsx";
 import FaqTab from "@/components/guide/FaqTab.tsx";
 import PolicyTab from "@/components/guide/PolicyTab.tsx";
+import DockerTab from "@/components/guide/DockerTab.tsx";
 
 export const Guide: Component = () => {
   const GuideTab = {
@@ -15,6 +16,7 @@ export const Guide: Component = () => {
     Token: "token",
     Features: "features",
     Faq: "faq",
+    Docker: "docker",
     Policy: "policy",
   } as const;
 
@@ -122,6 +124,16 @@ export const Guide: Component = () => {
 
               <button
                 class={`nav-tab ${
+                  activeTab() === GuideTab.Docker ? "active" : ""
+                }`}
+                onclick={() => setActiveTab(GuideTab.Docker)}
+              >
+                <span class="tab-icon">🐳</span>
+                <span class="tab-label">{t("guide_tab_docker")}</span>
+              </button>
+
+              <button
+                class={`nav-tab ${
                   activeTab() === GuideTab.Policy ? "active" : ""
                 }`}
                 onclick={() => setActiveTab(GuideTab.Policy)}
@@ -162,6 +174,10 @@ export const Guide: Component = () => {
 
             <Show when={activeTab() === GuideTab.Faq}>
               <FaqTab />
+            </Show>
+
+            <Show when={activeTab() === GuideTab.Docker}>
+              <DockerTab />
             </Show>
 
             <Show when={activeTab() === GuideTab.Policy}>

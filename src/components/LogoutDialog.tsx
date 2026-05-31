@@ -39,7 +39,14 @@ export default function LogoutDialog(props: Props) {
             <div class="dialog-body">
               <p>{t("msg_logout_warning")}</p>
 
-              <div style={{ "margin-top": "16px", "display": "flex", "flex-direction": "column", "gap": "8px" }}>
+              <div
+                style={{
+                  "margin-top": "16px",
+                  "display": "flex",
+                  "flex-direction": "column",
+                  "gap": "8px",
+                }}
+              >
                 <Checkbox
                   id="check-clear-progress"
                   checked={clearProgressChecked()}
@@ -62,7 +69,9 @@ export default function LogoutDialog(props: Props) {
                 disabled={saving()}
                 onClick={handleLogout}
               >
-                {saving() ? t("dialog_loading") || "..." : t("btn_logout_confirm")}
+                {saving()
+                  ? t("dialog_loading") || "..."
+                  : t("btn_logout_confirm")}
               </Button>
             </div>
           </div>

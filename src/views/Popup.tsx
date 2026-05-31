@@ -1,6 +1,6 @@
 import { type Component, createSignal, Match, onMount, Switch } from "solid-js";
 import { t } from "@/shared/i18n.ts";
-import { GAME_HOST } from "@/shared/constants.ts";
+import { getActiveTab, getGameTabs, isGameUrl } from "@/shared/tabs.ts";
 import Main from "@/views/Main.tsx";
 import Settings from "@/views/Settings.tsx";
 import Notice from "@/views/Notice.tsx";
@@ -13,14 +13,6 @@ export const Popup: Component = () => {
   const [warnMsg, setWarnMsg] = createSignal("");
   const [errorMsg] = createSignal("");
 
-  async function getGameTab(): Promise<chrome.tabs.Tab | null> {
-    const [tab] = await chrome.tabs.query({
-      active: true,
-      currentWindow: true,
-    });
-    return tab?.url?.includes(GAME_HOST) ? tab : null;
-  }
-
   onMount(async () => {
     await appStoreActions.init();
 
@@ -28,7 +20,7 @@ export const Popup: Component = () => {
       new URLSearchParams(window.location.search).get("mode") === "tab";
     if (isTabMode) {
       document.body.classList.add("tab-mode");
-      const tabs = await chrome.tabs.query({ url: `*://${GAME_HOST}/*` });
+      const tabs = await getGameTabs();
       if (tabs.length === 0) {
         setWarnMsg(t("not_game_page_body"));
       }
@@ -36,8 +28,8 @@ export const Popup: Component = () => {
       return;
     }
 
-    const tab = await getGameTab();
-    if (!tab) {
+    const activeTab = await getActiveTab();
+    if (!activeTab?.url || !isGameUrl(activeTab.url)) {
       setWarnMsg(t("not_game_page_body"));
       setReady(true);
       return;

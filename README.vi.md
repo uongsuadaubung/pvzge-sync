@@ -95,6 +95,38 @@ Sau khi build xong, các file chạy chính thức sẽ được biên dịch v�
 
 ---
 
+## 🐳 Chạy PVZGE cục bộ (Docker / Podman)
+
+Nếu bạn muốn chơi ngoại tuyến (offline) hoặc tự lưu trữ máy chủ game của riêng
+mình, bạn có thể khởi chạy gói container PVZGE cục bộ bằng **Docker** hoặc
+**Podman**. Tiện ích đã được cấu hình sẵn quyền truy cập cho địa chỉ
+`http://localhost/*` để tự động nhận diện và đồng bộ dữ liệu save giống hệt như
+trên trang chính thức.
+
+### 1. Sử dụng Docker
+
+Chạy lệnh sau trong terminal của bạn để tải xuống hình ảnh mới nhất và chạy game
+tại cổng `8080`:
+
+```bash
+docker run -d -p 8080:80 --name pvzge gaozih/pvzge:latest
+```
+
+### 2. Sử dụng Podman
+
+Nếu bạn thích dùng container không cần quyền root (rootless):
+
+```bash
+podman run -d -p 8080:80 --name pvzge docker.io/gaozih/pvzge:latest
+```
+
+Sau khi chạy xong, hãy truy cập địa chỉ
+[http://localhost:8080](http://localhost:8080) trên trình duyệt của bạn. Bảng
+popup đồng bộ sẽ lập tức nhận diện màn hình chơi và cho phép bạn sao lưu/phục
+hồi tiến trình chơi bình thường.
+
+---
+
 ## 🔑 Hướng dẫn tạo GitHub Token để lưu save
 
 Để kết nối an toàn tiến trình game của bạn với đám mây, extension sử dụng tính
@@ -199,7 +231,8 @@ deno task fmt
 
 ### 3. Tự động tăng số phiên bản
 
-Tự động cập nhật chuỗi phiên bản trong tệp `src/manifest.json` theo định dạng ngày tháng tương thích (`yyyy.m.d`):
+Tự động cập nhật chuỗi phiên bản trong tệp `src/manifest.json` theo định dạng
+ngày tháng tương thích (`yyyy.m.d`):
 
 ```bash
 # Tự động tạo mới hoặc tăng số phiên bản hôm nay (ví dụ: 2026.5.26)
@@ -208,9 +241,17 @@ deno task bump-version
 
 > [!NOTE]
 > **Logic của Cơ chế Phiên bản theo Ngày:**
-> - **Tự động chuyển ngày:** Chạy lệnh vào ngày mới sẽ tự khởi tạo phiên bản là `yyyy.m.d` (ví dụ: `2026.5.27`).
-> - **Phát hành nhiều lần trong ngày (Revision):** Nếu chạy nhiều lần trong cùng một ngày, kịch bản sẽ tự động chèn và tăng số revision phụ ở phân đoạn thứ 4 (ví dụ: `2026.5.26` ➔ `2026.5.26.1` ➔ `2026.5.26.2`). Cách này giúp tuân thủ tuyệt đối quy định 4 phân đoạn của Chrome & Firefox Extension mà vẫn hỗ trợ build không giới hạn số lần một ngày.
-> - **Tương thích Firefox:** Định dạng này loại bỏ hoàn toàn số 0 đi đầu ở Tháng và Ngày (dùng `.5` thay vì `.05`), đảm bảo vượt qua 100% các vòng kiểm duyệt nghiêm ngặt của Firefox Add-ons (AMO).
+>
+> - **Tự động chuyển ngày:** Chạy lệnh vào ngày mới sẽ tự khởi tạo phiên bản là
+>   `yyyy.m.d` (ví dụ: `2026.5.27`).
+> - **Phát hành nhiều lần trong ngày (Revision):** Nếu chạy nhiều lần trong cùng
+>   một ngày, kịch bản sẽ tự động chèn và tăng số revision phụ ở phân đoạn thứ 4
+>   (ví dụ: `2026.5.26` ➔ `2026.5.26.1` ➔ `2026.5.26.2`). Cách này giúp tuân thủ
+>   tuyệt đối quy định 4 phân đoạn của Chrome & Firefox Extension mà vẫn hỗ trợ
+>   build không giới hạn số lần một ngày.
+> - **Tương thích Firefox:** Định dạng này loại bỏ hoàn toàn số 0 đi đầu ở Tháng
+>   và Ngày (dùng `.5` thay vì `.05`), đảm bảo vượt qua 100% các vòng kiểm duyệt
+>   nghiêm ngặt của Firefox Add-ons (AMO).
 
 ---
 

@@ -52,7 +52,10 @@ chrome.runtime.onMessage.addListener(
         return true;
       case "GAME_PAGE_LOADED":
         clearSessionGistCache().catch((err) => {
-          console.error("[Background] Failed to clear session Gist cache:", err);
+          console.error(
+            "[Background] Failed to clear session Gist cache:",
+            err,
+          );
         });
         return false;
       case "SETTINGS_UPDATED": {
@@ -69,7 +72,10 @@ chrome.runtime.onMessage.addListener(
                 .catch(
                   (err) => {
                     // Ghi nhận debug lỗi gửi tin nhắn (ví dụ: tab không có content script chạy - được phép bỏ qua)
-                    console.debug(`[Background] Failed to send SETTINGS_UPDATED to tab ${tab.id}:`, err);
+                    console.debug(
+                      `[Background] Failed to send SETTINGS_UPDATED to tab ${tab.id}:`,
+                      err,
+                    );
                   },
                 );
             }

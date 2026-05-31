@@ -9,7 +9,8 @@ import {
   setLastSyncedHash,
   setSessionGistCache,
 } from "@/shared/storage.ts";
-import { GAME_HOST, IGNORED_KEYS } from "@/shared/constants.ts";
+import { IGNORED_KEYS } from "@/shared/constants.ts";
+import { getActiveTab, getGameTabs, isGameUrl } from "@/shared/tabs.ts";
 
 import { downloadFromGist, uploadToGist } from "@/domains/github/api.ts";
 
@@ -68,10 +69,10 @@ export function preserveLocalDate(remote: SaveData, local: SaveData): SaveData {
  */
 export async function getTargetTab(tabId?: number): Promise<number> {
   if (tabId) return tabId;
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (tab?.url?.includes(GAME_HOST) && tab.id) return tab.id;
+  const tab = await getActiveTab();
+  if (tab?.url && isGameUrl(tab.url) && tab.id) return tab.id;
 
-  const tabs = await chrome.tabs.query({ url: `*://${GAME_HOST}/*` });
+  const tabs = await getGameTabs();
   if (tabs[0]?.id) return tabs[0].id;
 
   throw new Error("msg_game_not_open");
@@ -321,7 +322,10 @@ export async function forceUploadToCloud(): Promise<void> {
 export async function forceDownloadFromCloud(): Promise<void> {
   console.log("[Sync] Force downloading remote data from cloud...");
   const local = await getLocalData().catch((err) => {
-    console.warn("[Sync] Could not get local data for force download (game not open?):", err);
+    console.warn(
+      "[Sync] Could not get local data for force download (game not open?):",
+      err,
+    );
     return null;
   });
   const r = await downloadFromGist();
@@ -347,7 +351,10 @@ export async function restoreHistoryVersion(data: SaveData): Promise<void> {
   console.log("[Sync] Restoring save data from historical commit...");
   await setSessionGistCache(data); // Cập nhật cache của lịch sử làm cache đám mây hiện hành
   const local = await getLocalData().catch((err) => {
-    console.warn("[Sync] Could not get local data for restore (game not open?):", err);
+    console.warn(
+      "[Sync] Could not get local data for restore (game not open?):",
+      err,
+    );
     return null;
   });
   const dataToApply = local ? preserveLocalDate(data, local) : data;
