@@ -200,11 +200,10 @@ function inferZodSchema(data: unknown, indent = ""): string {
     }\n${indent}]))`;
   }
   if (typeof data === "object") {
-    const obj = data as Record<string, unknown>;
-    const keys = Object.keys(obj);
+    const keys = Object.keys(data);
     if (keys.length === 0) return "z.object({})";
     const entries = keys
-      .map((k) => `${indent}  ${k}: ${inferZodSchema(obj[k], indent + "  ")}`)
+      .map((k) => `${indent}  ${k}: ${inferZodSchema(Reflect.get(data, k), indent + "  ")}`)
       .join(",\n");
     return `z.object({\n${entries}\n${indent}}).strict()`;
   }

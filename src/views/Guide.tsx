@@ -35,15 +35,15 @@ export const Guide: Component = () => {
     await appStoreActions.init();
   });
 
+  function isSupportLanguage(val: string): val is SupportLanguage {
+    return val === SupportLanguage.En || val === SupportLanguage.Vi;
+  }
+
   async function handleLangChange(val: string) {
-    if (val === SupportLanguage.En || val === SupportLanguage.Vi) {
-      await appStoreActions.updateSettings(
-        appStore.githubToken,
-        val,
-        appStore.autoSyncEnabled,
-        appStore.autoSyncInterval,
-        appStore.autoCollectEnabled,
-      );
+    if (isSupportLanguage(val)) {
+      await appStoreActions.updateSettings({
+        language: val,
+      });
     }
   }
 

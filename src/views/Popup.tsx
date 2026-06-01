@@ -1,6 +1,7 @@
 import { type Component, createSignal, Match, onMount, Switch } from "solid-js";
 import { t } from "@/shared/i18n.ts";
 import { getActiveTab, getGameTabs, isGameUrl } from "@/shared/tabs.ts";
+import { pingLocalGame } from "@/shared/localhost.ts";
 import Main from "@/views/Main.tsx";
 import Settings from "@/views/Settings.tsx";
 import Notice from "@/views/Notice.tsx";
@@ -12,6 +13,15 @@ export const Popup: Component = () => {
   const [ready, setReady] = createSignal(false);
   const [warnMsg, setWarnMsg] = createSignal("");
   const [errorMsg] = createSignal("");
+  const [localUrl, setLocalUrl] = createSignal("");
+
+  const checkLocalPort = async () => {
+    const port = appStore.localhostPort || "8080";
+    const url = await pingLocalGame(port);
+    if (url) {
+      setLocalUrl(url);
+    }
+  };
 
   onMount(async () => {
     await appStoreActions.init();
@@ -23,6 +33,7 @@ export const Popup: Component = () => {
       const tabs = await getGameTabs();
       if (tabs.length === 0) {
         setWarnMsg(t("not_game_page_body"));
+        checkLocalPort(); // Gọi ngầm không chặn UI
       }
       setReady(true);
       return;
@@ -31,6 +42,7 @@ export const Popup: Component = () => {
     const activeTab = await getActiveTab();
     if (!activeTab?.url || !isGameUrl(activeTab.url)) {
       setWarnMsg(t("not_game_page_body"));
+      checkLocalPort(); // Gọi ngầm không chặn UI
       setReady(true);
       return;
     }
@@ -53,7 +65,11 @@ export const Popup: Component = () => {
         <History />
       </Match>
       <Match when={warnMsg() || errorMsg()}>
-        <Notice warnMsg={warnMsg()} errorMsg={errorMsg()} />
+        <Notice
+          warnMsg={warnMsg()}
+          errorMsg={errorMsg()}
+          localUrl={localUrl()}
+        />
       </Match>
       <Match when={true}>
         <Main />

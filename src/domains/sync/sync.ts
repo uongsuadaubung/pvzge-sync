@@ -25,7 +25,7 @@ function stripIgnoredKeys(obj: unknown): unknown {
     const keys = Object.keys(obj).sort();
     for (const key of keys) {
       if (IGNORED_KEYS.includes(key)) continue;
-      const val = (obj as Record<string, unknown>)[key];
+      const val = Reflect.get(obj, key);
       clean[key] = stripIgnoredKeys(val);
     }
     return clean;

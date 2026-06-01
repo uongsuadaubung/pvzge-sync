@@ -49,7 +49,12 @@ export default function Header(props: Props) {
       )}
 
       <div class="header-text">
-        <h1>{getTitle()}</h1>
+        <div class="title-row">
+          <h1>{getTitle()}</h1>
+          <span class="version-badge">
+            v{chrome.runtime.getManifest().version}
+          </span>
+        </div>
         {props.subtitle && <small>{props.subtitle}</small>}
       </div>
 

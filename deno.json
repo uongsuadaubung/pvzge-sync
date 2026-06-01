@@ -31,7 +31,14 @@
     "singleQuote": false
   },
   "lint": {
+    "plugins": [
+      "./custom-rules-plugin.ts"
+    ],
     "rules": {
+      "tags": [
+        "recommended",
+        "jsx"
+      ],
       "exclude": [
         "no-window",
         "no-window-prefix",

@@ -11,8 +11,10 @@ import {
   getGithubToken,
   getLanguage,
   getLastSync,
+  getLocalhostPort,
   setGithubSettings,
   subscribeToSettings,
+  type UpdateSettingsOptions,
 } from "@/shared/storage.ts";
 import { setLanguage } from "@/shared/i18n.ts";
 import { SupportLanguage } from "@/shared/i18n.ts";
@@ -32,6 +34,7 @@ export interface AppStore {
   autoSyncEnabled: boolean;
   autoSyncInterval: number;
   autoCollectEnabled: boolean;
+  localhostPort: string;
   autoSyncStatus: string;
   autoSyncStatusType: SyncStatusType;
   isLoaded: boolean;
@@ -53,6 +56,7 @@ export const [appStore, setAppStore] = createStore<AppStore>({
   autoSyncEnabled: false,
   autoSyncInterval: 5,
   autoCollectEnabled: false,
+  localhostPort: "8080",
   autoSyncStatus: "",
   autoSyncStatusType: "info",
 
@@ -77,6 +81,7 @@ export const appStoreActions = {
     const autoSyncEnabled = await getAutoSyncEnabled();
     const autoSyncInterval = await getAutoSyncInterval();
     const autoCollectEnabled = await getAutoCollectEnabled();
+    const localhostPort = await getLocalhostPort();
     const autoSyncStatusObj = await getAutoSyncStatus();
     const cachedUser = await getCachedGithubUser();
 
@@ -88,6 +93,7 @@ export const appStoreActions = {
       autoSyncEnabled,
       autoSyncInterval,
       autoCollectEnabled,
+      localhostPort,
       autoSyncStatus: autoSyncStatusObj.status,
       autoSyncStatusType: autoSyncStatusObj.type,
       githubUser: cachedUser,
@@ -127,6 +133,7 @@ export const appStoreActions = {
         autoSyncEnabled: settings.autoSyncEnabled,
         autoSyncInterval: settings.autoSyncInterval,
         autoCollectEnabled: settings.autoCollectEnabled,
+        localhostPort: settings.localhostPort,
         autoSyncStatus: settings.autoSyncStatus || "",
         autoSyncStatusType: settings.autoSyncStatusType,
         githubUser: settings.cachedGithubUser,
@@ -137,36 +144,35 @@ export const appStoreActions = {
     console.log("[Store] Initialization complete.");
   },
 
-  /**
-   * Cập nhật cài đặt và lưu vào storage.
-   */
-  async updateSettings(
-    token: string,
-    lang: SupportLanguage,
-    autoSyncEnabled: boolean,
-    autoSyncInterval: number,
-    autoCollectEnabled: boolean,
-  ) {
+  async updateSettings(options: Partial<UpdateSettingsOptions>) {
     console.log("[Store] Updating settings...");
-    await setGithubSettings(
-      token,
-      lang,
-      autoSyncEnabled,
-      autoSyncInterval,
-      autoCollectEnabled,
-      token ? appStore.githubUser : null,
-    );
 
-    setAppStore({
-      githubToken: token,
-      language: lang,
-      autoSyncEnabled,
-      autoSyncInterval,
-      autoCollectEnabled,
-      githubUser: !token ? null : appStore.githubUser,
-    });
+    // 1. Chuẩn bị patch để lưu vào storage
+    const storagePatch: Partial<UpdateSettingsOptions> & {
+      cachedGithubUser?: GithubUser | null;
+    } = { ...options };
 
-    await setLanguage(lang);
+    if (options.githubToken !== undefined) {
+      storagePatch.cachedGithubUser = options.githubToken
+        ? appStore.githubUser
+        : null;
+    }
+
+    await setGithubSettings(storagePatch);
+
+    // 2. Cập nhật SolidJS Store bằng cách truyền partial patch
+    const storePatch: Partial<AppStore> = { ...options };
+    if (options.githubToken !== undefined) {
+      storePatch.githubUser = !options.githubToken
+        ? null
+        : appStore.githubUser;
+    }
+    setAppStore(storePatch);
+
+    // 3. Cập nhật ngôn ngữ i18n nếu ngôn ngữ được truyền vào
+    if (options.language !== undefined) {
+      await setLanguage(options.language);
+    }
 
     // Thông báo cho các thành phần khác (background, content)
     chrome.runtime.sendMessage({ type: "SETTINGS_UPDATED" });

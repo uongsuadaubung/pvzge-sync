@@ -385,13 +385,9 @@ export const Main: Component = () => {
                     variant={appStore.autoCollectEnabled ? "danger" : "primary"}
                     fullWidth
                     onclick={() => {
-                      appStoreActions.updateSettings(
-                        appStore.githubToken,
-                        appStore.language,
-                        appStore.autoSyncEnabled,
-                        appStore.autoSyncInterval,
-                        !appStore.autoCollectEnabled,
-                      );
+                      appStoreActions.updateSettings({
+                        autoCollectEnabled: !appStore.autoCollectEnabled,
+                      });
                     }}
                   >
                     {appStore.autoCollectEnabled

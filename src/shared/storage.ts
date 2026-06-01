@@ -16,12 +16,22 @@ const SettingsSchema = z.object({
   autoSyncEnabled: z.boolean().default(false),
   autoSyncInterval: z.number().default(5),
   autoCollectEnabled: z.boolean().default(false),
+  localhostPort: z.string().default("8080"),
   autoSyncStatus: z.string().default(""),
   autoSyncStatusType: SyncStatusTypeSchema.default("info"),
   cachedGithubUser: GithubUserSchema.nullable().default(null),
 });
 
 export type AppSettings = z.infer<typeof SettingsSchema>;
+
+export interface UpdateSettingsOptions {
+  githubToken: string;
+  language: SupportLanguage;
+  autoSyncEnabled: boolean;
+  autoSyncInterval: number;
+  autoCollectEnabled: boolean;
+  localhostPort: string;
+}
 
 export const STORAGE_KEY = "pvzge_sync_settings";
 
@@ -94,6 +104,11 @@ export async function getAutoCollectEnabled(): Promise<boolean> {
   return (await getAllSettings()).autoCollectEnabled;
 }
 
+/** Lấy cổng Localhost hoạt động */
+export async function getLocalhostPort(): Promise<string> {
+  return (await getAllSettings()).localhostPort;
+}
+
 // --- Setters ---
 
 /** Lưu Gist ID vào storage */
@@ -111,30 +126,31 @@ export async function setLastSyncedHash(lastSyncedHash: string) {
   await updateSettings({ lastSyncedHash });
 }
 
-/**
- * Lưu các thiết lập chính của GitHub và ứng dụng.
- */
 export async function setGithubSettings(
-  githubToken: string,
-  language: SupportLanguage,
-  autoSyncEnabled: boolean,
-  autoSyncInterval: number,
-  autoCollectEnabled: boolean,
-  cachedGithubUser?: GithubUser | null,
+  settings: Partial<UpdateSettingsOptions> & {
+    cachedGithubUser?: GithubUser | null;
+  },
 ) {
-  const currentToken = await getGithubToken();
-  const patch: Partial<AppSettings> = {
-    githubToken,
-    language,
-    autoSyncEnabled,
-    autoSyncInterval,
-    autoCollectEnabled,
-  };
-  if (currentToken !== githubToken) {
-    patch.cachedGithubUser = cachedGithubUser !== undefined
-      ? cachedGithubUser
-      : null;
+  const patch: Partial<AppSettings> = {};
+
+  if (settings.githubToken !== undefined) patch.githubToken = settings.githubToken;
+  if (settings.language !== undefined) patch.language = settings.language;
+  if (settings.autoSyncEnabled !== undefined) patch.autoSyncEnabled = settings.autoSyncEnabled;
+  if (settings.autoSyncInterval !== undefined) patch.autoSyncInterval = settings.autoSyncInterval;
+  if (settings.autoCollectEnabled !== undefined) patch.autoCollectEnabled = settings.autoCollectEnabled;
+  if (settings.localhostPort !== undefined) patch.localhostPort = settings.localhostPort;
+
+  if (settings.githubToken !== undefined) {
+    const currentToken = await getGithubToken();
+    if (currentToken !== settings.githubToken) {
+      patch.cachedGithubUser = settings.cachedGithubUser !== undefined
+        ? settings.cachedGithubUser
+        : null;
+    }
+  } else if (settings.cachedGithubUser !== undefined) {
+    patch.cachedGithubUser = settings.cachedGithubUser;
   }
+
   await updateSettings(patch);
 }
 /**
