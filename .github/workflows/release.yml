@@ -1,8 +1,9 @@
-name: Build on Release
+name: Build and Release
 
 on:
-  release:
-    types: [published]
+  push:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
@@ -13,23 +14,29 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
 
-      - name: Build extension packages
-        run: deno task build
-
-      - name: Upload packages to Release
+      - name: Create Release and Upload packages
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Determine the tag name, default to the latest git tag if manual run
-          TAG_NAME="${{ github.event.release.tag_name }}"
-          if [ -z "$TAG_NAME" ]; then
-            TAG_NAME=$(git describe --tags --abbrev=0 2>/dev/null || echo "v1.0.0")
+          # Read version from src/manifest.json
+          VERSION=$(jq -r '.version' src/manifest.json)
+          TAG_NAME="v$VERSION"
+
+          # Check if the release/tag already exists on GitHub
+          if gh release view "$TAG_NAME" >/dev/null 2>&1; then
+            echo "Release $TAG_NAME already exists. Skipping build and release creation."
+            exit 0
           fi
+
+          echo "New version detected: $TAG_NAME. Building extension packages..."
+          deno task build
 
           # Create and rename output files
           CHROME_FILE="pvzge-sync-chrome-${TAG_NAME}.zip"
@@ -38,5 +45,6 @@ jobs:
           cp dist/chrome.zip "$CHROME_FILE"
           cp dist/firefox.zip "$FIREFOX_FILE"
 
-          echo "Uploading $CHROME_FILE and $FIREFOX_FILE to release $TAG_NAME..."
-          gh release upload "$TAG_NAME" "$CHROME_FILE" "$FIREFOX_FILE" --clobber
+          echo "Creating release $TAG_NAME and uploading packages..."
+          gh release create "$TAG_NAME" "$CHROME_FILE" "$FIREFOX_FILE" --title "$TAG_NAME" --generate-notes
+
