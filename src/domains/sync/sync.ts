@@ -150,9 +150,17 @@ export type SmartSyncResult =
 export async function smartSync(isAuto = false): Promise<SmartSyncResult> {
   console.log("[SmartSync] Starting 3-way sync process...");
 
-  const local = await getLocalData().catch(() => {
-    console.warn("[SmartSync] Could not get local data (game not open?)");
-    return null;
+  const local = await getLocalData().catch((err) => {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (
+      msg === "msg_game_not_open" ||
+      msg === "Connection error" ||
+      msg.includes("not found")
+    ) {
+      console.warn("[SmartSync] Could not get local data (not ready or empty):", msg);
+      return null;
+    }
+    throw err;
   });
 
   // Đọc dữ liệu từ Session Cache

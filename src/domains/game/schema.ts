@@ -57,9 +57,10 @@ const WorldPropEntrySchema = z.object({
   wmx: z.number(),
 }).strict();
 
-const WorldPropsSchema = z.object({}).catchall(
-  z.union([WorldPropEntrySchema, z.number()]),
-);
+const WorldPropsSchema = z.object({
+  currentWM: z.number().optional(),
+  worldChooserPos: z.number().optional(),
+}).catchall(WorldPropEntrySchema);
 
 const ZenGardenSlotSchema = z.object({ unlocked: z.boolean() }).strict();
 
@@ -88,7 +89,16 @@ const ZenGardenSchema = z.object({
   sprout: z.number(),
 }).strict();
 
+const ArcadePlantDecodingSchema = z.object({
+  played_today: z.boolean(),
+  gem_today: z.number(),
+  max_base_count: z.number(),
+  max_code_count: z.number(),
+}).strict();
+
 const PlayerProfileSchema = z.object({
+  arcade_plant_decoding: ArcadePlantDecodingSchema.optional(), //0.9.0
+  yeti_spawned_today: z.boolean().optional(), //0.9.0
   beachWMX: z.number(),
   cardDecks: z.array(z.unknown()),
   coin: z.number(),
@@ -177,7 +187,8 @@ const SettingsSchema = z.object({
   MusicSpeedMin: z.number(),
   MusicVolume: z.number(),
   SFXVolume: z.number(),
-  CardsAtUpper: z.boolean(),
+  CardsAtUpper: z.boolean().optional(), // tương thích ngược với save bản cũ
+  CardsLayer: z.number().optional(), // tương thích với save bản mới 0.9.0
   LnCSelectionMode: z.number(),
   AllowCheat: z.boolean(),
   ShowKeyTips: z.boolean(),
