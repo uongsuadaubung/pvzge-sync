@@ -64,8 +64,71 @@ async function getGist(gistId: string): Promise<Gist> {
   return GistSchema.parse(data);
 }
 
+/**
+ * Nén đối tượng SaveData thành chuỗi Base64 (sử dụng gzip)
+ */
+async function compressSaveData(data: SaveData): Promise<string> {
+  const jsonString = JSON.stringify(data);
+  const byteArray = new TextEncoder().encode(jsonString);
+  const stream = new Response(byteArray).body!.pipeThrough(
+    new CompressionStream("gzip")
+  );
+  const compressedBuffer = await new Response(stream).arrayBuffer();
+  const bytes = new Uint8Array(compressedBuffer);
+
+  if (typeof bytes.toBase64 === "function") {
+    return bytes.toBase64();
+  }
+  //fallback old browsers
+  let binary = "";
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
+
+/**
+ * Giải nén chuỗi Base64 (gzip) thành đối tượng SaveData
+ */
+async function decompressSaveData(base64: string): Promise<SaveData> {
+  let bytes: Uint8Array;
+  if (typeof Uint8Array.fromBase64 === "function") {
+    bytes = Uint8Array.fromBase64(base64);
+  } else {
+    const binary = atob(base64);
+    bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+  }
+
+  if (!(bytes.buffer instanceof ArrayBuffer)) {
+    throw new Error("Expected ArrayBuffer");
+  }
+
+  const stream = new Blob([bytes.buffer]).stream().pipeThrough(
+    new DecompressionStream("gzip")
+  );
+  const jsonString = await new Response(stream).text();
+  const raw = JSON.parse(jsonString);
+  return SaveDataSchema.parse(raw);
+}
+
+/**
+ * Giải nén hoặc phân tích dữ liệu tải về từ Gist.
+ * Hỗ trợ tự động nhận dạng dữ liệu cũ chưa nén (JSON thô) và dữ liệu mới đã nén (gzip + base64).
+ */
+async function parseGistContent(content: string): Promise<SaveData> {
+  const trimmed = content.trim();
+  if (trimmed.startsWith("{")) {
+    const raw = JSON.parse(trimmed);
+    return SaveDataSchema.parse(raw);
+  }
+  return await decompressSaveData(trimmed);
+}
+
 /** Cập nhật nội dung file lưu trữ vào Gist hiện có. */
-async function updateGist(gistId: string, data: SaveData) {
+async function updateGist(gistId: string, content: string) {
   console.log("[GitHub API] Updating existing gist:", gistId);
   return await githubRequest(`/gists/${gistId}`, {
     method: "PATCH",
@@ -73,7 +136,7 @@ async function updateGist(gistId: string, data: SaveData) {
       description: GIST_DESCRIPTION,
       files: {
         [GIST_FILE_NAME]: {
-          content: JSON.stringify(data),
+          content,
         },
       },
     }),
@@ -81,7 +144,7 @@ async function updateGist(gistId: string, data: SaveData) {
 }
 
 /** Tạo một Gist bí mật mới để lưu trữ dữ liệu. */
-async function createGist(data: SaveData) {
+async function createGist(content: string) {
   console.log("[GitHub API] Creating new secret gist...");
   return await githubRequest("/gists", {
     method: "POST",
@@ -90,7 +153,7 @@ async function createGist(data: SaveData) {
       public: false,
       files: {
         [GIST_FILE_NAME]: {
-          content: JSON.stringify(data),
+          content,
         },
       },
     }),
@@ -126,10 +189,11 @@ async function getOrFindGistId(): Promise<string | undefined> {
 export async function uploadToGist(data: SaveData): Promise<SyncResponse> {
   try {
     const gistId = await getOrFindGistId();
+    const content = await compressSaveData(data);
     if (gistId) {
-      await updateGist(gistId, data);
+      await updateGist(gistId, content);
     } else {
-      const raw = await createGist(data);
+      const raw = await createGist(content);
       const gist = GistSchema.parse(raw);
       await setGistId(gist.id);
     }
@@ -161,8 +225,7 @@ export async function downloadFromGist(): Promise<SyncResponse> {
     // Xử lý trường hợp content bị cắt (truncate) do file quá lớn
     const content = file.content ||
       await fetch(file.raw_url).then((r) => r.text());
-    const raw = JSON.parse(content);
-    const data = SaveDataSchema.parse(raw);
+    const data = await parseGistContent(content);
     const gistUpdatedAt = new Date(gist.updated_at).getTime();
 
     console.log("[GitHub API] Download success, updated at:", gist.updated_at);
@@ -277,8 +340,7 @@ export async function fetchGistHistory(): Promise<HistoryItem[]> {
 
         const content = file.content ||
           await fetch(file.raw_url).then((r) => r.text());
-        const rawData = JSON.parse(content);
-        const saveData = SaveDataSchema.parse(rawData);
+        const saveData = await parseGistContent(content);
 
         return {
           version: commit.version,
