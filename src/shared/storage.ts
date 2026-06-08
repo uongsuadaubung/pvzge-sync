@@ -133,12 +133,22 @@ export async function setGithubSettings(
 ) {
   const patch: Partial<AppSettings> = {};
 
-  if (settings.githubToken !== undefined) patch.githubToken = settings.githubToken;
+  if (settings.githubToken !== undefined) {
+    patch.githubToken = settings.githubToken;
+  }
   if (settings.language !== undefined) patch.language = settings.language;
-  if (settings.autoSyncEnabled !== undefined) patch.autoSyncEnabled = settings.autoSyncEnabled;
-  if (settings.autoSyncInterval !== undefined) patch.autoSyncInterval = settings.autoSyncInterval;
-  if (settings.autoCollectEnabled !== undefined) patch.autoCollectEnabled = settings.autoCollectEnabled;
-  if (settings.localhostPort !== undefined) patch.localhostPort = settings.localhostPort;
+  if (settings.autoSyncEnabled !== undefined) {
+    patch.autoSyncEnabled = settings.autoSyncEnabled;
+  }
+  if (settings.autoSyncInterval !== undefined) {
+    patch.autoSyncInterval = settings.autoSyncInterval;
+  }
+  if (settings.autoCollectEnabled !== undefined) {
+    patch.autoCollectEnabled = settings.autoCollectEnabled;
+  }
+  if (settings.localhostPort !== undefined) {
+    patch.localhostPort = settings.localhostPort;
+  }
 
   if (settings.githubToken !== undefined) {
     const currentToken = await getGithubToken();

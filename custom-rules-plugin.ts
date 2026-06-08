@@ -41,7 +41,8 @@ const customRulesPlugin: LintPlugin = {
           if (node.params && node.params.length > MAX_PARAMS) {
             context.report({
               node,
-              message: `Function has too many parameters (${node.params.length}/${MAX_PARAMS}). Please refactor it using an Options Object.`,
+              message:
+                `Function has too many parameters (${node.params.length}/${MAX_PARAMS}). Please refactor it using an Options Object.`,
             });
           }
         }
@@ -67,7 +68,8 @@ const customRulesPlugin: LintPlugin = {
           ) {
             context.report({
               node,
-              message: "Do not destructure 'props' in SolidJS as it breaks reactivity. Access properties directly (e.g., props.title) or use 'splitProps'.",
+              message:
+                "Do not destructure 'props' in SolidJS as it breaks reactivity. Access properties directly (e.g., props.title) or use 'splitProps'.",
             });
           }
         }
@@ -83,8 +85,7 @@ const customRulesPlugin: LintPlugin = {
       create(context: LintContext) {
         return {
           TSAsExpression(node: LintNode) {
-            const isConst =
-              node.typeAnnotation &&
+            const isConst = node.typeAnnotation &&
               node.typeAnnotation.type === "TSTypeReference" &&
               node.typeAnnotation.typeName &&
               node.typeAnnotation.typeName.type === "Identifier" &&
@@ -93,7 +94,8 @@ const customRulesPlugin: LintPlugin = {
             if (!isConst) {
               context.report({
                 node,
-                message: "Do not use 'as' type assertions. Use proper type guards, schema parsing, or type narrowing instead.",
+                message:
+                  "Do not use 'as' type assertions. Use proper type guards, schema parsing, or type narrowing instead.",
               });
             }
           },

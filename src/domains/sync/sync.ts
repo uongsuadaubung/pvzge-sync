@@ -157,7 +157,10 @@ export async function smartSync(isAuto = false): Promise<SmartSyncResult> {
       msg === "Connection error" ||
       msg.includes("not found")
     ) {
-      console.warn("[SmartSync] Could not get local data (not ready or empty):", msg);
+      console.warn(
+        "[SmartSync] Could not get local data (not ready or empty):",
+        msg,
+      );
       return null;
     }
     throw err;

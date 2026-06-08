@@ -47,4 +47,3 @@ jobs:
 
           echo "Creating release $TAG_NAME and uploading packages..."
           gh release create "$TAG_NAME" "$CHROME_FILE" "$FIREFOX_FILE" --title "$TAG_NAME" --generate-notes
-

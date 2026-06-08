@@ -15,6 +15,37 @@ import {
 import { smartSync } from "@/domains/sync/sync.ts";
 
 /**
+ * Xử lý khi trang game được tải/tải lại.
+ * Xóa cache phiên và thực hiện tự động kiểm tra đồng bộ nếu có GitHub Token.
+ */
+async function handleGamePageLoaded() {
+  try {
+    await clearSessionGistCache();
+  } catch (err) {
+    console.error("[Background] Failed to clear session Gist cache:", err);
+  }
+
+  const token = await getGithubToken();
+  if (token) {
+    console.log("[Background] Game page loaded. Running auto sync...");
+    try {
+      const res = await smartSync(false);
+      if (res.type === "conflict") {
+        await setAutoSyncStatus("status_auto_sync_conflict", "warning");
+      } else if (res.type === "synced" && res.detail === "upload") {
+        await setAutoSyncStatus("status_auto_sync_success_upload", "success");
+      } else if (res.type === "no_action") {
+        await setAutoSyncStatus("status_auto_sync_identical", "success");
+      }
+    } catch (err) {
+      console.error("[Background] Auto sync on page load failed:", err);
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      await setAutoSyncStatus(errorMsg, "error");
+    }
+  }
+}
+
+/**
  * Listener xử lý các tin nhắn từ Popup hoặc Content Script.
  * Các hàm API được gọi ở đây để tận dụng môi trường Background (tránh bị kill khi đóng popup).
  */
@@ -51,12 +82,7 @@ chrome.runtime.onMessage.addListener(
         getUserInfo().then(sendResponse);
         return true;
       case "GAME_PAGE_LOADED":
-        clearSessionGistCache().catch((err) => {
-          console.error(
-            "[Background] Failed to clear session Gist cache:",
-            err,
-          );
-        });
+        handleGamePageLoaded();
         return false;
       case "SETTINGS_UPDATED": {
         console.log(

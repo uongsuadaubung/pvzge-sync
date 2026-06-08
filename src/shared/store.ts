@@ -12,6 +12,7 @@ import {
   getLanguage,
   getLastSync,
   getLocalhostPort,
+  setAutoSyncStatus,
   setGithubSettings,
   subscribeToSettings,
   type UpdateSettingsOptions,
@@ -163,9 +164,7 @@ export const appStoreActions = {
     // 2. Cập nhật SolidJS Store bằng cách truyền partial patch
     const storePatch: Partial<AppStore> = { ...options };
     if (options.githubToken !== undefined) {
-      storePatch.githubUser = !options.githubToken
-        ? null
-        : appStore.githubUser;
+      storePatch.githubUser = !options.githubToken ? null : appStore.githubUser;
     }
     setAppStore(storePatch);
 
@@ -199,6 +198,12 @@ export const appStoreActions = {
 
     // Thông báo cho background để dừng Alarm và thông báo cho tabs
     chrome.runtime.sendMessage({ type: "SETTINGS_UPDATED" });
+  },
+
+  /** Xóa tin nhắn trạng thái đồng bộ hiện tại */
+  async clearSyncStatus() {
+    await setAutoSyncStatus("", "info");
+    setAppStore({ autoSyncStatus: "", autoSyncStatusType: "info" });
   },
 
   /** Chuyển đổi màn hình hiển thị trong Popup. */

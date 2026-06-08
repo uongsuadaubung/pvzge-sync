@@ -411,28 +411,62 @@ export const Main: Component = () => {
                     <h3>{t("cloud_sync")}</h3>
                   </div>
 
-                  <Show when={appStore.autoSyncEnabled}>
+                  <Show
+                    when={appStore.autoSyncEnabled || localizedAutoSyncStatus()}
+                  >
                     <div class="auto-sync-status">
-                      <div class="auto-sync-info">
-                        <span class="auto-sync-label">
-                          ⏰ {t("next_sync_in")}
-                        </span>
-                        <span class="countdown-timer">{countdownText()}</span>
-                      </div>
-                      <div class="progress-bar-container">
-                        <div
-                          class="progress-bar-fill"
-                          style={{ width: `${progressPercent()}%` }}
-                        >
+                      <Show when={appStore.autoSyncEnabled}>
+                        <div class="auto-sync-info">
+                          <span class="auto-sync-label">
+                            ⏰ {t("next_sync_in")}
+                          </span>
+                          <span class="countdown-timer">{countdownText()}</span>
                         </div>
-                      </div>
+                        <div class="progress-bar-container">
+                          <div
+                            class="progress-bar-fill"
+                            style={{ width: `${progressPercent()}%` }}
+                          >
+                          </div>
+                        </div>
+                      </Show>
                       <Show when={localizedAutoSyncStatus()}>
                         <div
                           class={`auto-sync-status-msg ${
                             appStore.autoSyncStatusType || "info"
                           }`}
+                          style={{
+                            position: "relative",
+                            "padding-right": "24px",
+                          }}
                         >
                           {localizedAutoSyncStatus()}
+                          <button
+                            type="button"
+                            onclick={() => appStoreActions.clearSyncStatus()}
+                            style={{
+                              position: "absolute",
+                              right: "6px",
+                              top: "50%",
+                              transform: "translateY(-50%)",
+                              background: "transparent",
+                              border: "none",
+                              color: "inherit",
+                              "font-size": "14px",
+                              cursor: "pointer",
+                              opacity: "0.6",
+                              padding: "2px 6px",
+                              "line-height": "1",
+                            }}
+                            onmouseenter={(
+                              e,
+                            ) => (e.currentTarget.style.opacity = "1")}
+                            onmouseleave={(
+                              e,
+                            ) => (e.currentTarget.style.opacity = "0.6")}
+                          >
+                            &times;
+                          </button>
                         </div>
                       </Show>
                     </div>

@@ -203,7 +203,11 @@ function inferZodSchema(data: unknown, indent = ""): string {
     const keys = Object.keys(data);
     if (keys.length === 0) return "z.object({})";
     const entries = keys
-      .map((k) => `${indent}  ${k}: ${inferZodSchema(Reflect.get(data, k), indent + "  ")}`)
+      .map((k) =>
+        `${indent}  ${k}: ${
+          inferZodSchema(Reflect.get(data, k), indent + "  ")
+        }`
+      )
       .join(",\n");
     return `z.object({\n${entries}\n${indent}}).strict()`;
   }
