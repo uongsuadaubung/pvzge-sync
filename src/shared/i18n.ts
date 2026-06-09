@@ -203,6 +203,15 @@ const LangSchema = z.object({
   check_clear_progress_label: z.string(),
   btn_logout_confirm: z.string(),
   dialog_loading: z.string(),
+  zen_garden_title: z.string(),
+  zen_garden_waterable_now: z.string(),
+  zen_garden_watering_cooldown_prefix: z.string(),
+  zen_garden_watering_cooldown_suffix: z.string(),
+  zen_garden_no_plants: z.string(),
+  zen_garden_no_data: z.string(),
+  time_hours: z.string(),
+  time_minutes: z.string(),
+  time_seconds: z.string(),
 });
 
 type Lang = z.infer<typeof LangSchema>;

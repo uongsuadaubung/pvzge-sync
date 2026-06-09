@@ -16,6 +16,7 @@ import {
   smartSync,
 } from "@/domains/sync/sync.ts";
 import { type SaveData, SaveDataSchema } from "@/domains/game/schema.ts";
+import { getSessionGistCache } from "@/shared/storage.ts";
 import {
   type DialogConfig,
   type SyncStatusType,
@@ -45,10 +46,102 @@ export const Main: Component = () => {
   const [countdownText, setCountdownText] = createSignal("00:00");
   const [progressPercent, setProgressPercent] = createSignal(0);
 
+  const [zenSaveData, setZenSaveData] = createSignal<SaveData | null>(null);
+  const [zenStatus, setZenStatus] = createSignal<
+    "no_data" | "no_plants" | "ready" | "cooldown"
+  >("no_data");
+  const [zenCountdownText, setZenCountdownText] = createSignal("");
+
   let timerId: ReturnType<typeof setInterval> | undefined;
+  let zenFetchInterval: ReturnType<typeof setInterval> | undefined;
 
   onMount(() => {
+    function updateZenCountdown() {
+      const data = zenSaveData();
+      if (!data) {
+        setZenStatus("no_data");
+        return;
+      }
+
+      const profile = data.PvZ2_PlayerProperties?.[0];
+      const zengarden = profile?.zengarden;
+      if (!zengarden) {
+        setZenStatus("no_data");
+        return;
+      }
+
+      const plants = [
+        ...(zengarden.plantsInMain || []),
+        ...(zengarden.plantsInBeach || []),
+        ...(zengarden.plantsInMushroom || []),
+        ...(zengarden.plantsInNight || []),
+        ...(zengarden.plantInCart ? [zengarden.plantInCart] : []),
+      ];
+
+      if (plants.length === 0) {
+        setZenStatus("no_plants");
+        return;
+      }
+
+      const now = Date.now();
+      let minRemaining = Infinity;
+
+      for (const plant of plants) {
+        const elapsedSeconds = (now - plant.oldTime) / 1000;
+        const remaining = plant.waterCD - elapsedSeconds;
+        if (remaining < minRemaining) {
+          minRemaining = remaining;
+        }
+      }
+
+      if (minRemaining <= 0) {
+        setZenStatus("ready");
+      } else {
+        setZenStatus("cooldown");
+        const remainingRounded = Math.max(0, Math.ceil(minRemaining));
+        if (remainingRounded <= 60) {
+          setZenCountdownText(
+            t("zen_garden_watering_cooldown_prefix") +
+              remainingRounded +
+              t("time_seconds") +
+              t("zen_garden_watering_cooldown_suffix")
+          );
+        } else {
+          const h = Math.floor(remainingRounded / 3600);
+          const m = Math.floor((remainingRounded % 3600) / 60);
+          let timeStr = "";
+          if (h > 0) {
+            timeStr += h + t("time_hours");
+          }
+          timeStr += m + t("time_minutes");
+          setZenCountdownText(
+            t("zen_garden_watering_cooldown_prefix") +
+              timeStr +
+              t("zen_garden_watering_cooldown_suffix")
+          );
+        }
+      }
+    }
+
+    async function fetchZenData() {
+      try {
+        const localData = await getLocalData();
+        setZenSaveData(localData);
+      } catch (_err) {
+        // Fallback to session cache if game not open
+        const cached = await getSessionGistCache();
+        if (cached) {
+          setZenSaveData(cached);
+        } else {
+          setZenSaveData(null);
+        }
+      }
+    }
+
     async function updateTimer() {
+      // Always update Zen Garden countdown relative to current time
+      updateZenCountdown();
+
       if (!appStore.autoSyncEnabled || appStore.autoSyncInterval <= 0) {
         return;
       }
@@ -94,12 +187,16 @@ export const Main: Component = () => {
       }
     }
 
+    fetchZenData();
+    zenFetchInterval = setInterval(fetchZenData, 5000);
+
     updateTimer();
     timerId = setInterval(updateTimer, 1000);
   });
 
   onCleanup(() => {
     if (timerId) clearInterval(timerId);
+    if (zenFetchInterval) clearInterval(zenFetchInterval);
   });
 
   const [dialogResolver, setDialogResolver] = createSignal<
@@ -394,6 +491,51 @@ export const Main: Component = () => {
                       ? t("btn_auto_collect_off")
                       : t("btn_auto_collect_on")}
                   </Button>
+                </div>
+              </section>
+
+              <section class="action-section zen-garden">
+                <div class="section-header">
+                  <span class="section-icon">🪴</span>
+                  <h3>{t("zen_garden_title")}</h3>
+                </div>
+                <div class="zen-garden-status">
+                  <div
+                    class={`status-icon ${zenStatus()}`}
+                  >
+                    <Show when={zenStatus() === "ready"}>💧</Show>
+                    <Show when={zenStatus() === "cooldown"}>⏳</Show>
+                    <Show when={zenStatus() === "no_plants" || zenStatus() === "no_data"}>⚠️</Show>
+                  </div>
+                  <div class="status-details">
+                    <div class="status-text">{t("zen_garden_title")}</div>
+                    <div
+                      class={`status-time ${
+                        zenStatus() === "ready" ? "ready-text" : ""
+                      }`}
+                    >
+                      <Show
+                        when={zenStatus() === "no_data"}
+                        fallback={
+                          <Show
+                            when={zenStatus() === "no_plants"}
+                            fallback={
+                              <Show
+                                when={zenStatus() === "ready"}
+                                fallback={zenCountdownText()}
+                              >
+                                {t("zen_garden_waterable_now")}
+                              </Show>
+                            }
+                          >
+                            {t("zen_garden_no_plants")}
+                          </Show>
+                        }
+                      >
+                        {t("zen_garden_no_data")}
+                      </Show>
+                    </div>
+                  </div>
                 </div>
               </section>
             </Show>
