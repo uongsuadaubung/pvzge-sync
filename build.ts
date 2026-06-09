@@ -4,7 +4,6 @@ import {
   mkdirSync,
   readdirSync,
   readFileSync,
-  renameSync,
   rmSync,
   writeFileSync,
 } from "fs";
@@ -46,12 +45,12 @@ async function runBuild() {
   console.log("Bundling with esbuild...");
 
   // Entry points for bundling
-  const entryPoints = [
-    "extension/background.ts",
-    "extension/content.ts",
-    "popup-entry.tsx",
-    "guide-entry.tsx",
-  ].map((file) => join(srcDir, file));
+  const entryPoints = {
+    background: join(srcDir, "extension/background.ts"),
+    content: join(srcDir, "extension/content.ts"),
+    popup: join(srcDir, "popup-entry.tsx"),
+    guide: join(srcDir, "guide-entry.tsx"),
+  };
 
   // Custom path-alias resolver plugin for esbuild
   const pathAliasPlugin = {
@@ -69,8 +68,8 @@ async function runBuild() {
   const commonConfig = {
     entryPoints,
     bundle: true,
-    minify: true,
-    sourcemap: false,
+    minify: false,
+    sourcemap: true,
     platform: "browser" as const,
     target: ["esnext"],
     plugins: [pathAliasPlugin, solidPlugin()],
@@ -85,17 +84,6 @@ async function runBuild() {
       outExtension: { ".js": ".js" },
     });
 
-    // Rename popup-entry.js → popup.js
-    renameSync(
-      join(chromeDir, "popup-entry.js"),
-      join(chromeDir, "popup.js"),
-    );
-    // Rename guide-entry.js → guide.js
-    renameSync(
-      join(chromeDir, "guide-entry.js"),
-      join(chromeDir, "guide.js"),
-    );
-
     // Build for Firefox
     await build({
       ...commonConfig,
@@ -103,15 +91,6 @@ async function runBuild() {
       entryNames: "[name]",
       outExtension: { ".js": ".js" },
     });
-
-    renameSync(
-      join(firefoxDir, "popup-entry.js"),
-      join(firefoxDir, "popup.js"),
-    );
-    renameSync(
-      join(firefoxDir, "guide-entry.js"),
-      join(firefoxDir, "guide.js"),
-    );
 
     console.log("✓ JS/TS bundling successful.");
   } catch (err) {
