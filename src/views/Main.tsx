@@ -35,6 +35,8 @@ interface ProfileInfo {
   sprout: number;
 }
 
+const ZEN_COOLDOWN_SECONDS = 21600; // 6 hours
+
 export const Main: Component = () => {
   let fileInput!: HTMLInputElement;
   let downloadAnchor!: HTMLAnchorElement;
@@ -89,26 +91,45 @@ export const Main: Component = () => {
 
       const now = Date.now();
       let minRemaining = Infinity;
-
+      let anyReady = false;
       for (const plant of plants) {
-        const elapsedSeconds = (now - plant.oldTime) / 1000;
-        const remaining = plant.waterCD - elapsedSeconds;
-        if (remaining < minRemaining) {
-          minRemaining = remaining;
+        let remaining = 0;
+        const isReadyInGame = plant.stuck || plant.waterCD <= 0;
+
+        if (isReadyInGame) {
+          remaining = 0;
+        } else {
+          // Cooldown is always 6 hours (21,600 seconds) from the last care action (oldTime)
+          const elapsedSeconds = (now - plant.oldTime) / 1000;
+          remaining = ZEN_COOLDOWN_SECONDS - elapsedSeconds;
+        }
+
+        if (remaining <= 0) {
+          anyReady = true;
+        } else {
+          if (remaining < minRemaining) {
+            minRemaining = remaining;
+          }
         }
       }
 
-      if (minRemaining <= 0) {
+      if (anyReady) {
         setZenStatus("ready");
-      } else {
+      } else if (minRemaining !== Infinity) {
         setZenStatus("cooldown");
         const remainingRounded = Math.max(0, Math.ceil(minRemaining));
+        const targetDate = new Date(now + minRemaining * 1000);
+        const targetHours = String(targetDate.getHours()).padStart(2, "0");
+        const targetMinutes = String(targetDate.getMinutes()).padStart(2, "0");
+        const targetTimeStr = ` (${targetHours}:${targetMinutes})`;
+
         if (remainingRounded <= 60) {
           setZenCountdownText(
             t("zen_garden_watering_cooldown_prefix") +
               remainingRounded +
               t("time_seconds") +
-              t("zen_garden_watering_cooldown_suffix")
+              t("zen_garden_watering_cooldown_suffix") +
+              targetTimeStr,
           );
         } else {
           const h = Math.floor(remainingRounded / 3600);
@@ -121,9 +142,13 @@ export const Main: Component = () => {
           setZenCountdownText(
             t("zen_garden_watering_cooldown_prefix") +
               timeStr +
-              t("zen_garden_watering_cooldown_suffix")
+              t("zen_garden_watering_cooldown_suffix") +
+              targetTimeStr,
           );
         }
+      } else {
+        setZenStatus("cooldown");
+        setZenCountdownText("-");
       }
     }
 
@@ -513,7 +538,12 @@ export const Main: Component = () => {
                     <Show when={zenStatus() === "loading"}>🔄</Show>
                     <Show when={zenStatus() === "ready"}>💧</Show>
                     <Show when={zenStatus() === "cooldown"}>⏳</Show>
-                    <Show when={zenStatus() === "no_plants" || zenStatus() === "no_data"}>⚠️</Show>
+                    <Show
+                      when={zenStatus() === "no_plants" ||
+                        zenStatus() === "no_data"}
+                    >
+                      ⚠️
+                    </Show>
                   </div>
                   <div class="status-details">
                     <div class="status-text">{t("zen_garden_title")}</div>

@@ -210,7 +210,10 @@ export const appStoreActions = {
       try {
         await clearLocalGameData();
       } catch (err) {
-        console.warn("[Store] Failed to clear local game data during logout:", err);
+        console.warn(
+          "[Store] Failed to clear local game data during logout:",
+          err,
+        );
       }
     }
   },
