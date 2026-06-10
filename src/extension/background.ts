@@ -35,7 +35,7 @@ async function handleGamePageLoaded() {
       } else if (res.type === "synced" && res.detail === "upload") {
         await setAutoSyncStatus("status_auto_sync_success_upload", "success");
       } else if (res.type === "no_action") {
-        await setAutoSyncStatus("status_auto_sync_identical", "success");
+        await setAutoSyncStatus("msg_sync_no_changes", "info");
       }
     } catch (err) {
       console.error("[Background] Auto sync on page load failed:", err);

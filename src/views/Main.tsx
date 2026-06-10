@@ -48,15 +48,19 @@ export const Main: Component = () => {
 
   const [zenSaveData, setZenSaveData] = createSignal<SaveData | null>(null);
   const [zenStatus, setZenStatus] = createSignal<
-    "no_data" | "no_plants" | "ready" | "cooldown"
-  >("no_data");
+    "loading" | "no_data" | "no_plants" | "ready" | "cooldown"
+  >("loading");
   const [zenCountdownText, setZenCountdownText] = createSignal("");
 
   let timerId: ReturnType<typeof setInterval> | undefined;
   let zenFetchInterval: ReturnType<typeof setInterval> | undefined;
 
   onMount(() => {
+    let hasLoaded = false;
     function updateZenCountdown() {
+      if (!hasLoaded) {
+        return;
+      }
       const data = zenSaveData();
       if (!data) {
         setZenStatus("no_data");
@@ -135,6 +139,9 @@ export const Main: Component = () => {
         } else {
           setZenSaveData(null);
         }
+      } finally {
+        hasLoaded = true;
+        updateZenCountdown();
       }
     }
 
@@ -333,15 +340,15 @@ export const Main: Component = () => {
           const msgKey = res.detail === "upload"
             ? "msg_sync_success_upload"
             : "msg_sync_success_download";
-          await showAlert(t(msgKey), "success");
+          await appStoreActions.setSyncStatus(msgKey, "success");
           break;
         }
         case "no_action":
-          await showAlert(t("msg_sync_no_changes"), "info");
+          await appStoreActions.setSyncStatus("msg_sync_no_changes", "info");
           break;
       }
     } catch (e: unknown) {
-      await showAlert(getLocalizedError(e), "error");
+      await appStoreActions.setSyncStatus(getLocalizedError(e), "error");
     } finally {
       setLoading(false);
     }
@@ -501,8 +508,9 @@ export const Main: Component = () => {
                 </div>
                 <div class="zen-garden-status">
                   <div
-                    class={`status-icon ${zenStatus()}`}
+                    class={`status-icon ${zenStatus().replace("_", "-")}`}
                   >
+                    <Show when={zenStatus() === "loading"}>🔄</Show>
                     <Show when={zenStatus() === "ready"}>💧</Show>
                     <Show when={zenStatus() === "cooldown"}>⏳</Show>
                     <Show when={zenStatus() === "no_plants" || zenStatus() === "no_data"}>⚠️</Show>
@@ -515,24 +523,31 @@ export const Main: Component = () => {
                       }`}
                     >
                       <Show
-                        when={zenStatus() === "no_data"}
+                        when={zenStatus() === "loading"}
                         fallback={
                           <Show
-                            when={zenStatus() === "no_plants"}
+                            when={zenStatus() === "no_data"}
                             fallback={
                               <Show
-                                when={zenStatus() === "ready"}
-                                fallback={zenCountdownText()}
+                                when={zenStatus() === "no_plants"}
+                                fallback={
+                                  <Show
+                                    when={zenStatus() === "ready"}
+                                    fallback={zenCountdownText()}
+                                  >
+                                    {t("zen_garden_waterable_now")}
+                                  </Show>
+                                }
                               >
-                                {t("zen_garden_waterable_now")}
+                                {t("zen_garden_no_plants")}
                               </Show>
                             }
                           >
-                            {t("zen_garden_no_plants")}
+                            {t("zen_garden_no_data")}
                           </Show>
                         }
                       >
-                        {t("zen_garden_no_data")}
+                        {t("loading")}
                       </Show>
                     </div>
                   </div>

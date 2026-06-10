@@ -71,7 +71,7 @@ async function compressSaveData(data: SaveData): Promise<string> {
   const jsonString = JSON.stringify(data);
   const byteArray = new TextEncoder().encode(jsonString);
   const stream = new Response(byteArray).body!.pipeThrough(
-    new CompressionStream("gzip")
+    new CompressionStream("gzip"),
   );
   const compressedBuffer = await new Response(stream).arrayBuffer();
   const bytes = new Uint8Array(compressedBuffer);
@@ -107,7 +107,7 @@ async function decompressSaveData(base64: string): Promise<SaveData> {
   }
 
   const stream = new Blob([bytes.buffer]).stream().pipeThrough(
-    new DecompressionStream("gzip")
+    new DecompressionStream("gzip"),
   );
   const jsonString = await new Response(stream).text();
   const raw = JSON.parse(jsonString);
@@ -165,7 +165,9 @@ async function findGistId(): Promise<string> {
   console.log("[GitHub API] Searching for existing PVZGE gist...");
   const raw = await githubRequest("/gists");
   const gists = GistArraySchema.parse(raw);
-  const target = gists.find((g) => GIST_FILE_NAME in g.files);
+  const target = gists.find(
+    (g) => g.description === GIST_DESCRIPTION && GIST_FILE_NAME in g.files,
+  );
   return target ? target.id : "";
 }
 

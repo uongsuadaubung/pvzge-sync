@@ -19,7 +19,7 @@ import {
 } from "@/shared/storage.ts";
 import { setLanguage } from "@/shared/i18n.ts";
 import { SupportLanguage } from "@/shared/i18n.ts";
-import { clearLocalGameData } from "@/domains/sync/sync.ts";
+import { clearLocalGameData, smartSync } from "@/domains/sync/sync.ts";
 import {
   type GithubUser,
   SyncResponseSchema,
@@ -180,14 +180,20 @@ export const appStoreActions = {
   /** Đăng xuất: Xóa toàn bộ thông tin liên quan đến GitHub và dừng đồng bộ. */
   async logout(clearLocalProgress?: boolean) {
     console.log("[Store] Logging out...");
-    if (clearLocalProgress) {
-      await clearLocalGameData();
+
+    // Chạy smartSync trước khi xóa dữ liệu
+    try {
+      console.log("[Store] Running smartSync before logout...");
+      await smartSync();
+    } catch (syncErr) {
+      console.warn("[Store] smartSync failed before logout:", syncErr);
     }
 
+    // 1. Xóa thông tin xác thực trước để chặn đứng mọi hành vi tự động đồng bộ (auto-sync)
     await clearAuth();
     await clearSessionGistCache();
 
-    // Cập nhật lại trạng thái local trong store
+    // Cập nhật lại trạng thái local trong store ngay lập tức
     setAppStore({
       githubToken: "",
       gistId: "",
@@ -198,12 +204,27 @@ export const appStoreActions = {
 
     // Thông báo cho background để dừng Alarm và thông báo cho tabs
     chrome.runtime.sendMessage({ type: "SETTINGS_UPDATED" });
+
+    // 2. Xóa tiến trình cục bộ nếu có yêu cầu
+    if (clearLocalProgress) {
+      try {
+        await clearLocalGameData();
+      } catch (err) {
+        console.warn("[Store] Failed to clear local game data during logout:", err);
+      }
+    }
   },
 
   /** Xóa tin nhắn trạng thái đồng bộ hiện tại */
   async clearSyncStatus() {
     await setAutoSyncStatus("", "info");
     setAppStore({ autoSyncStatus: "", autoSyncStatusType: "info" });
+  },
+
+  /** Cập nhật tin nhắn trạng thái đồng bộ hiện tại */
+  async setSyncStatus(status: string, type: SyncStatusType = "info") {
+    await setAutoSyncStatus(status, type);
+    setAppStore({ autoSyncStatus: status, autoSyncStatusType: type });
   },
 
   /** Chuyển đổi màn hình hiển thị trong Popup. */
