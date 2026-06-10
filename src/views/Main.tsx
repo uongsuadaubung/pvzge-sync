@@ -16,6 +16,7 @@ import {
   smartSync,
 } from "@/domains/sync/sync.ts";
 import { type SaveData, SaveDataSchema } from "@/domains/game/schema.ts";
+import { getSessionGistCache } from "@/shared/storage.ts";
 import {
   type DialogConfig,
   type SyncStatusType,
@@ -34,6 +35,8 @@ interface ProfileInfo {
   sprout: number;
 }
 
+const ZEN_COOLDOWN_SECONDS = 21600; // 6 hours
+
 export const Main: Component = () => {
   let fileInput!: HTMLInputElement;
   let downloadAnchor!: HTMLAnchorElement;
@@ -45,10 +48,132 @@ export const Main: Component = () => {
   const [countdownText, setCountdownText] = createSignal("00:00");
   const [progressPercent, setProgressPercent] = createSignal(0);
 
+  const [zenSaveData, setZenSaveData] = createSignal<SaveData | null>(null);
+  const [zenStatus, setZenStatus] = createSignal<
+    "loading" | "no_data" | "no_plants" | "ready" | "cooldown"
+  >("loading");
+  const [zenCountdownText, setZenCountdownText] = createSignal("");
+
   let timerId: ReturnType<typeof setInterval> | undefined;
+  let zenFetchInterval: ReturnType<typeof setInterval> | undefined;
 
   onMount(() => {
+    let hasLoaded = false;
+    function updateZenCountdown() {
+      if (!hasLoaded) {
+        return;
+      }
+      const data = zenSaveData();
+      if (!data) {
+        setZenStatus("no_data");
+        return;
+      }
+
+      const profile = data.PvZ2_PlayerProperties?.[0];
+      const zengarden = profile?.zengarden;
+      if (!zengarden) {
+        setZenStatus("no_data");
+        return;
+      }
+
+      const plants = [
+        ...(zengarden.plantsInMain || []),
+        ...(zengarden.plantsInBeach || []),
+        ...(zengarden.plantsInMushroom || []),
+        ...(zengarden.plantsInNight || []),
+        ...(zengarden.plantInCart ? [zengarden.plantInCart] : []),
+      ];
+
+      if (plants.length === 0) {
+        setZenStatus("no_plants");
+        return;
+      }
+
+      const now = Date.now();
+      let minRemaining = Infinity;
+      let anyReady = false;
+      for (const plant of plants) {
+        let remaining = 0;
+        const isReadyInGame = plant.stuck || plant.waterCD <= 0;
+
+        if (isReadyInGame) {
+          remaining = 0;
+        } else {
+          // Cooldown is always 6 hours (21,600 seconds) from the last care action (oldTime)
+          const elapsedSeconds = (now - plant.oldTime) / 1000;
+          remaining = ZEN_COOLDOWN_SECONDS - elapsedSeconds;
+        }
+
+        if (remaining <= 0) {
+          anyReady = true;
+        } else {
+          if (remaining < minRemaining) {
+            minRemaining = remaining;
+          }
+        }
+      }
+
+      if (anyReady) {
+        setZenStatus("ready");
+      } else if (minRemaining !== Infinity) {
+        setZenStatus("cooldown");
+        const remainingRounded = Math.max(0, Math.ceil(minRemaining));
+        const targetDate = new Date(now + minRemaining * 1000);
+        const targetHours = String(targetDate.getHours()).padStart(2, "0");
+        const targetMinutes = String(targetDate.getMinutes()).padStart(2, "0");
+        const targetTimeStr = ` (${targetHours}:${targetMinutes})`;
+
+        if (remainingRounded <= 60) {
+          setZenCountdownText(
+            t("zen_garden_watering_cooldown_prefix") +
+              remainingRounded +
+              t("time_seconds") +
+              t("zen_garden_watering_cooldown_suffix") +
+              targetTimeStr,
+          );
+        } else {
+          const h = Math.floor(remainingRounded / 3600);
+          const m = Math.floor((remainingRounded % 3600) / 60);
+          let timeStr = "";
+          if (h > 0) {
+            timeStr += h + t("time_hours");
+          }
+          timeStr += m + t("time_minutes");
+          setZenCountdownText(
+            t("zen_garden_watering_cooldown_prefix") +
+              timeStr +
+              t("zen_garden_watering_cooldown_suffix") +
+              targetTimeStr,
+          );
+        }
+      } else {
+        setZenStatus("cooldown");
+        setZenCountdownText("-");
+      }
+    }
+
+    async function fetchZenData() {
+      try {
+        const localData = await getLocalData();
+        setZenSaveData(localData);
+      } catch (_err) {
+        // Fallback to session cache if game not open
+        const cached = await getSessionGistCache();
+        if (cached) {
+          setZenSaveData(cached);
+        } else {
+          setZenSaveData(null);
+        }
+      } finally {
+        hasLoaded = true;
+        updateZenCountdown();
+      }
+    }
+
     async function updateTimer() {
+      // Always update Zen Garden countdown relative to current time
+      updateZenCountdown();
+
       if (!appStore.autoSyncEnabled || appStore.autoSyncInterval <= 0) {
         return;
       }
@@ -94,12 +219,16 @@ export const Main: Component = () => {
       }
     }
 
+    fetchZenData();
+    zenFetchInterval = setInterval(fetchZenData, 5000);
+
     updateTimer();
     timerId = setInterval(updateTimer, 1000);
   });
 
   onCleanup(() => {
     if (timerId) clearInterval(timerId);
+    if (zenFetchInterval) clearInterval(zenFetchInterval);
   });
 
   const [dialogResolver, setDialogResolver] = createSignal<
@@ -236,15 +365,15 @@ export const Main: Component = () => {
           const msgKey = res.detail === "upload"
             ? "msg_sync_success_upload"
             : "msg_sync_success_download";
-          await showAlert(t(msgKey), "success");
+          await appStoreActions.setSyncStatus(msgKey, "success");
           break;
         }
         case "no_action":
-          await showAlert(t("msg_sync_no_changes"), "info");
+          await appStoreActions.setSyncStatus("msg_sync_no_changes", "info");
           break;
       }
     } catch (e: unknown) {
-      await showAlert(getLocalizedError(e), "error");
+      await appStoreActions.setSyncStatus(getLocalizedError(e), "error");
     } finally {
       setLoading(false);
     }
@@ -394,6 +523,64 @@ export const Main: Component = () => {
                       ? t("btn_auto_collect_off")
                       : t("btn_auto_collect_on")}
                   </Button>
+                </div>
+              </section>
+
+              <section class="action-section zen-garden">
+                <div class="section-header">
+                  <span class="section-icon">🪴</span>
+                  <h3>{t("zen_garden_title")}</h3>
+                </div>
+                <div class="zen-garden-status">
+                  <div
+                    class={`status-icon ${zenStatus().replace("_", "-")}`}
+                  >
+                    <Show when={zenStatus() === "loading"}>🔄</Show>
+                    <Show when={zenStatus() === "ready"}>💧</Show>
+                    <Show when={zenStatus() === "cooldown"}>⏳</Show>
+                    <Show
+                      when={zenStatus() === "no_plants" ||
+                        zenStatus() === "no_data"}
+                    >
+                      ⚠️
+                    </Show>
+                  </div>
+                  <div class="status-details">
+                    <div class="status-text">{t("zen_garden_title")}</div>
+                    <div
+                      class={`status-time ${
+                        zenStatus() === "ready" ? "ready-text" : ""
+                      }`}
+                    >
+                      <Show
+                        when={zenStatus() === "loading"}
+                        fallback={
+                          <Show
+                            when={zenStatus() === "no_data"}
+                            fallback={
+                              <Show
+                                when={zenStatus() === "no_plants"}
+                                fallback={
+                                  <Show
+                                    when={zenStatus() === "ready"}
+                                    fallback={zenCountdownText()}
+                                  >
+                                    {t("zen_garden_waterable_now")}
+                                  </Show>
+                                }
+                              >
+                                {t("zen_garden_no_plants")}
+                              </Show>
+                            }
+                          >
+                            {t("zen_garden_no_data")}
+                          </Show>
+                        }
+                      >
+                        {t("loading")}
+                      </Show>
+                    </div>
+                  </div>
                 </div>
               </section>
             </Show>

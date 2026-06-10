@@ -200,7 +200,7 @@ export async function smartSync(isAuto = false): Promise<SmartSyncResult> {
       await setLastSyncedHash(H_local);
     }
     if (isAuto) {
-      await setAutoSyncStatus("status_auto_sync_identical", "success");
+      await setAutoSyncStatus("msg_sync_no_changes", "info");
     }
     return { type: "no_action" };
   }
@@ -209,7 +209,7 @@ export async function smartSync(isAuto = false): Promise<SmartSyncResult> {
   if (H_local === H_base && H_cloud === H_base) {
     console.log("[SmartSync] Both Local and Cloud are unchanged.");
     if (isAuto) {
-      await setAutoSyncStatus("status_auto_sync_no_changes", "info");
+      await setAutoSyncStatus("msg_sync_no_changes", "info");
     }
     return { type: "no_action" };
   }
@@ -261,7 +261,7 @@ export async function smartSync(isAuto = false): Promise<SmartSyncResult> {
     if (!cloud) {
       console.log("[SmartSync] Cloud changes detected, but cloud is empty.");
       if (isAuto) {
-        await setAutoSyncStatus("status_auto_sync_no_changes", "info");
+        await setAutoSyncStatus("msg_sync_no_changes", "info");
       }
       return { type: "no_action" };
     }
@@ -291,7 +291,7 @@ export async function smartSync(isAuto = false): Promise<SmartSyncResult> {
         { local: !!local, cloud: !!cloud },
       );
       if (isAuto) {
-        await setAutoSyncStatus("status_auto_sync_no_changes", "info");
+        await setAutoSyncStatus("msg_sync_no_changes", "info");
       }
       return { type: "no_action" };
     }
@@ -305,7 +305,7 @@ export async function smartSync(isAuto = false): Promise<SmartSyncResult> {
   }
 
   if (isAuto) {
-    await setAutoSyncStatus("status_auto_sync_no_changes", "info");
+    await setAutoSyncStatus("msg_sync_no_changes", "info");
   }
   return { type: "no_action" };
 }

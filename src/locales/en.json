@@ -193,11 +193,19 @@
   "status_auto_sync_download_blocked": "Auto sync: New cloud save detected but automatic download is disabled.",
   "status_auto_sync_conflict": "Auto sync: Conflict detected between local and cloud saves.",
   "status_auto_sync_success_upload": "Auto sync: Successfully uploaded the latest progress to the cloud!",
-  "status_auto_sync_no_changes": "Auto sync: No changes to back up.",
-  "status_auto_sync_identical": "Auto sync: Progress is already identical.",
   "status_auto_sync_empty_local": "Auto sync: Cannot back up because local progress is empty.",
   "msg_logout_warning": "Are you sure you want to log out? This will stop automatic backup syncing and disconnect from cloud backup.",
   "check_clear_progress_label": "Clear all local game progress on this device",
   "btn_logout_confirm": "Logout",
-  "dialog_loading": "Processing..."
+  "dialog_loading": "Processing...",
+  "loading": "Loading...",
+  "zen_garden_title": "Zen Garden Watering",
+  "zen_garden_waterable_now": "Ready to water IMMEDIATELY!",
+  "zen_garden_watering_cooldown_prefix": "Next watering in: ",
+  "zen_garden_watering_cooldown_suffix": "",
+  "zen_garden_no_plants": "No plants in the Zen Garden",
+  "zen_garden_no_data": "Game not open or not synced",
+  "time_hours": "h ",
+  "time_minutes": "m ",
+  "time_seconds": "s"
 }

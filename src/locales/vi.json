@@ -193,11 +193,19 @@
   "status_auto_sync_download_blocked": "Tự động đồng bộ: Phát hiện bản lưu mới trên Cloud nhưng không tự động tải về.",
   "status_auto_sync_conflict": "Tự động đồng bộ: Có sự xung đột tiến trình chơi giữa máy này và Cloud.",
   "status_auto_sync_success_upload": "Tự động đồng bộ: Đã tải tiến trình mới nhất lên Cloud thành công!",
-  "status_auto_sync_no_changes": "Tự động đồng bộ: Không có thay đổi mới nào cần sao lưu.",
-  "status_auto_sync_identical": "Tự động đồng bộ: Bản lưu trên máy và Cloud đã trùng khớp hoàn toàn.",
   "status_auto_sync_empty_local": "Tự động đồng bộ: Không thể thực hiện vì tiến trình cục bộ trống.",
   "msg_logout_warning": "Bạn có chắc chắn muốn đăng xuất không? Hành động này sẽ dừng đồng bộ tự động và ngắt kết nối với đám mây.",
   "check_clear_progress_label": "Xóa toàn bộ tiến trình game cục bộ trên thiết bị này",
   "btn_logout_confirm": "Đăng xuất",
-  "dialog_loading": "Đang xử lý..."
+  "dialog_loading": "Đang xử lý...",
+  "loading": "Đang tải...",
+  "zen_garden_title": "Tưới nước Zen Garden",
+  "zen_garden_waterable_now": "Đã có thể tưới NGAY LẬP TỨC!",
+  "zen_garden_watering_cooldown_prefix": "Còn ",
+  "zen_garden_watering_cooldown_suffix": " nữa có thể tưới",
+  "zen_garden_no_plants": "Không có cây nào trong Zen Garden",
+  "zen_garden_no_data": "Chưa mở game hoặc chưa đồng bộ",
+  "time_hours": " giờ ",
+  "time_minutes": " phút ",
+  "time_seconds": " giây"
 }
