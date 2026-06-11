@@ -5,6 +5,7 @@ import {
   getGameSaveData,
   setGameSaveData,
 } from "@/domains/game/storage.ts";
+import { computeHash } from "@/domains/sync/sync.ts";
 
 /**
  * Chuyển đổi định dạng phím của game (ví dụ: "KEY_A", "DIGIT_1", "SPACE")
@@ -124,17 +125,51 @@ chrome.runtime.onMessage.addListener(
         );
         break;
       }
-      case "APPLY_REMOTE_DATA":
-        setGameSaveData(message.data);
-        sendResponse({ success: true });
-        window.location.reload();
-        break;
-      case "CLEAR_LOCAL_DATA":
+      case "APPLY_REMOTE_DATA": {
+        (async () => {
+          setGameSaveData(message.data);
+
+          const targetHash = await computeHash(message.data);
+          let attempts = 0;
+          let local = getGameSaveData().data;
+          let localHash = await computeHash(local);
+
+          // Khi reload trang, tiến trình game (WebAssembly) đang chạy có thể tự động ghi đè ngược lại dữ liệu cũ
+          // từ bộ nhớ RAM xuống localStorage. Vòng lặp while giúp liên tục ghi đè lại dữ liệu mới cho đến khi
+          // localStorage thực tế trùng khớp hoàn toàn với mã băm dữ liệu cloud trước khi tải lại trang.
+          while (localHash !== targetHash && attempts < 100) {
+            setGameSaveData(message.data);
+            local = getGameSaveData().data;
+            localHash = await computeHash(local);
+            attempts++;
+          }
+
+          sendResponse({ success: true });
+          window.location.reload();
+        })();
+        return true;
+      }
+      case "CLEAR_LOCAL_DATA": {
         localStorage.removeItem("PvZ2_PlayerProperties");
         localStorage.removeItem("PvZ2_Settings");
+
+        let attempts = 0;
+        // Khi đăng xuất và reload, game đang chạy có thể tự động thực hiện thao tác auto-save dữ liệu cũ từ RAM.
+        // Vòng lặp while này giúp liên tục xóa sạch cho đến khi localStorage thực sự trống rỗng hoàn toàn.
+        while (
+          (localStorage.getItem("PvZ2_PlayerProperties") !== null ||
+            localStorage.getItem("PvZ2_Settings") !== null) &&
+          attempts < 100
+        ) {
+          localStorage.removeItem("PvZ2_PlayerProperties");
+          localStorage.removeItem("PvZ2_Settings");
+          attempts++;
+        }
+
         sendResponse({ success: true });
         window.location.reload();
         break;
+      }
       case "SETTINGS_UPDATED":
         syncAutoCollect();
         sendResponse({ success: true });

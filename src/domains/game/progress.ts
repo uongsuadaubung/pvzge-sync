@@ -4,7 +4,7 @@ import type { SaveData } from "./schema.ts";
  * Kiểm tra xem dữ liệu SaveData có tiến trình chơi game thực tế hay không.
  * Đối chiếu giữa dữ liệu mới tinh và dữ liệu có tiến trình :
  * - Bản save mới tinh chỉ có name = "New Player", coin = 0, gem = 0, sprout = 0.
- * - levelProps, trophyProps, zombieProps, upgradeProps trống trơn
+ * - levelProps, player_trophies/trophyProps, zombieProps, player_upgrades/upgradeProps trống trơn
  * - plantProps chỉ có đúng 4 cây mặc định: peashooter, sunflower, wallnut, potatomine.
  */
 export function hasProgress(
@@ -17,13 +17,25 @@ export function hasProgress(
     return false;
   }
   return save.PvZ2_PlayerProperties.some((profile) => {
-    const levelCount = Object.keys(profile.levelProps || {}).length;
-    const trophyCount = Object.keys(profile.trophyProps || {}).length;
+    const levelCount = Object.values(profile.levelProps || {}).filter(
+      (l) => l.progress > 0,
+    ).length;
+    const trophyCount =
+      Object.values(profile.player_trophies || profile.trophyProps || {})
+        .filter(
+          (t) => t.progress > 0,
+        ).length;
     const plantCount = Object.values(profile.plantProps || {}).filter(
       (p) => p.progress > 0,
     ).length;
-    const zombieCount = Object.keys(profile.zombieProps || {}).length;
-    const upgradeCount = Object.keys(profile.upgradeProps || {}).length;
+    const zombieCount = Object.values(profile.zombieProps || {}).filter(
+      (z) => z.progress > 0,
+    ).length;
+    const upgradeCount =
+      Object.values(profile.player_upgrades || profile.upgradeProps || {})
+        .filter(
+          (u) => u.progress > 0 || u.enabled,
+        ).length;
 
     const coinCount = profile.coin || 0;
     const gemCount = profile.gem || 0;
