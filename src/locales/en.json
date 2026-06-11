@@ -204,7 +204,7 @@
   "zen_garden_watering_cooldown_prefix": "Next watering in: ",
   "zen_garden_watering_cooldown_suffix": "",
   "zen_garden_no_plants": "No plants in the Zen Garden",
-  "zen_garden_no_data": "Game not open or not synced",
+  "zen_garden_no_data": "No data",
   "time_hours": "h ",
   "time_minutes": "m ",
   "time_seconds": "s"

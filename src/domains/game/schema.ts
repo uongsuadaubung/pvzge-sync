@@ -119,11 +119,13 @@ const PlayerProfileSchema = z.object({
   name: z.string(),
   pirateWMX: z.number(),
   plantProps: z.record(z.string(), PlantPropSchema),
+  player_trophies: z.record(z.string(), ProgressEntrySchema).optional(), //0.9.3 chuyển từ trophyProps
+  player_upgrades: z.record(z.string(), UpgradePropSchema).optional(), //0.9.3 chuyển từ upgradeProps
   sprout: z.number(),
   time: z.number(),
-  trophyProps: z.record(z.string(), ProgressEntrySchema),
+  trophyProps: z.record(z.string(), ProgressEntrySchema).optional(),
   tutorial: TutorialSchema,
-  upgradeProps: z.record(z.string(), UpgradePropSchema),
+  upgradeProps: z.record(z.string(), UpgradePropSchema).optional(),
   version: z.string(),
   worldProgress: z.array(z.unknown()),
   worldProps: WorldPropsSchema,

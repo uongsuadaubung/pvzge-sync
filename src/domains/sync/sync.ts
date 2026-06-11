@@ -193,6 +193,28 @@ export async function smartSync(isAuto = false): Promise<SmartSyncResult> {
     H_base,
   );
 
+  // Nếu dữ liệu local không có tiến trình chơi thực tế (game mới/trống)
+  // trong khi dữ liệu cloud đã có tiến trình chơi thực tế:
+  // Tự động tải từ Cloud về máy mà không báo xung đột (conflict).
+  if (local && cloud && !hasProgress(local) && hasProgress(cloud)) {
+    console.log(
+      "[SmartSync] Local has no progress (new game) but Cloud has progress. Auto-downloading from Cloud...",
+    );
+    if (isAuto) {
+      console.log(
+        "[SmartSync] Auto-sync is enabled. Download is blocked in auto-sync mode.",
+      );
+      await setAutoSyncStatus("status_auto_sync_download_blocked", "warning");
+      return { type: "download_blocked" };
+    }
+    const dataToApply = preserveLocalDate(cloud, local);
+    await applyRemoteToGame(dataToApply);
+    await setLastSync();
+    await setLastSyncedHash(H_cloud);
+    console.log("[SmartSync] Auto-download completed successfully.");
+    return { type: "synced", detail: "download" };
+  }
+
   // Nếu cả 2 bên giống nhau y hệt
   if (H_local === H_cloud) {
     console.log("[SmartSync] Local and Cloud are already identical.");
@@ -222,18 +244,6 @@ export async function smartSync(isAuto = false): Promise<SmartSyncResult> {
         await setAutoSyncStatus("status_auto_sync_empty_local", "warning");
       }
       return { type: "no_action" };
-    }
-
-    // Nếu dữ liệu local là "New Game" (không có tiến trình) trong khi cloud đã có tiến trình chơi thực tế,
-    // ta không được auto-upload ghi đè lên cloud mà phải kích hoạt trạng thái xung đột (conflict).
-    if (!hasProgress(local) && hasProgress(cloud)) {
-      console.warn(
-        "[SmartSync] Local has no progress (new game) but Cloud has progress. Triggering conflict to prevent cloud save overwrite.",
-      );
-      if (isAuto) {
-        await setAutoSyncStatus("status_auto_sync_conflict", "warning");
-      }
-      return { type: "conflict", localData: local, cloudData: cloud };
     }
 
     console.log("[SmartSync] Only Local changed. Auto-uploading to Cloud...");
