@@ -20,22 +20,20 @@ export function hasProgress(
     const levelCount = Object.values(profile.levelProps || {}).filter(
       (l) => l.progress > 0,
     ).length;
-    const trophyCount =
-      Object.values(profile.player_trophies || profile.trophyProps || {})
-        .filter(
-          (t) => t.progress > 0,
-        ).length;
+    const trophyCount = Object.values(profile.player_trophies || {})
+      .filter(
+        (t) => t.progress > 0,
+      ).length;
     const plantCount = Object.values(profile.plantProps || {}).filter(
       (p) => p.progress > 0,
     ).length;
     const zombieCount = Object.values(profile.zombieProps || {}).filter(
       (z) => z.progress > 0,
     ).length;
-    const upgradeCount =
-      Object.values(profile.player_upgrades || profile.upgradeProps || {})
-        .filter(
-          (u) => u.progress > 0 || u.enabled,
-        ).length;
+    const upgradeCount = Object.values(profile.player_upgrades || {})
+      .filter(
+        (u) => u.progress > 0 || u.enabled,
+      ).length;
 
     const coinCount = profile.coin || 0;
     const gemCount = profile.gem || 0;

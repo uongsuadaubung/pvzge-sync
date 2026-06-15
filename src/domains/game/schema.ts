@@ -132,7 +132,18 @@ const PlayerProfileSchema = z.object({
   worldkey: z.number(),
   zengarden: ZenGardenSchema,
   zombieProps: z.record(z.string(), ProgressEntrySchema),
-}).strict();
+}).strict().transform((data) => {
+  const player_trophies = data.player_trophies ?? data.trophyProps;
+  const player_upgrades = data.player_upgrades ?? data.upgradeProps;
+
+  const { trophyProps: _trophyProps, upgradeProps: _upgradeProps, ...rest } =
+    data;
+  return {
+    ...rest,
+    player_trophies,
+    player_upgrades,
+  };
+});
 
 const KeyBindsSchema = z.object({
   Game_Pause: z.string(),
@@ -207,7 +218,18 @@ const SettingsSchema = z.object({
   PlayerIndex: z.number(),
   KeyBinds: KeyBindsSchema,
   ZombieAlert: z.boolean(),
-}).strict();
+}).strict().transform((data) => {
+  let CardsLayer = data.CardsLayer;
+  if (CardsLayer === undefined && data.CardsAtUpper !== undefined) {
+    CardsLayer = data.CardsAtUpper ? 1 : 0;
+  }
+
+  const { CardsAtUpper: _CardsAtUpper, ...rest } = data;
+  return {
+    ...rest,
+    CardsLayer,
+  };
+});
 
 export const SaveDataSchema = z.object({
   PvZ2_PlayerProperties: z.array(PlayerProfileSchema),
