@@ -40,7 +40,8 @@ export const Popup: Component = () => {
     }
 
     const activeTab = await getActiveTab();
-    if (!activeTab?.url || !isGameUrl(activeTab.url)) {
+    const port = appStore.localhostPort || "8080";
+    if (!activeTab?.url || !isGameUrl(activeTab.url, port)) {
       setWarnMsg(t("not_game_page_body"));
       checkLocalPort(); // Gọi ngầm không chặn UI
       setReady(true);
