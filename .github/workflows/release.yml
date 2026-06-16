@@ -5,6 +5,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 jobs:
   build:
@@ -44,3 +45,23 @@ jobs:
 
           echo "Creating release $TAG_NAME and uploading packages..."
           gh release create "$TAG_NAME" "$CHROME_FILE" "$FIREFOX_FILE" --title "$TAG_NAME" --generate-notes
+
+      - name: Cleanup old releases and workflow runs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Cleaning up old releases (keeping 20 most recent)..."
+          gh release list --limit 100 --json tagName --jq '.[20:].[] | .tagName' | while read -r tag; do
+            if [ -n "$tag" ]; then
+              echo "Deleting old release and tag: $tag"
+              gh release delete "$tag" --yes --cleanup-tag || true
+            fi
+          done
+
+          echo "Cleaning up old workflow runs (keeping 20 most recent)..."
+          gh run list --limit 100 --json databaseId --jq '.[20:].[] | .databaseId' | while read -r run_id; do
+            if [ -n "$run_id" ]; then
+              echo "Deleting old workflow run: $run_id"
+              gh run delete "$run_id" || true
+            fi
+          done
