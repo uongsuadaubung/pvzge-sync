@@ -12,7 +12,7 @@ interface Props {
 
 export default function LogoutDialog(props: Props) {
   const [saving, setSaving] = createSignal(false);
-  const [clearProgressChecked, setClearProgressChecked] = createSignal(false);
+  const [clearProgressChecked, setClearProgressChecked] = createSignal(true);
 
   async function handleLogout() {
     try {
