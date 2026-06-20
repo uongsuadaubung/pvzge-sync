@@ -5,7 +5,31 @@ import {
   getGameSaveData,
   setGameSaveData,
 } from "@/domains/game/storage.ts";
-import { computeHash } from "@/domains/sync/sync.ts";
+import { SaveDataSchema } from "@/domains/game/schema.ts";
+
+// Kiểm tra cờ xóa dữ liệu tồn tại từ phiên trước đó (do reload)
+if (sessionStorage.getItem("PVZGE_PENDING_CLEAR") === "true") {
+  localStorage.removeItem("PvZ2_PlayerProperties");
+  localStorage.removeItem("PvZ2_Settings");
+  sessionStorage.removeItem("PVZGE_PENDING_CLEAR");
+}
+
+// Kiểm tra cờ áp dụng dữ liệu cloud tồn tại từ phiên trước đó (do reload)
+const pendingApply = sessionStorage.getItem("PVZGE_PENDING_APPLY");
+if (pendingApply) {
+  try {
+    const raw = JSON.parse(pendingApply);
+    const result = SaveDataSchema.safeParse(raw);
+    if (result.success) {
+      setGameSaveData(result.data);
+    } else {
+      console.error("[PVZGE-Sync] Pending apply data validation failed:", result.error);
+    }
+  } catch (e) {
+    console.error("[PVZGE-Sync] Failed to parse pending apply data:", e);
+  }
+  sessionStorage.removeItem("PVZGE_PENDING_APPLY");
+}
 
 /**
  * Chuyển đổi định dạng phím của game (ví dụ: "KEY_A", "DIGIT_1", "SPACE")
@@ -126,46 +150,13 @@ chrome.runtime.onMessage.addListener(
         break;
       }
       case "APPLY_REMOTE_DATA": {
-        (async () => {
-          setGameSaveData(message.data);
-
-          const targetHash = await computeHash(message.data);
-          let attempts = 0;
-          let local = getGameSaveData().data;
-          let localHash = await computeHash(local);
-
-          // Khi reload trang, tiến trình game (WebAssembly) đang chạy có thể tự động ghi đè ngược lại dữ liệu cũ
-          // từ bộ nhớ RAM xuống localStorage. Vòng lặp while giúp liên tục ghi đè lại dữ liệu mới cho đến khi
-          // localStorage thực tế trùng khớp hoàn toàn với mã băm dữ liệu cloud trước khi tải lại trang.
-          while (localHash !== targetHash && attempts < 100) {
-            setGameSaveData(message.data);
-            local = getGameSaveData().data;
-            localHash = await computeHash(local);
-            attempts++;
-          }
-
-          sendResponse({ success: true });
-          window.location.reload();
-        })();
+        sessionStorage.setItem("PVZGE_PENDING_APPLY", JSON.stringify(message.data));
+        sendResponse({ success: true });
+        window.location.reload();
         return true;
       }
       case "CLEAR_LOCAL_DATA": {
-        localStorage.removeItem("PvZ2_PlayerProperties");
-        localStorage.removeItem("PvZ2_Settings");
-
-        let attempts = 0;
-        // Khi đăng xuất và reload, game đang chạy có thể tự động thực hiện thao tác auto-save dữ liệu cũ từ RAM.
-        // Vòng lặp while này giúp liên tục xóa sạch cho đến khi localStorage thực sự trống rỗng hoàn toàn.
-        while (
-          (localStorage.getItem("PvZ2_PlayerProperties") !== null ||
-            localStorage.getItem("PvZ2_Settings") !== null) &&
-          attempts < 100
-        ) {
-          localStorage.removeItem("PvZ2_PlayerProperties");
-          localStorage.removeItem("PvZ2_Settings");
-          attempts++;
-        }
-
+        sessionStorage.setItem("PVZGE_PENDING_CLEAR", "true");
         sendResponse({ success: true });
         window.location.reload();
         break;
