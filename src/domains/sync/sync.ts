@@ -370,7 +370,6 @@ export async function forceDownloadFromCloud(): Promise<void> {
  */
 export async function restoreHistoryVersion(data: SaveData): Promise<void> {
   console.log("[Sync] Restoring save data from historical commit...");
-  await setSessionGistCache(data); // Cập nhật cache của lịch sử làm cache đám mây hiện hành
   const local = await getLocalData().catch((err) => {
     console.warn(
       "[Sync] Could not get local data for restore (game not open?):",
@@ -379,8 +378,16 @@ export async function restoreHistoryVersion(data: SaveData): Promise<void> {
     return null;
   });
   const dataToApply = local ? preserveLocalDate(data, local) : data;
+
+  // Cập nhật đám mây (Gist) trước để đồng bộ với Local mới khôi phục
+  const uploadR = await uploadToGist(dataToApply);
+  if (!uploadR.success) {
+    throw new Error(uploadR.error || "Failed to update cloud with restored version");
+  }
+
+  await setSessionGistCache(dataToApply); // Cập nhật cache của lịch sử làm cache đám mây hiện hành
   await applyRemoteToGame(dataToApply);
-  const H_cloud = await computeHash(data);
+  const H_cloud = await computeHash(dataToApply);
   await setLastSync();
   await setLastSyncedHash(H_cloud);
   console.log("[Sync] Historical save data restored successfully.");
