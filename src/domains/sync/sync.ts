@@ -140,6 +140,11 @@ export type SmartSyncResult =
   | { type: "conflict"; localData: SaveData; cloudData: SaveData }
   | { type: "download_blocked" };
 
+export interface SmartSyncOptions {
+  blockDownload?: boolean;
+  blockUpload?: boolean;
+}
+
 /**
  * Smart Sync Logic (3-Way Hash-based):
  * 1. Lấy dữ liệu Local và Cloud.
@@ -147,7 +152,10 @@ export type SmartSyncResult =
  * 3. So sánh 3 chiều giữa Local (H_local), Cloud (H_cloud) và snapshot đồng bộ gần nhất (H_base).
  * 4. Quyết định hành động an toàn tối ưu hoặc kích hoạt xung đột.
  */
-export async function smartSync(isAuto = false): Promise<SmartSyncResult> {
+export async function smartSync(
+  options: SmartSyncOptions = {},
+): Promise<SmartSyncResult> {
+  const { blockDownload = false, blockUpload = false } = options;
   console.log("[SmartSync] Starting 3-way sync process...");
 
   const local = await getLocalData().catch((err) => {
@@ -200,7 +208,7 @@ export async function smartSync(isAuto = false): Promise<SmartSyncResult> {
     console.log(
       "[SmartSync] Local has no progress (new game) but Cloud has progress. Auto-downloading from Cloud...",
     );
-    if (isAuto) {
+    if (blockDownload) {
       console.log(
         "[SmartSync] Auto-sync is enabled. Download is blocked in auto-sync mode.",
       );
@@ -209,8 +217,6 @@ export async function smartSync(isAuto = false): Promise<SmartSyncResult> {
     }
     const dataToApply = preserveLocalDate(cloud, local);
     await applyRemoteToGame(dataToApply);
-    await setLastSync();
-    await setLastSyncedHash(H_cloud);
     console.log("[SmartSync] Auto-download completed successfully.");
     return { type: "synced", detail: "download" };
   }
@@ -221,7 +227,7 @@ export async function smartSync(isAuto = false): Promise<SmartSyncResult> {
     if (H_base !== H_local) {
       await setLastSyncedHash(H_local);
     }
-    if (isAuto) {
+    if (blockDownload) {
       await setAutoSyncStatus("msg_sync_no_changes", "info");
     }
     return { type: "no_action" };
@@ -230,7 +236,7 @@ export async function smartSync(isAuto = false): Promise<SmartSyncResult> {
   // Trường hợp A: Cả hai bên đều không đổi so với snapshot
   if (H_local === H_base && H_cloud === H_base) {
     console.log("[SmartSync] Both Local and Cloud are unchanged.");
-    if (isAuto) {
+    if (blockDownload) {
       await setAutoSyncStatus("msg_sync_no_changes", "info");
     }
     return { type: "no_action" };
@@ -240,9 +246,16 @@ export async function smartSync(isAuto = false): Promise<SmartSyncResult> {
   if (H_local !== H_base && H_cloud === H_base) {
     if (!local) {
       console.log("[SmartSync] Local changes detected, but local is empty.");
-      if (isAuto) {
+      if (blockDownload) {
         await setAutoSyncStatus("status_auto_sync_empty_local", "warning");
       }
+      return { type: "no_action" };
+    }
+
+    if (blockUpload) {
+      console.log(
+        "[SmartSync] Upload is blocked in options.",
+      );
       return { type: "no_action" };
     }
 
@@ -253,13 +266,13 @@ export async function smartSync(isAuto = false): Promise<SmartSyncResult> {
       await setLastSync();
       await setLastSyncedHash(H_local);
       console.log("[SmartSync] Auto-upload completed successfully.");
-      if (isAuto) {
+      if (blockDownload) {
         await setAutoSyncStatus("status_auto_sync_success_upload", "success");
       }
       return { type: "synced", detail: "upload" };
     } else {
       console.error("[SmartSync] Upload failed:", uploadR.error);
-      if (isAuto) {
+      if (blockDownload) {
         await setAutoSyncStatus(uploadR.error || "Upload failed", "error");
       }
       throw new Error(uploadR.error);
@@ -270,12 +283,12 @@ export async function smartSync(isAuto = false): Promise<SmartSyncResult> {
   if (H_local === H_base && H_cloud !== H_base) {
     if (!cloud) {
       console.log("[SmartSync] Cloud changes detected, but cloud is empty.");
-      if (isAuto) {
+      if (blockDownload) {
         await setAutoSyncStatus("msg_sync_no_changes", "info");
       }
       return { type: "no_action" };
     }
-    if (isAuto) {
+    if (blockDownload) {
       console.log(
         "[SmartSync] Cloud changed, but auto-sync is enabled. Download is blocked.",
       );
@@ -287,8 +300,6 @@ export async function smartSync(isAuto = false): Promise<SmartSyncResult> {
     );
     const dataToApply = local ? preserveLocalDate(cloud, local) : cloud;
     await applyRemoteToGame(dataToApply);
-    await setLastSync();
-    await setLastSyncedHash(H_cloud);
     console.log("[SmartSync] Auto-download completed successfully.");
     return { type: "synced", detail: "download" };
   }
@@ -300,7 +311,7 @@ export async function smartSync(isAuto = false): Promise<SmartSyncResult> {
         "[SmartSync] Conflict detected but local or cloud is empty.",
         { local: !!local, cloud: !!cloud },
       );
-      if (isAuto) {
+      if (blockDownload) {
         await setAutoSyncStatus("msg_sync_no_changes", "info");
       }
       return { type: "no_action" };
@@ -308,13 +319,13 @@ export async function smartSync(isAuto = false): Promise<SmartSyncResult> {
     console.log(
       "[SmartSync] Real conflict detected! Both Local and Cloud have changed independently.",
     );
-    if (isAuto) {
+    if (blockDownload) {
       await setAutoSyncStatus("status_auto_sync_conflict", "warning");
     }
     return { type: "conflict", localData: local, cloudData: cloud };
   }
 
-  if (isAuto) {
+  if (blockDownload) {
     await setAutoSyncStatus("msg_sync_no_changes", "info");
   }
   return { type: "no_action" };
@@ -359,9 +370,6 @@ export async function forceDownloadFromCloud(): Promise<void> {
   await setSessionGistCache(r.data); // Ghi lại cache mới
   const dataToApply = local ? preserveLocalDate(r.data, local) : r.data;
   await applyRemoteToGame(dataToApply);
-  const H_cloud = await computeHash(r.data);
-  await setLastSync();
-  await setLastSyncedHash(H_cloud);
   console.log("[Sync] Force download completed successfully.");
 }
 
@@ -387,9 +395,6 @@ export async function restoreHistoryVersion(data: SaveData): Promise<void> {
 
   await setSessionGistCache(dataToApply); // Cập nhật cache của lịch sử làm cache đám mây hiện hành
   await applyRemoteToGame(dataToApply);
-  const H_cloud = await computeHash(dataToApply);
-  await setLastSync();
-  await setLastSyncedHash(H_cloud);
   console.log("[Sync] Historical save data restored successfully.");
 }
 
