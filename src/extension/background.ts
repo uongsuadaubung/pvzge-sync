@@ -29,7 +29,7 @@ async function handleGamePageLoaded() {
   if (token) {
     console.log("[Background] Game page loaded. Running auto sync...");
     try {
-      const res = await smartSync(false);
+      const res = await smartSync();
       if (res.type === "conflict") {
         await setAutoSyncStatus("status_auto_sync_conflict", "warning");
       } else if (res.type === "synced" && res.detail === "upload") {
@@ -173,8 +173,8 @@ chrome.alarms.onAlarm.addListener(async (alarm: chrome.alarms.Alarm) => {
       new Date().toLocaleTimeString(),
     );
     try {
-      // Tự động đồng bộ với tham số isAuto = true
-      await smartSync(true);
+      // Tự động đồng bộ, chặn tự động tải xuống
+      await smartSync({ blockDownload: true });
       console.log("[AutoSync] Periodic sync completed.");
     } catch (e) {
       console.error("[AutoSync] Periodic sync failed:", e);
