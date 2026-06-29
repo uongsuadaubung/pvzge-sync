@@ -6,7 +6,6 @@ import {
   validateToken,
 } from "@/domains/github/api.ts";
 import {
-  clearSessionGistCache,
   getAutoSyncEnabled,
   getAutoSyncInterval,
   getGithubToken,
@@ -19,11 +18,6 @@ import { smartSync } from "@/domains/sync/sync.ts";
  * Xóa cache phiên và thực hiện tự động kiểm tra đồng bộ nếu có GitHub Token.
  */
 async function handleGamePageLoaded() {
-  try {
-    await clearSessionGistCache();
-  } catch (err) {
-    console.error("[Background] Failed to clear session Gist cache:", err);
-  }
 
   const token = await getGithubToken();
   if (token) {

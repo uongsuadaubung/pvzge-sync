@@ -40,6 +40,7 @@ async function githubRequest(
 
   const response = await fetch(`${GITHUB_API_BASE}${path}`, {
     ...options,
+    cache: "no-store",
     headers: {
       "Authorization": `token ${githubToken}`,
       "Accept": "application/vnd.github.v3+json",
@@ -226,7 +227,7 @@ export async function downloadFromGist(): Promise<SyncResponse> {
 
     // Xử lý trường hợp content bị cắt (truncate) do file quá lớn
     const content = file.content ||
-      await fetch(file.raw_url).then((r) => r.text());
+      await fetch(file.raw_url, { cache: "no-store" }).then((r) => r.text());
     const data = await parseGistContent(content);
     const gistUpdatedAt = new Date(gist.updated_at).getTime();
 
@@ -245,6 +246,7 @@ async function fetchUserInfo(token: string): Promise<SyncResponse> {
   try {
     console.log("[GitHub API] Validating token...");
     const response = await fetch(`${GITHUB_API_BASE}/user`, {
+      cache: "no-store",
       headers: {
         "Authorization": `token ${token}`,
         "Accept": "application/vnd.github.v3+json",
@@ -341,7 +343,7 @@ export async function fetchGistHistory(): Promise<HistoryItem[]> {
         }
 
         const content = file.content ||
-          await fetch(file.raw_url).then((r) => r.text());
+          await fetch(file.raw_url, { cache: "no-store" }).then((r) => r.text());
         const saveData = await parseGistContent(content);
 
         return {
