@@ -1,7 +1,6 @@
 import { createStore } from "solid-js/store";
 import {
   clearAuth,
-  clearSessionGistCache,
   getAutoCollectEnabled,
   getAutoSyncEnabled,
   getAutoSyncInterval,
@@ -191,7 +190,6 @@ export const appStoreActions = {
 
     // 1. Xóa thông tin xác thực trước để chặn đứng mọi hành vi tự động đồng bộ (auto-sync)
     await clearAuth();
-    await clearSessionGistCache();
 
     // Cập nhật lại trạng thái local trong store ngay lập tức
     setAppStore({

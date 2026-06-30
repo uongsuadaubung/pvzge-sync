@@ -2,7 +2,6 @@ import { z } from "zod";
 import { SupportLanguage, SupportLanguageSchema } from "@/shared/i18n.ts";
 import { type SyncStatusType, SyncStatusTypeSchema } from "@/shared/types.ts";
 import { type GithubUser, GithubUserSchema } from "@/domains/github/schema.ts";
-import { type SaveData, SaveDataSchema } from "@/domains/game/schema.ts";
 
 /**
  * Schema định nghĩa cấu trúc dữ liệu lưu trữ trong chrome.storage.local.
@@ -230,42 +229,4 @@ export async function setCachedGithubUser(cachedGithubUser: GithubUser | null) {
   await updateSettings({ cachedGithubUser });
 }
 
-const SESSION_CACHE_KEY = "pvzge_session_gist_cache";
 
-/** Lấy dữ liệu SaveData đã cache từ Session RAM */
-export async function getSessionGistCache(): Promise<SaveData | null> {
-  if (typeof chrome === "undefined" || !chrome.storage?.session) return null;
-  try {
-    const result = await chrome.storage.session.get(SESSION_CACHE_KEY);
-    const raw = result[SESSION_CACHE_KEY];
-    if (!raw) return null;
-    return SaveDataSchema.parse(raw);
-  } catch (e) {
-    console.warn("[Storage] Failed to read session cache:", e);
-    return null;
-  }
-}
-
-/** Lưu dữ liệu SaveData vào Session RAM */
-export async function setSessionGistCache(data: SaveData) {
-  if (typeof chrome === "undefined" || !chrome.storage?.session) return;
-  try {
-    // Chốt chặn bảo vệ triệt tiêu hoàn toàn Proxy bằng cách parse qua Zod Schema trước khi đưa vào storage
-    const safeData = SaveDataSchema.parse(data);
-    await chrome.storage.session.set({ [SESSION_CACHE_KEY]: safeData });
-    console.log("[Storage] Session cache updated.");
-  } catch (e) {
-    console.error("[Storage] Failed to set session cache:", e);
-  }
-}
-
-/** Xóa sạch dữ liệu cache trong Session RAM */
-export async function clearSessionGistCache() {
-  if (typeof chrome === "undefined" || !chrome.storage?.session) return;
-  try {
-    await chrome.storage.session.remove(SESSION_CACHE_KEY);
-    console.log("[Storage] Session cache cleared.");
-  } catch (e) {
-    console.error("[Storage] Failed to clear session cache:", e);
-  }
-}

@@ -16,7 +16,6 @@ import {
   smartSync,
 } from "@/domains/sync/sync.ts";
 import { type SaveData, SaveDataSchema } from "@/domains/game/schema.ts";
-import { getSessionGistCache } from "@/shared/storage.ts";
 import {
   type DialogConfig,
   type SyncStatusType,
@@ -157,13 +156,7 @@ export const Main: Component = () => {
         const localData = await getLocalData();
         setZenSaveData(localData);
       } catch (_err) {
-        // Fallback to session cache if game not open
-        const cached = await getSessionGistCache();
-        if (cached) {
-          setZenSaveData(cached);
-        } else {
-          setZenSaveData(null);
-        }
+        setZenSaveData(null);
       } finally {
         hasLoaded = true;
         updateZenCountdown();
