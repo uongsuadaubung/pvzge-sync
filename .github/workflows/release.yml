@@ -19,6 +19,22 @@ jobs:
         with:
           deno-version: v2.x
 
+      - name: Bump version and commit
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          
+          deno task bump-version
+          
+          if [ -n "$(git status --porcelain src/manifest.json)" ]; then
+            git add src/manifest.json
+            VERSION=$(jq -r '.version' src/manifest.json)
+            git commit -m "chore: bump version to $VERSION [skip ci]"
+            git push
+          else
+            echo "No version bump needed."
+          fi
+
       - name: Create Release and Upload packages
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
